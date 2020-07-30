@@ -16,9 +16,9 @@
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
 
-#define MAX_CHUNKS_GENERATED_PER_FRAME 4
-#define MAX_CHUNKS_DELETED_PER_FRAME 8
-#define CHUNK_RENDER_RADIUS 4
+#define MAX_CHUNKS_GENERATED_PER_FRAME 8
+#define MAX_CHUNKS_DELETED_PER_FRAME 32
+#define CHUNK_RENDER_RADIUS 6
 
 struct vec3i{
 	int x;
@@ -222,7 +222,7 @@ int main(int argc, char** argv){
     frames++;
 
     if(currentTime - lastPrintTime >= 1.0f){
-      printf("%.1fms (%dfps)\n", 1000.0f/(float)frames, frames);
+      printf("%.1fms (%dfps) %d chunks\n", 1000.0f/(float)frames, frames, chunks.size());
       frames = 0;
       lastPrintTime += 1.0f;
     }
@@ -251,7 +251,7 @@ int main(int argc, char** argv){
 
       // delete chunks outside of render radius
       if(abs(dx) > CHUNK_RENDER_RADIUS || abs(dy) > CHUNK_RENDER_RADIUS || abs(dz) > CHUNK_RENDER_RADIUS){
-        chunks.erase(it--);
+        it = chunks.erase(it);
         delete chunk;
 
         chunksDeleted++;

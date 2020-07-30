@@ -64,7 +64,7 @@ Chunk::Chunk(int _x, int _y, int _z){
 
   blocks = (block_t*)malloc(CHUNK_SIZE_CUBED * sizeof(block_t));
   elements = 0;
-  changed = true;
+  changed = false;
   meshChanged = false;
 
   x = _x;
@@ -91,6 +91,10 @@ for(uint8_t dx = 0; dx < CHUNK_SIZE; dx++){
         uint8_t block = h < CHUNK_SIZE / 4 && thickness <= 3 ? 5 : thickness == 1 ? 1 : thickness <= 5 ? 3 : 2;
 
         blocks[blockIndex(dx, dy, dz)] = dy < rh ? h == 0 ? 4 : block : 0;
+        if(!changed && blocks[blockIndex(dx, dy, dz)] > 0){
+          changed = true;
+        }
+
 #if defined DEBUG && defined PRINT_TIMING
         if(dy < h){
           count++;
