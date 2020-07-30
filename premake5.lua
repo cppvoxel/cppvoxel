@@ -11,6 +11,11 @@ workspace "cengine"
 
   filter {}
 
+  newoption {
+    ["trigger"] = "release",
+    ["description"] = "Release build"
+  }
+
   newaction {
     ["trigger"] = "clean",
     ["description"] = "Delete generated project and build files",
@@ -41,9 +46,25 @@ workspace "cengine"
       function()
         os.execute("premake5 gmake2")
         if _TARGET_OS == "windows" then
-          os.execute("mingw32-make -C build")
+          if _OPTIONS["release"] then
+            os.execute("mingw32-make -C build config=release")
+          else
+            os.execute("mingw32-make -C build")
+          end
         else
-          os.execute("make -C build")
+          if _OPTIONS["release"] then
+            os.execute("make -C build config=release")
+          else
+            os.execute("make -C build")
+          end
+        end
+
+        print "Copying resources..."
+        if _TARGET_OS == "windows" then
+          os.execute("xcopy /Q /E /Y /I res bin\\res")
+        else
+          os.execute("mkdir -p bin/res")
+          os.execute("cp -rf res bin/res")
         end
       end
   }
