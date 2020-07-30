@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <vector>
+#include <map>
 
 #include <GL/glew.h>
 #include <glfw/glfw3.h>
@@ -15,8 +15,42 @@
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
-#define MAX_CHUNKS_GENERATED_PER_FRAME 8
+
+#define MAX_CHUNKS_GENERATED_PER_FRAME 4
+#define MAX_CHUNKS_DELETED_PER_FRAME 8
 #define CHUNK_RENDER_RADIUS 4
+
+struct ChunkCoord{
+	int x;
+	int y;
+	int z;
+};
+
+inline bool const operator==(const ChunkCoord& l, const ChunkCoord& r){
+	return l.x == r.x && l.y == r.y && l.z == r.z;
+};
+
+inline bool const operator<(const ChunkCoord& l, const ChunkCoord& r){
+	if(l.x < r.x){
+    return true;
+  }else if(l.x > r.x){
+    return false;
+  }
+
+	if(l.y < r.y){
+    return true;
+  }else if(l.y > r.y){
+    return false;
+  }
+
+	if(l.z < r.z){
+    return true;
+  }else if(l.z > r.z){
+    return false;
+  }
+
+	return false;
+};
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -26,7 +60,8 @@ float lastX = WINDOW_WIDTH / 2.0f;
 float lastY = WINDOW_HEIGHT / 2.0f;
 bool firstMouse = true;
 
-std::vector<Chunk*> chunks;
+std::map<ChunkCoord, Chunk*> chunks;
+typedef std::map<ChunkCoord, Chunk*>::iterator chunk_it;
 
 const static char* voxelShaderVertexSource = R"(#version 330 core
 layout (location = 0) in vec4 coord;
@@ -192,8 +227,11 @@ int main(int argc, char** argv){
     int y = floorf(camera.position.y / CHUNK_SIZE);
     int z = floorf(camera.position.z / CHUNK_SIZE);
 
-    for(std::vector<Chunk*>::iterator it = chunks.begin(); it != chunks.end(); it++){
-      Chunk* chunk = *it;
+    // delete chunks
+    unsigned short chunksDeleted = 0;
+    for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
+      Chunk* chunk = it->second;
+
       int dx = x - chunk->x;
       int dy = y - chunk->y;
       int dz = z - chunk->z;
@@ -202,49 +240,50 @@ int main(int argc, char** argv){
       if(abs(dx) > CHUNK_RENDER_RADIUS || abs(dy) > CHUNK_RENDER_RADIUS || abs(dz) > CHUNK_RENDER_RADIUS){
         chunks.erase(it--);
         delete chunk;
+
+        chunksDeleted++;
+        if(chunksDeleted >= MAX_CHUNKS_DELETED_PER_FRAME){
+          break;
+        }
       }
     }
 
     // generate new chunks needed
     unsigned short chunksGenerated = 0;
-    for(int8_t i = -CHUNK_RENDER_RADIUS; i <= CHUNK_RENDER_RADIUS; i++){
-      for(int8_t j = -CHUNK_RENDER_RADIUS; j <= CHUNK_RENDER_RADIUS; j++){
-        for(int8_t k = -CHUNK_RENDER_RADIUS; k <= CHUNK_RENDER_RADIUS; k++){
-          if(chunksGenerated >= MAX_CHUNKS_GENERATED_PER_FRAME){
-            break;
-          }
-
+    for(int8_t i = -CHUNK_RENDER_RADIUS; i <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; i++){
+      for(int8_t j = -CHUNK_RENDER_RADIUS; j <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; j++){
+        for(int8_t k = -CHUNK_RENDER_RADIUS; k <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; k++){
           int cx = x + i;
           int cy = y + k;
           int cz = z + j;
-          bool create = true;
 
-          // see if chunk already exists
-          for(Chunk* chunk : chunks){
-            if(chunk->x == cx && chunk->y == cy && chunk->z == cz){
-              create = false;
-              break;
-            }
-          }
+          ChunkCoord chunkCoord;
+          chunkCoord.x = cx;
+          chunkCoord.y = cy;
+          chunkCoord.z = cz;
 
-          if(!create){
+          chunk_it it = chunks.find(chunkCoord);
+          if(it != chunks.end()){
             continue;
           }
 
           Chunk* chunk = new Chunk(cx, cy, cz);
-          chunks.push_back(chunk);
+          chunks[chunkCoord] = chunk;
+
           chunksGenerated++;
         }
       }
     }
 
-    for(Chunk* chunk : chunks){
-      chunk->update();
+    unsigned short chunksUpdated = 0;
+    for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
+      it->second->update();
     }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    for(Chunk* chunk : chunks){
+    for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
+      Chunk* chunk = it->second;
       int dx = x - chunk->x;
       int dy = y - chunk->y;
       int dz = z - chunk->z;
@@ -257,6 +296,7 @@ int main(int argc, char** argv){
       model = glm::mat4(1.0f);
       model = glm::translate(model, glm::vec3(chunk->x * CHUNK_SIZE, chunk->y * CHUNK_SIZE, chunk->z * CHUNK_SIZE));
       shader.setMat4("model", model);
+
       chunk->draw();
     }
 
@@ -264,7 +304,8 @@ int main(int argc, char** argv){
     window.swapBuffers();
   }
 
-  for(Chunk* chunk : chunks){
+  for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
+    Chunk* chunk = it->second;
     delete chunk;
   }
 
