@@ -15,7 +15,8 @@
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
-#define WORLD_SIZE 4
+#define MAX_CHUNKS_GENERATED_PER_FRAME 8
+#define CHUNK_RENDER_RADIUS 4
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -149,25 +150,20 @@ int main(int argc, char** argv){
     return -1;
   }
 
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
+  glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+
   Texture texture("tiles.png", GL_NEAREST);
 
   Shader shader(voxelShaderVertexSource, voxelShaderFragmentSource);
   shader.use();
   shader.setInt("diffuse_texture", 0);
 
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_CULL_FACE);
-  glCullFace(GL_BACK);
-  glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-
-  for(int8_t x = -WORLD_SIZE; x <= WORLD_SIZE; x++){
-    for(int8_t z = -WORLD_SIZE; z <= WORLD_SIZE; z++){
-      for(int8_t y = -WORLD_SIZE; y <= WORLD_SIZE; y++){
-        Chunk* chunk = new Chunk(x, y, z);
-        chunks.push_back(chunk);
-      }
-    }
-  }
+  glm::mat4 projection = glm::mat4(1.0f);
+  glm::mat4 cameraView;
+  glm::mat4 model;
 
   while(!window.shouldClose()){
     float currentFrame = glfwGetTime();
@@ -176,13 +172,62 @@ int main(int argc, char** argv){
 
     processInput(window.window);
 
-    glm::mat4 projection = glm::mat4(1.0f);
     projection = glm::perspective(glm::radians(camera.fov), (float)WINDOW_WIDTH/(float)WINDOW_HEIGHT, 0.1f, 1000.0f);
     shader.setMat4("projection", projection);
 
-    glm::mat4 cameraView = camera.getViewMatrix();
+    cameraView = camera.getViewMatrix();
     shader.setMat4("view", cameraView);
     shader.setVec3("camera_position", camera.position);
+
+    int x = floorf(camera.position.x / CHUNK_SIZE);
+    int y = floorf(camera.position.y / CHUNK_SIZE);
+    int z = floorf(camera.position.z / CHUNK_SIZE);
+
+    for(std::vector<Chunk*>::iterator it = chunks.begin(); it != chunks.end(); it++){
+      Chunk* chunk = *it;
+      int dx = x - chunk->x;
+      int dy = y - chunk->y;
+      int dz = z - chunk->z;
+
+      // delete chunks outside of render radius
+      if(abs(dx) > CHUNK_RENDER_RADIUS || abs(dy) > CHUNK_RENDER_RADIUS || abs(dz) > CHUNK_RENDER_RADIUS){
+        chunks.erase(it--);
+        delete chunk;
+      }
+    }
+
+    // generate new chunks needed
+    unsigned short chunksGenerated = 0;
+    for(int8_t i = -CHUNK_RENDER_RADIUS; i <= CHUNK_RENDER_RADIUS; i++){
+      for(int8_t j = -CHUNK_RENDER_RADIUS; j <= CHUNK_RENDER_RADIUS; j++){
+        for(int8_t k = -CHUNK_RENDER_RADIUS; k <= CHUNK_RENDER_RADIUS; k++){
+          if(chunksGenerated >= MAX_CHUNKS_GENERATED_PER_FRAME){
+            break;
+          }
+
+          int cx = x + i;
+          int cy = y + k;
+          int cz = z + j;
+          bool create = true;
+
+          // see if chunk already exists
+          for(Chunk* chunk : chunks){
+            if(chunk->x == cx && chunk->y == cy && chunk->z == cz){
+              create = false;
+              break;
+            }
+          }
+
+          if(!create){
+            continue;
+          }
+
+          Chunk* chunk = new Chunk(cx, cy, cz);
+          chunks.push_back(chunk);
+          chunksGenerated++;
+        }
+      }
+    }
 
     for(Chunk* chunk : chunks){
       chunk->update();
@@ -191,7 +236,16 @@ int main(int argc, char** argv){
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for(Chunk* chunk : chunks){
-      glm::mat4 model = glm::mat4(1.0f);
+      int dx = x - chunk->x;
+      int dy = y - chunk->y;
+      int dz = z - chunk->z;
+
+      // don't render chunks outside of render radius
+      if(abs(dx) > CHUNK_RENDER_RADIUS || abs(dy) > CHUNK_RENDER_RADIUS || abs(dz) > CHUNK_RENDER_RADIUS){
+        continue;
+      }
+
+      model = glm::mat4(1.0f);
       model = glm::translate(model, glm::vec3(chunk->x * CHUNK_SIZE, chunk->y * CHUNK_SIZE, chunk->z * CHUNK_SIZE));
       shader.setMat4("model", model);
       chunk->draw();
