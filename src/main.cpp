@@ -10,6 +10,8 @@
 #include <Texture.h>
 #include <Camera.h>
 
+#include "Chunk.h"
+
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
 
@@ -21,28 +23,72 @@ float lastX = WINDOW_WIDTH / 2.0f;
 float lastY = WINDOW_HEIGHT / 2.0f;
 bool firstMouse = true;
 
-const static char* basicShaderVertexSource = R"(#version 330 core
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec2 aTexCoord;
+const static char* voxelShaderVertexSource = R"(#version 330 core
+layout (location = 0) in vec4 coord;
+layout (location = 1) in int brightness;
+layout (location = 2) in vec3 normal;
+layout (location = 3) in vec2 texCoord;
 
-out vec2 TexCoord;
+out vec3 vPosition;
+out float vBrightness;
+out vec2 vTexCoord;
+out vec3 vNormal;
+out float vDiffuse;
 
-uniform mat4 MVP;
+uniform mat4 projection;
+uniform mat4 view;
+uniform mat4 model;
+uniform vec3 camera_position;
+uniform vec3 light_direction = normalize(vec3(-0.9, 0.9, -0.1));
+
+float calcLight(vec3 position, vec3 lightDir, vec3 normal){
+  float diffuse = max(dot(normal, lightDir), 0.0);
+  /* specular */
+  vec3 viewDir = normalize(camera_position - position);
+  vec3 reflectDir = reflect(-lightDir, normal);
+  float spec = pow(max(dot(viewDir, reflectDir), 0.0), 8);
+
+  return diffuse + spec;
+}
 
 void main(){
-  gl_Position = MVP * vec4(aPos, 1.0);
-  TexCoord = vec2(aTexCoord.x, aTexCoord.y);
+  vPosition = vec3(model * vec4(coord.xyz, 1.0));
+  vBrightness = float(brightness) * 0.1 + 1.0;
+  vNormal = mat3(transpose(inverse(model))) * normal;
+  vTexCoord = texCoord;
+
+  // vDiffuse = calcLight(vPosition, normalize(light_direction), normal);
+  vDiffuse = max(0.0, dot(normal, light_direction));
+
+  gl_Position = projection * view * vec4(vPosition, 1.0);
 })";
 
-const static char* basicShaderFragmentSource = R"(#version 330 core
+const static char* voxelShaderFragmentSource = R"(#version 330 core
 out vec4 FragColor;
 
-in vec2 TexCoord;
+in vec3 vPosition;
+in float vBrightness;
+in vec2 vTexCoord;
+in vec3 vNormal;
+in float vDiffuse;
 
-uniform sampler2D tex;
+uniform sampler2D diffuse_texture;
+uniform float daylight = 1.0;
 
 void main(){
-  FragColor = texture(tex, TexCoord);
+  vec3 color = texture(diffuse_texture, vTexCoord).rgb;
+  if(color == vec3(1.0, 0.0, 1.0)){
+    discard;
+  }
+
+  vec3 normal = normalize(vNormal);
+
+  float ambient = daylight * 0.9;
+  vec3 light = vec3(max(max(0.01, daylight * 0.08), ambient * vDiffuse) * vBrightness);
+
+  float f = pow(clamp(gl_FragCoord.z / gl_FragCoord.w / 1000, 0, 0.8), 2);
+
+  FragColor = vec4(mix(color * light, vec3(0.53, 0.81, 0.92) * daylight, f), 1.0);
 })";
 
 void processInput(GLFWwindow *window){
@@ -80,14 +126,12 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos){
   camera.processMouseMovement(xoffset, yoffset);
 }
 
-// glfw: whenever the mouse scroll wheel scrolls, this callback is called
-// ----------------------------------------------------------------------
 void scrollCallback(GLFWwindow* window, double xoffset, double yoffset){
   camera.processMouseScroll(yoffset);
 }
 
 int main(int argc, char** argv){
-  Window window(WINDOW_WIDTH, WINDOW_HEIGHT, "cppgl example");
+  Window window(WINDOW_WIDTH, WINDOW_HEIGHT, "cppvoxel");
 
   glfwSetCursorPosCallback(window.window, mouseCallback);
   glfwSetScrollCallback(window.window, scrollCallback);
@@ -99,81 +143,22 @@ int main(int argc, char** argv){
     return -1;
   }
 
-  float vertices[] = {
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+  Texture texture("tiles.png", GL_NEAREST);
 
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-  };
-
-  unsigned int VBO, VAO;
-  glGenVertexArrays(1, &VAO);
-  glGenBuffers(1, &VBO);
-
-  glBindVertexArray(VAO);
-
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-  // position attribute
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-  glEnableVertexAttribArray(0);
-  // texture coord attribute
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
-
-
-  Texture teuxtre("wall.png");
-
-  Shader shader(basicShaderVertexSource, basicShaderFragmentSource);
+  Shader shader(voxelShaderVertexSource, voxelShaderFragmentSource);
   shader.use();
-  shader.setInt("tex", 0);
-
-  glm::mat4 model = glm::mat4(1.0f);
-
-  model = glm::rotate(model, glm::radians(-45.0f), glm::vec3(1.0f, 1.0f, 0.0f));
+  shader.setInt("diffuse_texture", 0);
 
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+
+  Chunk chunk(0, 0, 0);
+
+  glm::mat4 model = glm::mat4(1.0f);
+  // model = glm::translate(model, glm::vec3(chunk.x * CHUNK_SIZE, chunk.y * CHUNK_SIZE, chunk.z * CHUNK_SIZE));
+  shader.setMat4("model", model);
 
   while(!window.shouldClose()){
     float currentFrame = glfwGetTime();
@@ -183,20 +168,22 @@ int main(int argc, char** argv){
     processInput(window.window);
 
     glm::mat4 projection = glm::mat4(1.0f);
-    projection = glm::perspective(glm::radians(camera.fov), (float)WINDOW_WIDTH/(float)WINDOW_HEIGHT, 0.1f, 100.0f);
-    glm::mat4 mvp = projection * camera.getViewMatrix() * model;
-    shader.setMat4("MVP", mvp);
+    projection = glm::perspective(glm::radians(camera.fov), (float)WINDOW_WIDTH/(float)WINDOW_HEIGHT, 0.1f, 1000.0f);
+    shader.setMat4("projection", projection);
+
+    glm::mat4 cameraView = camera.getViewMatrix();
+    shader.setMat4("view", cameraView);
+    shader.setVec3("camera_position", camera.position);
+
+    chunk.update();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    chunk.draw();
 
     window.pollEvents();
     window.swapBuffers();
   }
-
-  glDeleteVertexArrays(1, &VAO);
-  glDeleteBuffers(1, &VBO);
 
   return 0;
 }

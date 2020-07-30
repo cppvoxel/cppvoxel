@@ -58,7 +58,7 @@ project "cppvoxel"
 
   files {"src/**.cpp"}
 
-  includedirs {"../cppgl/include", "../cppgl/vendors", "../cppgl/vendors/glm"}
+  includedirs {"../cppgl/include", "../cppgl/vendors", "../cppgl/vendors/glm", "include"}
   libdirs "../cppgl/bin"
   links {"cppgl"}
   defines {"GLEW_STATIC"}
