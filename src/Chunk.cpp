@@ -13,31 +13,31 @@
 #define VOID_BLOCK 0 // block id if there is no neighbor for block
 // #define PRINT_TIMING
 
-unsigned short blockIndex(uint8_t x, uint8_t y, uint8_t z){
+inline unsigned short blockIndex(uint8_t x, uint8_t y, uint8_t z){
   return x | (y << 5) | (z << 10);
 }
 
-float halfPixelCorrection(float coord){
+inline float halfPixelCorrection(float coord){
   coord *= (1.0f / TEXTURE_SIZE); // convert texture pos to uv coord
   return coord;
   // return (coord + 0.5f) / TEXTURE_SIZE;
 }
 
-void byte4Set(GLbyte x, GLbyte y, GLbyte z, GLbyte w, byte4 dest){
+inline void byte4Set(GLbyte x, GLbyte y, GLbyte z, GLbyte w, byte4 dest){
   dest[0] = x;
   dest[1] = y;
   dest[2] = z;
   dest[3] = w;
 }
 
-void byte3Set(GLbyte x, GLbyte y, GLbyte z, byte3 dest){
+inline void byte3Set(GLbyte x, GLbyte y, GLbyte z, byte3 dest){
   dest[0] = x;
   dest[1] = y;
   dest[2] = z;
 }
 
 // use magic numbers >.> to check if a block ID is transparent
-unsigned char isTransparent(uint8_t block){
+inline unsigned char isTransparent(uint8_t block){
   switch(block){
     case 0:
     case 6:
