@@ -20,17 +20,21 @@
 #define MAX_CHUNKS_DELETED_PER_FRAME 8
 #define CHUNK_RENDER_RADIUS 4
 
-struct ChunkCoord{
+struct vec3i{
 	int x;
 	int y;
 	int z;
 };
 
-inline bool const operator==(const ChunkCoord& l, const ChunkCoord& r){
+inline bool const operator==(const vec3i& l, const vec3i& r){
 	return l.x == r.x && l.y == r.y && l.z == r.z;
 };
 
-inline bool const operator<(const ChunkCoord& l, const ChunkCoord& r){
+inline bool const operator!=(const vec3i& l, const vec3i& r){
+	return l.x != r.x || l.y != r.y || l.z != r.z;
+};
+
+inline bool const operator<(const vec3i& l, const vec3i& r){
 	if(l.x < r.x){
     return true;
   }else if(l.x > r.x){
@@ -60,8 +64,10 @@ float lastX = WINDOW_WIDTH / 2.0f;
 float lastY = WINDOW_HEIGHT / 2.0f;
 bool firstMouse = true;
 
-std::map<ChunkCoord, Chunk*> chunks;
-typedef std::map<ChunkCoord, Chunk*>::iterator chunk_it;
+std::map<vec3i, Chunk*> chunks;
+typedef std::map<vec3i, Chunk*>::iterator chunk_it;
+
+vec3i lastPos;
 
 const static char* voxelShaderVertexSource = R"(#version 330 core
 layout (location = 0) in vec4 coord;
@@ -200,6 +206,13 @@ int main(int argc, char** argv){
   glm::mat4 cameraView;
   glm::mat4 model;
 
+  lastPos.x = floorf(camera.position.x / CHUNK_SIZE);
+  lastPos.y = floorf(camera.position.y / CHUNK_SIZE);
+  lastPos.z = floorf(camera.position.z / CHUNK_SIZE);
+
+  vec3i pos{lastPos.x, lastPos.y, lastPos.z};
+  bool noChunksRemaining = false;
+
   float lastPrintTime = glfwGetTime();
   unsigned short frames = 0;
   while(!window.shouldClose()){
@@ -223,18 +236,18 @@ int main(int argc, char** argv){
     shader.setMat4("view", cameraView);
     shader.setVec3("camera_position", camera.position);
 
-    int x = floorf(camera.position.x / CHUNK_SIZE);
-    int y = floorf(camera.position.y / CHUNK_SIZE);
-    int z = floorf(camera.position.z / CHUNK_SIZE);
+    pos.x = floorf(camera.position.x / CHUNK_SIZE);
+    pos.y = floorf(camera.position.y / CHUNK_SIZE);
+    pos.z = floorf(camera.position.z / CHUNK_SIZE);
 
     // delete chunks
     unsigned short chunksDeleted = 0;
     for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
       Chunk* chunk = it->second;
 
-      int dx = x - chunk->x;
-      int dy = y - chunk->y;
-      int dz = z - chunk->z;
+      int dx = pos.x - chunk->x;
+      int dy = pos.y - chunk->y;
+      int dz = pos.z - chunk->z;
 
       // delete chunks outside of render radius
       if(abs(dx) > CHUNK_RENDER_RADIUS || abs(dy) > CHUNK_RENDER_RADIUS || abs(dz) > CHUNK_RENDER_RADIUS){
@@ -249,44 +262,45 @@ int main(int argc, char** argv){
     }
 
     // generate new chunks needed
-    unsigned short chunksGenerated = 0;
-    for(int8_t i = -CHUNK_RENDER_RADIUS; i <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; i++){
-      for(int8_t j = -CHUNK_RENDER_RADIUS; j <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; j++){
-        for(int8_t k = -CHUNK_RENDER_RADIUS; k <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; k++){
-          int cx = x + i;
-          int cy = y + k;
-          int cz = z + j;
+    if(pos != lastPos || !noChunksRemaining){
+      unsigned short chunksGenerated = 0;
+      for(int8_t i = -CHUNK_RENDER_RADIUS; i <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; i++){
+        for(int8_t j = -CHUNK_RENDER_RADIUS; j <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; j++){
+          for(int8_t k = -CHUNK_RENDER_RADIUS; k <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; k++){
+            int cx = pos.x + i;
+            int cy = pos.y + k;
+            int cz = pos.z + j;
 
-          ChunkCoord chunkCoord;
-          chunkCoord.x = cx;
-          chunkCoord.y = cy;
-          chunkCoord.z = cz;
+            vec3i pos;
+            pos.x = cx;
+            pos.y = cy;
+            pos.z = cz;
 
-          chunk_it it = chunks.find(chunkCoord);
-          if(it != chunks.end()){
-            continue;
+            chunk_it it = chunks.find(pos);
+            if(it != chunks.end()){
+              continue;
+            }
+
+            Chunk* chunk = new Chunk(cx, cy, cz);
+            chunks[pos] = chunk;
+
+            chunksGenerated++;
           }
-
-          Chunk* chunk = new Chunk(cx, cy, cz);
-          chunks[chunkCoord] = chunk;
-
-          chunksGenerated++;
         }
       }
-    }
 
-    unsigned short chunksUpdated = 0;
-    for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
-      it->second->update();
+      noChunksRemaining = chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME;
     }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
       Chunk* chunk = it->second;
-      int dx = x - chunk->x;
-      int dy = y - chunk->y;
-      int dz = z - chunk->z;
+      int dx = pos.x - chunk->x;
+      int dy = pos.y - chunk->y;
+      int dz = pos.z - chunk->z;
+
+      it->second->update();
 
       // don't render chunks outside of render radius
       if(abs(dx) > CHUNK_RENDER_RADIUS || abs(dy) > CHUNK_RENDER_RADIUS || abs(dz) > CHUNK_RENDER_RADIUS){
@@ -299,6 +313,10 @@ int main(int argc, char** argv){
 
       chunk->draw();
     }
+
+    lastPos.x = pos.x;
+    lastPos.y = pos.y;
+    lastPos.z = pos.z;
 
     window.pollEvents();
     window.swapBuffers();

@@ -71,12 +71,6 @@ Chunk::Chunk(int _x, int _y, int _z){
   y = _y;
   z = _z;
 
-  // allocate space for vertices, lighting, brightness, 
-  vertex = (byte4*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(byte4));
-  brightness = (char*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(char));
-  normal = (byte3*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(byte3));
-  texCoords = (float*)malloc(CHUNK_SIZE_CUBED * 4 * sizeof(float));
-
   glGenVertexArrays(1, &vao);
 
 #if defined DEBUG && defined PRINT_TIMING
@@ -117,16 +111,12 @@ Chunk::~Chunk(){
 
   // delete the stored data
   free(blocks);
-  free(vertex);
-  free(brightness);
-  free(normal);
-  free(texCoords);
 }
 
 // update the chunk
 bool Chunk::update(){
   // if the chunk does not need to remesh then stop
-  if(!changed){
+  if(!changed || meshChanged){
     return false;
   }
 
@@ -145,6 +135,12 @@ bool Chunk::update(){
   float du, dv;
   float a = 0.0f;
   float b = 1.0f;
+
+  // allocate space for vertices, lighting, brightness, 
+  vertex = (byte4*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(byte4));
+  brightness = (char*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(char));
+  normal = (byte3*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(byte3));
+  texCoords = (float*)malloc(CHUNK_SIZE_CUBED * 4 * sizeof(float));
 
   for(uint8_t y = 0; y < CHUNK_SIZE; y++){
     for(uint8_t x = 0; x < CHUNK_SIZE; x++){
@@ -346,6 +342,8 @@ bool Chunk::update(){
 }
 
 void Chunk::draw(){
+  bufferMesh();
+
   // don't draw if chunk has no mesh
   if(!elements){
     return;
@@ -355,8 +353,6 @@ void Chunk::draw(){
   // if(chunk->px == NULL || chunk->nx == NULL || chunk->py == NULL || chunk->ny == NULL || chunk->pz == NULL || chunk->nz == NULL){
   //   return;
   // }
-
-  bufferMesh();
 
   glBindVertexArray(vao);
   glDrawArrays(GL_TRIANGLES, 0, elements);
@@ -396,6 +392,11 @@ void Chunk::bufferMesh(){
   glDeleteBuffers(1, &brightnessBuffer);
   glDeleteBuffers(1, &normalBuffer);
   glDeleteBuffers(1, &texureBuffer);
+
+  free(vertex);
+  free(brightness);
+  free(normal);
+  free(texCoords);
 
   meshChanged = false;
 
