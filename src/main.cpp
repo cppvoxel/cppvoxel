@@ -157,7 +157,7 @@ int main(int argc, char** argv){
   Chunk chunk(0, 0, 0);
 
   glm::mat4 model = glm::mat4(1.0f);
-  // model = glm::translate(model, glm::vec3(chunk.x * CHUNK_SIZE, chunk.y * CHUNK_SIZE, chunk.z * CHUNK_SIZE));
+  model = glm::translate(model, glm::vec3(chunk.x * CHUNK_SIZE, chunk.y * CHUNK_SIZE, chunk.z * CHUNK_SIZE));
   shader.setMat4("model", model);
 
   while(!window.shouldClose()){

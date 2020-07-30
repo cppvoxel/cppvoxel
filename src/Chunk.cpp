@@ -57,7 +57,7 @@ unsigned int makeBuffer(GLenum target, GLsizei size, const void* data){
   return buffer;
 }
 
-Chunk::Chunk(int x, int y, int z){
+Chunk::Chunk(int _x, int _y, int _z){
 #if defined DEBUG && defined PRINT_TIMING
   double start = glfwGetTime();
 #endif
@@ -67,9 +67,9 @@ Chunk::Chunk(int x, int y, int z){
   changed = true;
   meshChanged = false;
 
-  x = x;
-  y = y;
-  z = z;
+  x = _x;
+  y = _y;
+  z = _z;
 
   // allocate space for vertices, lighting, brightness, 
   vertex = (byte4*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(byte4));
@@ -404,20 +404,20 @@ void Chunk::bufferMesh(){
 #endif
 }
 
-block_t Chunk::get(int x, int y, int z){
-  if(x < 0){
+block_t Chunk::get(int _x, int _y, int _z){
+  if(_x < 0){
     return VOID_BLOCK;
-  }else if(x >= CHUNK_SIZE){
+  }else if(_x >= CHUNK_SIZE){
     return VOID_BLOCK;
-  }else if(y < 0){
+  }else if(_y < 0){
     return VOID_BLOCK;
-  }else if(y >= CHUNK_SIZE){
+  }else if(_y >= CHUNK_SIZE){
     return VOID_BLOCK;
-  }else if(z < 0){
+  }else if(_z < 0){
     return VOID_BLOCK;
-  }else if(z >= CHUNK_SIZE){
+  }else if(_z >= CHUNK_SIZE){
     return VOID_BLOCK;
   }else{
-    return blocks[blockIndex(x, y, z)];
+    return blocks[blockIndex(_x, _y, _z)];
   }
 }

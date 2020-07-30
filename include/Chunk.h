@@ -20,7 +20,7 @@ public:
   int y;
   int z;
 
-  Chunk(int x, int y, int z);
+  Chunk(int _x, int _y, int _z);
   ~Chunk();
 
   bool update();
@@ -38,7 +38,7 @@ private:
   float *texCoords;
 
   void bufferMesh();
-  block_t get(int x, int y, int z);
+  block_t get(int _x, int _y, int _z);
 };
 
 #endif
