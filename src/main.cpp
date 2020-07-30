@@ -165,10 +165,19 @@ int main(int argc, char** argv){
   glm::mat4 cameraView;
   glm::mat4 model;
 
+  float lastPrintTime = glfwGetTime();
+  unsigned short frames = 0;
   while(!window.shouldClose()){
-    float currentFrame = glfwGetTime();
-    deltaTime = currentFrame - lastFrame;
-    lastFrame = currentFrame;
+    float currentTime = glfwGetTime();
+    deltaTime = currentTime - lastFrame;
+    lastFrame = currentTime;
+    frames++;
+
+    if(currentTime - lastPrintTime >= 1.0f){
+      printf("%.1fms (%dfps)\n", 1000.0f/(float)frames, frames);
+      frames = 0;
+      lastPrintTime += 1.0f;
+    }
 
     processInput(window.window);
 
