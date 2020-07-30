@@ -11,7 +11,7 @@
 
 #define TEXTURE_SIZE 4
 #define VOID_BLOCK 0 // block id if there is no neighbor for block
-#define PRINT_TIMING
+// #define PRINT_TIMING
 
 unsigned short blockIndex(uint8_t x, uint8_t y, uint8_t z){
   return x | (y << 5) | (z << 10);
@@ -94,7 +94,7 @@ for(uint8_t dx = 0; dx < CHUNK_SIZE; dx++){
 
       for(uint8_t dy = 0; dy < CHUNK_SIZE; dy++){
         uint8_t thickness = rh - dy;
-        uint8_t block = h < CHUNK_SIZE / 4 && thickness <= 3 ? 5 : thickness == 1 ? 1 : thickness <= 3 ? 3 : 2;
+        uint8_t block = h < CHUNK_SIZE / 4 && thickness <= 3 ? 5 : thickness == 1 ? 1 : thickness <= 5 ? 3 : 2;
 
         blocks[blockIndex(dx, dy, dz)] = dy < rh ? h == 0 ? 4 : block : 0;
 #if defined DEBUG && defined PRINT_TIMING

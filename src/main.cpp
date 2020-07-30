@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <vector>
 
 #include <GL/glew.h>
 #include <glfw/glfw3.h>
@@ -14,6 +15,7 @@
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
+#define WORLD_SIZE 4
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -22,6 +24,8 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX = WINDOW_WIDTH / 2.0f;
 float lastY = WINDOW_HEIGHT / 2.0f;
 bool firstMouse = true;
+
+std::vector<Chunk*> chunks;
 
 const static char* voxelShaderVertexSource = R"(#version 330 core
 layout (location = 0) in vec4 coord;
@@ -96,6 +100,8 @@ void processInput(GLFWwindow *window){
     glfwSetWindowShouldClose(window, true);
   }
 
+  camera.fast = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
+
   if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
     camera.processKeyboard(FORWARD, deltaTime);
   }
@@ -154,11 +160,14 @@ int main(int argc, char** argv){
   glCullFace(GL_BACK);
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
-  Chunk chunk(0, 0, 0);
-
-  glm::mat4 model = glm::mat4(1.0f);
-  model = glm::translate(model, glm::vec3(chunk.x * CHUNK_SIZE, chunk.y * CHUNK_SIZE, chunk.z * CHUNK_SIZE));
-  shader.setMat4("model", model);
+  for(int8_t x = -WORLD_SIZE; x <= WORLD_SIZE; x++){
+    for(int8_t z = -WORLD_SIZE; z <= WORLD_SIZE; z++){
+      for(int8_t y = -WORLD_SIZE; y <= WORLD_SIZE; y++){
+        Chunk* chunk = new Chunk(x, y, z);
+        chunks.push_back(chunk);
+      }
+    }
+  }
 
   while(!window.shouldClose()){
     float currentFrame = glfwGetTime();
@@ -175,14 +184,25 @@ int main(int argc, char** argv){
     shader.setMat4("view", cameraView);
     shader.setVec3("camera_position", camera.position);
 
-    chunk.update();
+    for(Chunk* chunk : chunks){
+      chunk->update();
+    }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    chunk.draw();
+    for(Chunk* chunk : chunks){
+      glm::mat4 model = glm::mat4(1.0f);
+      model = glm::translate(model, glm::vec3(chunk->x * CHUNK_SIZE, chunk->y * CHUNK_SIZE, chunk->z * CHUNK_SIZE));
+      shader.setMat4("model", model);
+      chunk->draw();
+    }
 
     window.pollEvents();
     window.swapBuffers();
+  }
+
+  for(Chunk* chunk : chunks){
+    delete chunk;
   }
 
   return 0;
