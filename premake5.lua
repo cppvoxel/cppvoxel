@@ -1,5 +1,6 @@
 workspace "cengine"
   configurations {"Debug", "Release"}
+  location "build"
 
   filter "configurations:Debug"
     defines {"DEBUG"}
@@ -59,12 +60,14 @@ workspace "cengine"
           end
         end
 
-        print "Copying resources..."
-        if _TARGET_OS == "windows" then
-          os.execute("xcopy /Q /E /Y /I res bin\\res")
-        else
-          os.execute("mkdir -p bin/res")
-          os.execute("cp -rf res bin/res")
+        if _OPTIONS["release"] then
+          print "Copying resources..."
+          if _TARGET_OS == "windows" then
+            os.execute("xcopy /Q /E /Y /I res bin\\res")
+          else
+            os.execute("mkdir -p bin/res")
+            os.execute("cp -rf res bin/res")
+          end
         end
       end
   }
@@ -73,7 +76,6 @@ project "cppvoxel"
   kind "ConsoleApp"
 
   language "C++"
-  location "build"
   targetdir "bin"
   objdir "obj"
 
