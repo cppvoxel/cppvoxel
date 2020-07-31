@@ -81,9 +81,6 @@ std::map<vec3i, Chunk*> chunks;
 typedef std::map<vec3i, Chunk*>::iterator chunk_it;
 
 vec3i lastPos;
-#ifdef MULTI_THREADING
-bool canChunksUpdate = false;
-#endif
 
 const static char* voxelShaderVertexSource = R"(#version 330 core
 layout (location = 0) in vec4 coord;
@@ -217,31 +214,31 @@ void updateChunks(){
   }
 
   // generate new chunks needed
-    unsigned short chunksGenerated = 0;
-    for(int8_t i = -CHUNK_RENDER_RADIUS; i <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; i++){
-      for(int8_t j = -CHUNK_RENDER_RADIUS; j <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; j++){
-        for(int8_t k = -CHUNK_RENDER_RADIUS; k <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; k++){
-          int cx = lastPos.x + i;
-          int cy = lastPos.y + k;
-          int cz = lastPos.z + j;
+  unsigned short chunksGenerated = 0;
+  for(int8_t i = -CHUNK_RENDER_RADIUS; i <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; i++){
+    for(int8_t j = -CHUNK_RENDER_RADIUS; j <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; j++){
+      for(int8_t k = -CHUNK_RENDER_RADIUS; k <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; k++){
+        int cx = lastPos.x + i;
+        int cy = lastPos.y + k;
+        int cz = lastPos.z + j;
 
-          vec3i pos;
-          pos.x = cx;
-          pos.y = cy;
-          pos.z = cz;
+        vec3i pos;
+        pos.x = cx;
+        pos.y = cy;
+        pos.z = cz;
 
-          chunk_it it = chunks.find(pos);
-          if(it != chunks.end()){
-            continue;
-          }
-
-          Chunk* chunk = new Chunk(cx, cy, cz);
-          chunks[pos] = chunk;
-
-          chunksGenerated++;
+        chunk_it it = chunks.find(pos);
+        if(it != chunks.end()){
+          continue;
         }
+
+        Chunk* chunk = new Chunk(cx, cy, cz);
+        chunks[pos] = chunk;
+
+        chunksGenerated++;
       }
     }
+  }
 
   for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
     it->second->update();
@@ -251,9 +248,7 @@ void updateChunks(){
 #ifdef MULTI_THREADING
 void updateChunksThread(){
   while(!window.shouldClose()){
-    if(canChunksUpdate){
-      updateChunks();
-    }
+    updateChunks();
 
 #ifdef _WIN32
     Sleep(0);
@@ -329,47 +324,6 @@ int main(int argc, char** argv){
     pos.x = floorf(camera.position.x / CHUNK_SIZE);
     pos.y = floorf(camera.position.y / CHUNK_SIZE);
     pos.z = floorf(camera.position.z / CHUNK_SIZE);
-
-#ifdef MULTI_THREADING
-    canChunksUpdate = false;
-#endif
-
-//     // generate new chunks needed
-//     if(pos != lastPos || !noChunksRemaining){
-// // double start = glfwGetTime();
-//       unsigned short chunksGenerated = 0;
-//       for(int8_t i = -CHUNK_RENDER_RADIUS; i <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; i++){
-//         for(int8_t j = -CHUNK_RENDER_RADIUS; j <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; j++){
-//           for(int8_t k = -CHUNK_RENDER_RADIUS; k <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; k++){
-//             int cx = pos.x + i;
-//             int cy = pos.y + k;
-//             int cz = pos.z + j;
-
-//             vec3i pos;
-//             pos.x = cx;
-//             pos.y = cy;
-//             pos.z = cz;
-
-//             chunk_it it = chunks.find(pos);
-//             if(it != chunks.end()){
-//               continue;
-//             }
-
-//             Chunk* chunk = new Chunk(cx, cy, cz);
-//             chunks[pos] = chunk;
-
-//             chunksGenerated++;
-//           }
-//         }
-//       }
-
-//       noChunksRemaining = chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME;
-// // printf("chunk generation: %.2fms %d\n", (glfwGetTime() - start) * 1000.0, chunksGenerated);
-//     }
-
-#ifdef MULTI_THREADING
-    canChunksUpdate = true;
-#endif
 
 #ifndef MULTI_THREADING
     updateChunks();
