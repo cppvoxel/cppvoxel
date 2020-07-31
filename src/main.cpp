@@ -24,9 +24,6 @@
 
 #include "Chunk.h"
 
-#define WINDOW_WIDTH 800
-#define WINDOW_HEIGHT 600
-
 #define MAX_CHUNKS_GENERATED_PER_FRAME 8
 #define MAX_CHUNKS_DELETED_PER_FRAME 32
 #define CHUNK_RENDER_RADIUS 6
@@ -70,17 +67,22 @@ inline bool const operator<(const vec3i& l, const vec3i& r){
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-Window window(WINDOW_WIDTH, WINDOW_HEIGHT, "cppvoxel");
+int windowWidth = 800;
+int windowHeight = 600;
+int windowedXPos, windowedYPos, windowedWidth, windowedHeight;
+
+Window window(windowWidth, windowHeight, "cppvoxel");
 
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-float lastX = WINDOW_WIDTH / 2.0f;
-float lastY = WINDOW_HEIGHT / 2.0f;
+float lastX = (float)windowWidth / 2.0f;
+float lastY = (float)windowHeight / 2.0f;
 bool firstMouse = true;
 
 std::map<vec3i, Chunk*> chunks;
 typedef std::map<vec3i, Chunk*>::iterator chunk_it;
 
 vec3i lastPos;
+bool fullscreenToggled = false;
 
 const static char* voxelShaderVertexSource = R"(#version 330 core
 layout (location = 0) in vec4 coord;
@@ -150,9 +152,33 @@ void main(){
   FragColor = vec4(mix(color * light, vec3(0.53, 0.81, 0.92) * daylight, f), 1.0);
 })";
 
+void framebufferResizeCallback(GLFWwindow* window, int width, int height){
+  glViewport(0, 0, width, height);
+  windowWidth = width;
+  windowHeight = height;
+}
+
 void processInput(GLFWwindow *window){
   if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
     glfwSetWindowShouldClose(window, true);
+  }
+
+  if(!fullscreenToggled && glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS){
+    fullscreenToggled = true;
+
+    if(glfwGetWindowMonitor(window)){
+      glfwSetWindowMonitor(window, NULL, windowedXPos, windowedYPos, windowedWidth, windowedHeight, 0);
+    }else{
+      GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+      if(monitor){
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        glfwGetWindowPos(window, &windowedXPos, &windowedYPos);
+        glfwGetWindowSize(window, &windowedWidth, &windowedHeight);
+        glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+      }
+    }
+  }else if(glfwGetKey(window, GLFW_KEY_F11) == GLFW_RELEASE){
+    fullscreenToggled = false;
   }
 
   camera.fast = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
@@ -260,8 +286,10 @@ void updateChunksThread(){
 #endif
 
 int main(int argc, char** argv){
+  glfwSetFramebufferSizeCallback(window.window, framebufferResizeCallback);
   glfwSetCursorPosCallback(window.window, mouseCallback);
   glfwSetScrollCallback(window.window, scrollCallback);
+
   glfwSetInputMode(window.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   glfwSwapInterval(0);
 
@@ -314,7 +342,7 @@ int main(int argc, char** argv){
 
     processInput(window.window);
 
-    projection = glm::perspective(glm::radians(camera.fov), (float)WINDOW_WIDTH/(float)WINDOW_HEIGHT, 0.1f, 1000.0f);
+    projection = glm::perspective(glm::radians(camera.fov), (float)windowWidth/(float)windowHeight, 0.1f, 1000.0f);
     shader.setMat4("projection", projection);
 
     cameraView = camera.getViewMatrix();
