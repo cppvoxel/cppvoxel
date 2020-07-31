@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include <GL/glew.h>
 #include <glfw/glfw3.h>
 
 #include "noise.h"
@@ -87,7 +88,7 @@ for(uint8_t dx = 0; dx < CHUNK_SIZE; dx++){
 
       for(uint8_t dy = 0; dy < CHUNK_SIZE; dy++){
         uint8_t thickness = rh - dy;
-        uint8_t block = h < 15 && thickness <= 10 ? 8 : h < 18 && thickness <= 3 ? 5 : h >= 140 && thickness == 1 ? 7 : thickness == 1 ? 1 : thickness <= 5 ? 3 : 2;
+        uint8_t block = h < 15 && thickness <= 10 ? 8 : h < 18 && thickness <= 3 ? 5 : h >= 140 && thickness <= 7 ? 7 : thickness == 1 ? 1 : thickness <= 6 ? 3 : 2;
         if(block == 8 && h < 14){
           h = 14;
           rh = h - y * CHUNK_SIZE;

@@ -3,14 +3,12 @@
 
 #include <stdint.h>
 
-#include <GL/glew.h>
-
 #define CHUNK_SIZE 32
 #define CHUNK_SIZE_SQUARED 1024
 #define CHUNK_SIZE_CUBED 32768
 
-typedef GLbyte byte4[4];
-typedef GLbyte byte3[3];
+typedef char byte4[4];
+typedef char byte3[3];
 typedef int vec2i[2];
 typedef uint8_t block_t;
 
