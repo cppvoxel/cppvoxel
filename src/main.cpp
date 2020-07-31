@@ -18,7 +18,7 @@
 
 #define MAX_CHUNKS_GENERATED_PER_FRAME 8
 #define MAX_CHUNKS_DELETED_PER_FRAME 32
-#define CHUNK_RENDER_RADIUS 6
+#define CHUNK_RENDER_RADIUS 10
 
 struct vec3i{
 	int x;
@@ -85,7 +85,7 @@ uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
 uniform vec3 camera_position;
-uniform vec3 light_direction = normalize(vec3(-0.9, 0.9, -0.1));
+uniform vec3 light_direction = normalize(vec3(-0.8, 0.7, 0.3));
 
 float calcLight(vec3 position, vec3 lightDir, vec3 normal){
   float diffuse = max(dot(normal, lightDir), 0.0);
@@ -103,8 +103,8 @@ void main(){
   vNormal = mat3(transpose(inverse(model))) * normal;
   vTexCoord = texCoord;
 
-  // vDiffuse = calcLight(vPosition, normalize(light_direction), normal);
-  vDiffuse = max(0.0, dot(normal, light_direction));
+  vDiffuse = calcLight(vPosition, normalize(light_direction), normal);
+  // vDiffuse = max(0.0, dot(normal, light_direction));
 
   gl_Position = projection * view * vec4(vPosition, 1.0);
 })";
@@ -130,7 +130,7 @@ void main(){
   vec3 normal = normalize(vNormal);
 
   float ambient = daylight * 0.9;
-  vec3 light = vec3(max(max(0.01, daylight * 0.08), ambient * vDiffuse) * vBrightness);
+  vec3 light = vec3(max(max(0.5, daylight * 0.8), ambient * vDiffuse) * vBrightness);
 
   float f = pow(clamp(gl_FragCoord.z / gl_FragCoord.w / 1000, 0, 0.8), 2);
 
@@ -194,7 +194,7 @@ int main(int argc, char** argv){
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
-  glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+  glClearColor(0.2f, 0.6f, 0.8f, 1.0f);
 
   Texture texture("tiles.png", GL_NEAREST);
 

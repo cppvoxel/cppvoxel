@@ -83,14 +83,18 @@ for(uint8_t dx = 0; dx < CHUNK_SIZE; dx++){
       int cz = z * CHUNK_SIZE + dz;
 
       float f = simplex2(cx * 0.003f, cz * 0.003f, 6, 0.6f, 1.5f);
-      int h = pow((f + 1) / 2  + 1, 9);
+      int h = pow((f + 1) / 2 + 1, 9);
       int rh = h - y * CHUNK_SIZE;
 
       for(uint8_t dy = 0; dy < CHUNK_SIZE; dy++){
         uint8_t thickness = rh - dy;
-        uint8_t block = h < CHUNK_SIZE / 4 && thickness <= 3 ? 5 : thickness == 1 ? 1 : thickness <= 5 ? 3 : 2;
+        uint8_t block = h < 15 && thickness <= 10 ? 8 : h < 18 && thickness <= 3 ? 5 : h >= 140 && thickness == 1 ? 7 : thickness == 1 ? 1 : thickness <= 5 ? 3 : 2;
+        if(block == 8 && h < 14){
+          h = 14;
+          rh = h - y * CHUNK_SIZE;
+        }
 
-        blocks[blockIndex(dx, dy, dz)] = dy < rh ? h == 0 ? 4 : block : 0;
+        blocks[blockIndex(dx, dy, dz)] = dy < rh ? block : 0;
         if(!changed && blocks[blockIndex(dx, dy, dz)] > 0){
           changed = true;
         }
