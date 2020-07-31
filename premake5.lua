@@ -22,7 +22,7 @@ workspace "cengine"
     ["description"] = "Delete generated project and build files",
     ["onStart"] =
       function()
-	      print "Cleaning files..."
+        print "Cleaning files..."
       end,
     ["execute"] =
       function()
@@ -36,7 +36,7 @@ workspace "cengine"
       end,
     ["onEnd"] =
       function()
-	      print "Done."
+        print "Done."
       end
   }
 
@@ -85,6 +85,10 @@ project "cppvoxel"
   libdirs "../cppgl/bin"
   links {"cppgl"}
   defines {"GLEW_STATIC"}
+
+  staticruntime "On"
+  flags {"LinkTimeOptimization"}
+  linkoptions {"-static", "-static-libgcc", "-static-libstdc++"}
 
   filter {"system:windows"}
     libdirs "../cppgl/lib"
