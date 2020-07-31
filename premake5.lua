@@ -1,16 +1,7 @@
 workspace "cengine"
   configurations {"Debug", "Release"}
+  architecture "x64"
   location "build"
-
-  filter "configurations:Debug"
-    defines {"DEBUG"}
-    symbols "On"
-
-  filter "configurations:Release"
-    defines {"NDEBUG"}
-    optimize "Speed"
-
-  filter {}
 
   newoption {
     ["trigger"] = "release",
@@ -26,13 +17,9 @@ workspace "cengine"
       end,
     ["execute"] =
       function()
-        if _TARGET_OS == "windows" then
-          os.execute("IF EXIST bin ( RMDIR /S /Q bin )")
-          os.execute("IF EXIST obj ( RMDIR /S /Q obj )")
-          os.execute("IF EXIST build ( RMDIR /S /Q build )")
-        else
-          os.execute("rm -rf bin obj build")
-        end
+        os.rmdir("bin")
+        os.rmdir("obj")
+        os.rmdir("build")
       end,
     ["onEnd"] =
       function()
@@ -62,11 +49,11 @@ workspace "cengine"
 
         if _OPTIONS["release"] then
           print "Copying resources..."
-          if _TARGET_OS == "windows" then
-            os.execute("xcopy /Q /E /Y /I res bin\\res")
-          else
-            os.execute("mkdir -p bin/res")
-            os.execute("cp -rf res bin/res")
+          os.mkdir("bin/res")
+          res = os.matchfiles("res/*")
+          for _, resFile in ipairs(res) do
+            printf("Copying %s", resFile)
+            os.copyfile(resFile, "bin/"..resFile)
           end
         end
       end
@@ -87,7 +74,9 @@ project "cppvoxel"
   defines {"GLEW_STATIC"}
 
   staticruntime "On"
-  flags {"LinkTimeOptimization"}
+  flags {"LinkTimeOptimization", "ShadowedVariables"}
+  enablewarnings {"all"}
+  buildoptions {"-fdiagnostics-color=always"}
   linkoptions {"-static", "-static-libgcc", "-static-libstdc++"}
 
   filter {"system:windows"}
@@ -96,3 +85,14 @@ project "cppvoxel"
 
   filter {"system:not windows"}
     links {"GLEW", "glfw", "rt", "m", "dl", "GL"}
+
+  filter "configurations:Debug"
+    defines {"DEBUG"}
+    symbols "On"
+    targetsuffix ".debug"
+
+  filter "configurations:Release"
+    defines {"NDEBUG"}
+    optimize "Speed"
+
+  filter {}

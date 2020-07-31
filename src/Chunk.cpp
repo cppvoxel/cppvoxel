@@ -24,14 +24,14 @@ inline float halfPixelCorrection(float coord){
   // return (coord + 0.5f) / TEXTURE_SIZE;
 }
 
-inline void byte4Set(GLbyte x, GLbyte y, GLbyte z, GLbyte w, byte4 dest){
+inline void byte4Set(char x, char y, char z, char w, byte4 dest){
   dest[0] = x;
   dest[1] = y;
   dest[2] = z;
   dest[3] = w;
 }
 
-inline void byte3Set(GLbyte x, GLbyte y, GLbyte z, byte3 dest){
+inline void byte3Set(char x, char y, char z, byte3 dest){
   dest[0] = x;
   dest[1] = y;
   dest[2] = z;
@@ -150,10 +150,10 @@ bool Chunk::update(){
   normal = (byte3*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(byte3));
   texCoords = (float*)malloc(CHUNK_SIZE_CUBED * 4 * sizeof(float));
 
-  for(uint8_t y = 0; y < CHUNK_SIZE; y++){
-    for(uint8_t x = 0; x < CHUNK_SIZE; x++){
-      for(uint8_t z = 0; z < CHUNK_SIZE; z++){
-        block_t block = blocks[blockIndex(x, y, z)];
+  for(uint8_t _y = 0; _y < CHUNK_SIZE; _y++){
+    for(uint8_t _x = 0; _x < CHUNK_SIZE; _x++){
+      for(uint8_t _z = 0; _z < CHUNK_SIZE; _z++){
+        block_t block = blocks[blockIndex(_x, _y, z)];
 
         if(!block){
           continue;
@@ -163,18 +163,18 @@ bool Chunk::update(){
         uint8_t w;
 
         // add a face if -x is transparent
-        if(isTransparent(get(x - 1, y, z))){
+        if(isTransparent(get(_x - 1, _y, z))){
           w = BLOCKS[block][0]; // get texture coordinates
           // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
           du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
 
           // set the vertex data for the face
-          byte4Set(x, y, z, block, vertex[i++]);
-          byte4Set(x, y + 1, z + 1, block, vertex[i++]);
-          byte4Set(x, y + 1, z, block, vertex[i++]);
-          byte4Set(x, y, z, block, vertex[i++]);
-          byte4Set(x, y, z + 1, block, vertex[i++]);
-          byte4Set(x, y + 1, z + 1, block, vertex[i++]);
+          byte4Set(_x, _y, _z, block, vertex[i++]);
+          byte4Set(_x, _y + 1, _z + 1, block, vertex[i++]);
+          byte4Set(_x, _y + 1, _z, block, vertex[i++]);
+          byte4Set(_x, _y, _z, block, vertex[i++]);
+          byte4Set(_x, _y, _z + 1, block, vertex[i++]);
+          byte4Set(_x, _y + 1, _z + 1, block, vertex[i++]);
 
           // set the brightness data for the face
           for(int k = 0; k < 6; k++){
@@ -192,18 +192,18 @@ bool Chunk::update(){
         }
 
         // add a face if +x is transparent
-        if(isTransparent(get(x + 1, y, z))){
+        if(isTransparent(get(_x + 1, _y, z))){
           w = BLOCKS[block][1]; // get texture coordinates
           // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
           du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
 
           // set the vertex data for the face
-          byte4Set(x + 1, y, z, block, vertex[i++]);
-          byte4Set(x + 1, y + 1, z + 1, block, vertex[i++]);
-          byte4Set(x + 1, y, z + 1, block, vertex[i++]);
-          byte4Set(x + 1, y, z, block, vertex[i++]);
-          byte4Set(x + 1, y + 1, z, block, vertex[i++]);
-          byte4Set(x + 1, y + 1, z + 1, block, vertex[i++]);
+          byte4Set(_x + 1, _y, _z, block, vertex[i++]);
+          byte4Set(_x + 1, _y + 1, _z + 1, block, vertex[i++]);
+          byte4Set(_x + 1, _y, _z + 1, block, vertex[i++]);
+          byte4Set(_x + 1, _y, _z, block, vertex[i++]);
+          byte4Set(_x + 1, _y + 1, _z, block, vertex[i++]);
+          byte4Set(_x + 1, _y + 1, _z + 1, block, vertex[i++]);
 
           // set the brightness data for the face
           for(int k = 0; k < 6; k++){
@@ -221,18 +221,18 @@ bool Chunk::update(){
         }
 
         // add a face if -z is transparent
-        if(isTransparent(get(x, y, z - 1))){
+        if(isTransparent(get(_x, _y, _z - 1))){
           w = BLOCKS[block][4]; // get texture coordinates
           // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
           du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
 
           // set the vertex data for the face
-          byte4Set(x, y, z, block, vertex[i++]);
-          byte4Set(x + 1, y + 1, z, block, vertex[i++]);
-          byte4Set(x + 1, y, z, block, vertex[i++]);
-          byte4Set(x, y, z, block, vertex[i++]);
-          byte4Set(x, y + 1, z, block, vertex[i++]);
-          byte4Set(x + 1, y + 1, z, block, vertex[i++]);
+          byte4Set(_x, _y, _z, block, vertex[i++]);
+          byte4Set(_x + 1, _y + 1, _z, block, vertex[i++]);
+          byte4Set(_x + 1, _y, _z, block, vertex[i++]);
+          byte4Set(_x, _y, _z, block, vertex[i++]);
+          byte4Set(_x, _y + 1, _z, block, vertex[i++]);
+          byte4Set(_x + 1, _y + 1, _z, block, vertex[i++]);
 
           // set the brightness data for the face
           for(int k = 0; k < 6; k++){
@@ -250,18 +250,18 @@ bool Chunk::update(){
         }
 
         // add a face if +z is transparent
-        if(isTransparent(get(x, y, z + 1))){
+        if(isTransparent(get(_x, _y, _z + 1))){
           w = BLOCKS[block][5]; // get texture coordinates
           // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
           du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
 
           // set the vertex data for the face
-          byte4Set(x, y, z + 1, block, vertex[i++]);
-          byte4Set(x + 1, y, z + 1, block, vertex[i++]);
-          byte4Set(x + 1, y + 1, z + 1, block, vertex[i++]);
-          byte4Set(x, y, z + 1, block, vertex[i++]);
-          byte4Set(x + 1, y + 1, z + 1, block, vertex[i++]);
-          byte4Set(x, y + 1, z + 1, block, vertex[i++]);
+          byte4Set(_x, _y, _z + 1, block, vertex[i++]);
+          byte4Set(_x + 1, _y, _z + 1, block, vertex[i++]);
+          byte4Set(_x + 1, _y + 1, _z + 1, block, vertex[i++]);
+          byte4Set(_x, _y, _z + 1, block, vertex[i++]);
+          byte4Set(_x + 1, _y + 1, _z + 1, block, vertex[i++]);
+          byte4Set(_x, _y + 1, _z + 1, block, vertex[i++]);
 
           // set the brightness data for the face
           for(int k = 0; k < 6; k++){
@@ -279,18 +279,18 @@ bool Chunk::update(){
         }
 
         // add a face if -y is transparent
-        if(isTransparent(get(x, y - 1, z))){
+        if(isTransparent(get(_x, _y - 1, z))){
           w = BLOCKS[block][3]; // get texture coordinates
           // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
           du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
 
           // set the vertex data for the face
-          byte4Set(x, y, z, block, vertex[i++]);
-          byte4Set(x + 1, y, z, block, vertex[i++]);
-          byte4Set(x + 1, y, z + 1, block, vertex[i++]);
-          byte4Set(x, y, z, block, vertex[i++]);
-          byte4Set(x + 1, y, z + 1, block, vertex[i++]);
-          byte4Set(x, y, z + 1, block, vertex[i++]);
+          byte4Set(_x, _y, _z, block, vertex[i++]);
+          byte4Set(_x + 1, _y, _z, block, vertex[i++]);
+          byte4Set(_x + 1, _y, _z + 1, block, vertex[i++]);
+          byte4Set(_x, _y, _z, block, vertex[i++]);
+          byte4Set(_x + 1, _y, _z + 1, block, vertex[i++]);
+          byte4Set(_x, _y, _z + 1, block, vertex[i++]);
 
           // set the brightness data for the face
           for(int k = 0; k < 6; k++){
@@ -308,18 +308,18 @@ bool Chunk::update(){
         }
 
         // add a face if +y is transparent
-        if(isTransparent(get(x, y + 1, z))){
+        if(isTransparent(get(_x, _y + 1, z))){
           w = BLOCKS[block][2]; // get texture coordinates
           // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
           du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
 
           // set the vertex data for the face
-          byte4Set(x, y + 1, z, block, vertex[i++]);
-          byte4Set(x, y + 1, z + 1, block, vertex[i++]);
-          byte4Set(x + 1, y + 1, z + 1, block, vertex[i++]);
-          byte4Set(x, y + 1, z, block, vertex[i++]);
-          byte4Set(x + 1, y + 1, z + 1, block, vertex[i++]);
-          byte4Set(x + 1, y + 1, z, block, vertex[i++]);
+          byte4Set(_x, _y + 1, _z, block, vertex[i++]);
+          byte4Set(_x, _y + 1, _z + 1, block, vertex[i++]);
+          byte4Set(_x + 1, _y + 1, _z + 1, block, vertex[i++]);
+          byte4Set(_x, _y + 1, _z, block, vertex[i++]);
+          byte4Set(_x + 1, _y + 1, _z + 1, block, vertex[i++]);
+          byte4Set(_x + 1, _y + 1, _z, block, vertex[i++]);
 
           // set the brightness data for the face
           for(int k = 0; k < 6; k++){
