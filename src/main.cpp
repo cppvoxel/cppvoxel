@@ -1,5 +1,16 @@
+#define MULTI_THREADING
+
 #include <stdio.h>
 #include <map>
+#ifdef MULTI_THREADING
+#include <thread>
+#endif
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 
 #include <GL/glew.h>
 #include <glfw/glfw3.h>
@@ -16,9 +27,9 @@
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
 
-#define MAX_CHUNKS_GENERATED_PER_FRAME 8
+#define MAX_CHUNKS_GENERATED_PER_FRAME 4
 #define MAX_CHUNKS_DELETED_PER_FRAME 32
-#define CHUNK_RENDER_RADIUS 10
+#define CHUNK_RENDER_RADIUS 8
 
 struct vec3i{
 	int x;
@@ -59,6 +70,8 @@ inline bool const operator<(const vec3i& l, const vec3i& r){
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+Window window(WINDOW_WIDTH, WINDOW_HEIGHT, "cppvoxel");
+
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX = WINDOW_WIDTH / 2.0f;
 float lastY = WINDOW_HEIGHT / 2.0f;
@@ -68,6 +81,9 @@ std::map<vec3i, Chunk*> chunks;
 typedef std::map<vec3i, Chunk*>::iterator chunk_it;
 
 vec3i lastPos;
+#ifdef MULTI_THREADING
+bool canChunksUpdate = false;
+#endif
 
 const static char* voxelShaderVertexSource = R"(#version 330 core
 layout (location = 0) in vec4 coord;
@@ -178,12 +194,81 @@ void scrollCallback(GLFWwindow* window, double xoffset, double yoffset){
   camera.processMouseScroll(yoffset);
 }
 
-int main(int argc, char** argv){
-  Window window(WINDOW_WIDTH, WINDOW_HEIGHT, "cppvoxel");
+void updateChunks(){
+  // delete chunks
+  unsigned short chunksDeleted = 0;
+  for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
+    Chunk* chunk = it->second;
 
+    int dx = lastPos.x - chunk->x;
+    int dy = lastPos.y - chunk->y;
+    int dz = lastPos.z - chunk->z;
+
+    // delete chunks outside of render radius
+    if(abs(dx) > CHUNK_RENDER_RADIUS || abs(dy) > CHUNK_RENDER_RADIUS || abs(dz) > CHUNK_RENDER_RADIUS){
+      it = chunks.erase(it);
+      delete chunk;
+
+      chunksDeleted++;
+      if(chunksDeleted >= MAX_CHUNKS_DELETED_PER_FRAME){
+        break;
+      }
+    }
+  }
+
+  // generate new chunks needed
+    unsigned short chunksGenerated = 0;
+    for(int8_t i = -CHUNK_RENDER_RADIUS; i <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; i++){
+      for(int8_t j = -CHUNK_RENDER_RADIUS; j <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; j++){
+        for(int8_t k = -CHUNK_RENDER_RADIUS; k <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; k++){
+          int cx = lastPos.x + i;
+          int cy = lastPos.y + k;
+          int cz = lastPos.z + j;
+
+          vec3i pos;
+          pos.x = cx;
+          pos.y = cy;
+          pos.z = cz;
+
+          chunk_it it = chunks.find(pos);
+          if(it != chunks.end()){
+            continue;
+          }
+
+          Chunk* chunk = new Chunk(cx, cy, cz);
+          chunks[pos] = chunk;
+
+          chunksGenerated++;
+        }
+      }
+    }
+
+  for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
+    it->second->update();
+  }
+}
+
+#ifdef MULTI_THREADING
+void updateChunksThread(){
+  while(!window.shouldClose()){
+    if(canChunksUpdate){
+      updateChunks();
+    }
+
+#ifdef _WIN32
+    Sleep(0);
+#else
+    sleep(0);
+#endif
+  }
+}
+#endif
+
+int main(int argc, char** argv){
   glfwSetCursorPosCallback(window.window, mouseCallback);
   glfwSetScrollCallback(window.window, scrollCallback);
   glfwSetInputMode(window.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  glfwSwapInterval(0);
 
   glewExperimental = true;
   if(glewInit() != GLEW_OK){
@@ -215,6 +300,11 @@ int main(int argc, char** argv){
 
   float lastPrintTime = glfwGetTime();
   unsigned short frames = 0;
+
+#ifdef MULTI_THREADING
+  std::thread chunkThread(updateChunksThread);
+#endif
+
   while(!window.shouldClose()){
     float currentTime = glfwGetTime();
     deltaTime = currentTime - lastFrame;
@@ -240,57 +330,50 @@ int main(int argc, char** argv){
     pos.y = floorf(camera.position.y / CHUNK_SIZE);
     pos.z = floorf(camera.position.z / CHUNK_SIZE);
 
-    // delete chunks
-    unsigned short chunksDeleted = 0;
-    for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
-      Chunk* chunk = it->second;
+#ifdef MULTI_THREADING
+    canChunksUpdate = false;
+#endif
 
-      int dx = pos.x - chunk->x;
-      int dy = pos.y - chunk->y;
-      int dz = pos.z - chunk->z;
+//     // generate new chunks needed
+//     if(pos != lastPos || !noChunksRemaining){
+// // double start = glfwGetTime();
+//       unsigned short chunksGenerated = 0;
+//       for(int8_t i = -CHUNK_RENDER_RADIUS; i <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; i++){
+//         for(int8_t j = -CHUNK_RENDER_RADIUS; j <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; j++){
+//           for(int8_t k = -CHUNK_RENDER_RADIUS; k <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; k++){
+//             int cx = pos.x + i;
+//             int cy = pos.y + k;
+//             int cz = pos.z + j;
 
-      // delete chunks outside of render radius
-      if(abs(dx) > CHUNK_RENDER_RADIUS || abs(dy) > CHUNK_RENDER_RADIUS || abs(dz) > CHUNK_RENDER_RADIUS){
-        it = chunks.erase(it);
-        delete chunk;
+//             vec3i pos;
+//             pos.x = cx;
+//             pos.y = cy;
+//             pos.z = cz;
 
-        chunksDeleted++;
-        if(chunksDeleted >= MAX_CHUNKS_DELETED_PER_FRAME){
-          break;
-        }
-      }
-    }
+//             chunk_it it = chunks.find(pos);
+//             if(it != chunks.end()){
+//               continue;
+//             }
 
-    // generate new chunks needed
-    if(pos != lastPos || !noChunksRemaining){
-      unsigned short chunksGenerated = 0;
-      for(int8_t i = -CHUNK_RENDER_RADIUS; i <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; i++){
-        for(int8_t j = -CHUNK_RENDER_RADIUS; j <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; j++){
-          for(int8_t k = -CHUNK_RENDER_RADIUS; k <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; k++){
-            int cx = pos.x + i;
-            int cy = pos.y + k;
-            int cz = pos.z + j;
+//             Chunk* chunk = new Chunk(cx, cy, cz);
+//             chunks[pos] = chunk;
 
-            vec3i pos;
-            pos.x = cx;
-            pos.y = cy;
-            pos.z = cz;
+//             chunksGenerated++;
+//           }
+//         }
+//       }
 
-            chunk_it it = chunks.find(pos);
-            if(it != chunks.end()){
-              continue;
-            }
+//       noChunksRemaining = chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME;
+// // printf("chunk generation: %.2fms %d\n", (glfwGetTime() - start) * 1000.0, chunksGenerated);
+//     }
 
-            Chunk* chunk = new Chunk(cx, cy, cz);
-            chunks[pos] = chunk;
+#ifdef MULTI_THREADING
+    canChunksUpdate = true;
+#endif
 
-            chunksGenerated++;
-          }
-        }
-      }
-
-      noChunksRemaining = chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME;
-    }
+#ifndef MULTI_THREADING
+    updateChunks();
+#endif
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -299,8 +382,6 @@ int main(int argc, char** argv){
       int dx = pos.x - chunk->x;
       int dy = pos.y - chunk->y;
       int dz = pos.z - chunk->z;
-
-      it->second->update();
 
       // don't render chunks outside of render radius
       if(abs(dx) > CHUNK_RENDER_RADIUS || abs(dy) > CHUNK_RENDER_RADIUS || abs(dz) > CHUNK_RENDER_RADIUS){
@@ -321,6 +402,10 @@ int main(int argc, char** argv){
     window.pollEvents();
     window.swapBuffers();
   }
+
+#ifdef MULTI_THREADING
+  chunkThread.join();
+#endif
 
   for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
     Chunk* chunk = it->second;

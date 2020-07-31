@@ -66,12 +66,11 @@ Chunk::Chunk(int _x, int _y, int _z){
   elements = 0;
   changed = false;
   meshChanged = false;
+  vao = -1;
 
   x = _x;
   y = _y;
   z = _z;
-
-  glGenVertexArrays(1, &vao);
 
 #if defined DEBUG && defined PRINT_TIMING
   unsigned short count = 0;
@@ -376,6 +375,10 @@ void Chunk::bufferMesh(){
 #if defined DEBUG && defined PRINT_TIMING
   double start = glfwGetTime();
 #endif
+
+  if(vao == -1){
+    glGenVertexArrays(1, &vao);
+  }
 
   glBindVertexArray(vao);
 
