@@ -27,9 +27,9 @@
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
 
-#define MAX_CHUNKS_GENERATED_PER_FRAME 4
+#define MAX_CHUNKS_GENERATED_PER_FRAME 8
 #define MAX_CHUNKS_DELETED_PER_FRAME 32
-#define CHUNK_RENDER_RADIUS 8
+#define CHUNK_RENDER_RADIUS 6
 
 struct vec3i{
 	int x;
@@ -222,18 +222,18 @@ void updateChunks(){
         int cy = lastPos.y + k;
         int cz = lastPos.z + j;
 
-        vec3i pos;
-        pos.x = cx;
-        pos.y = cy;
-        pos.z = cz;
+        vec3i chunkPos;
+        chunkPos.x = cx;
+        chunkPos.y = cy;
+        chunkPos.z = cz;
 
-        chunk_it it = chunks.find(pos);
+        chunk_it it = chunks.find(chunkPos);
         if(it != chunks.end()){
           continue;
         }
 
         Chunk* chunk = new Chunk(cx, cy, cz);
-        chunks[pos] = chunk;
+        chunks[chunkPos] = chunk;
 
         chunksGenerated++;
       }
