@@ -152,52 +152,52 @@ void main(){
   FragColor = vec4(mix(color * light, vec3(0.53, 0.81, 0.92) * daylight, f), 1.0);
 })";
 
-void framebufferResizeCallback(GLFWwindow* window, int width, int height){
+void framebufferResizeCallback(GLFWwindow* _window, int width, int height){
   glViewport(0, 0, width, height);
   windowWidth = width;
   windowHeight = height;
 }
 
-void processInput(GLFWwindow *window){
-  if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
-    glfwSetWindowShouldClose(window, true);
+void processInput(GLFWwindow* _window){
+  if(glfwGetKey(_window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
+    glfwSetWindowShouldClose(_window, true);
   }
 
-  if(!fullscreenToggled && glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS){
+  if(!fullscreenToggled && glfwGetKey(_window, GLFW_KEY_F11) == GLFW_PRESS){
     fullscreenToggled = true;
 
-    if(glfwGetWindowMonitor(window)){
-      glfwSetWindowMonitor(window, NULL, windowedXPos, windowedYPos, windowedWidth, windowedHeight, 0);
+    if(glfwGetWindowMonitor(_window)){
+      glfwSetWindowMonitor(_window, NULL, windowedXPos, windowedYPos, windowedWidth, windowedHeight, 0);
     }else{
       GLFWmonitor* monitor = glfwGetPrimaryMonitor();
       if(monitor){
         const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-        glfwGetWindowPos(window, &windowedXPos, &windowedYPos);
-        glfwGetWindowSize(window, &windowedWidth, &windowedHeight);
-        glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+        glfwGetWindowPos(_window, &windowedXPos, &windowedYPos);
+        glfwGetWindowSize(_window, &windowedWidth, &windowedHeight);
+        glfwSetWindowMonitor(_window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
       }
     }
-  }else if(glfwGetKey(window, GLFW_KEY_F11) == GLFW_RELEASE){
+  }else if(glfwGetKey(_window, GLFW_KEY_F11) == GLFW_RELEASE){
     fullscreenToggled = false;
   }
 
-  camera.fast = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
+  camera.fast = glfwGetKey(_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
 
-  if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
+  if(glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS){
     camera.processKeyboard(FORWARD, deltaTime);
   }
-  if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
+  if(glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS){
     camera.processKeyboard(BACKWARD, deltaTime);
   }
-  if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
+  if(glfwGetKey(_window, GLFW_KEY_A) == GLFW_PRESS){
     camera.processKeyboard(LEFT, deltaTime);
   }
-  if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
+  if(glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS){
     camera.processKeyboard(RIGHT, deltaTime);
   }
 }
 
-void mouseCallback(GLFWwindow* window, double xpos, double ypos){
+void mouseCallback(GLFWwindow* _window, double xpos, double ypos){
   if(firstMouse){
     lastX = xpos;
     lastY = ypos;
@@ -213,7 +213,7 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos){
   camera.processMouseMovement(xoffset, yoffset);
 }
 
-void scrollCallback(GLFWwindow* window, double xoffset, double yoffset){
+void scrollCallback(GLFWwindow* _window, double xoffset, double yoffset){
   camera.processMouseScroll(yoffset);
 }
 
@@ -319,7 +319,6 @@ int main(int argc, char** argv){
   lastPos.z = floorf(camera.position.z / CHUNK_SIZE);
 
   vec3i pos{lastPos.x, lastPos.y, lastPos.z};
-  bool noChunksRemaining = false;
 
   float lastPrintTime = glfwGetTime();
   unsigned short frames = 0;
@@ -335,7 +334,7 @@ int main(int argc, char** argv){
     frames++;
 
     if(currentTime - lastPrintTime >= 1.0f){
-      printf("%.1fms (%dfps) %d chunks\n", 1000.0f/(float)frames, frames, chunks.size());
+      printf("%.1fms (%dfps) %d chunks\n", 1000.0f/(float)frames, frames, (int)chunks.size());
       frames = 0;
       lastPrintTime += 1.0f;
     }

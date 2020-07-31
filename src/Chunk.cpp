@@ -67,7 +67,7 @@ Chunk::Chunk(int _x, int _y, int _z){
   elements = 0;
   changed = false;
   meshChanged = false;
-  vao = -1;
+  vao = 0;
 
   x = _x;
   y = _y;
@@ -377,7 +377,7 @@ void Chunk::bufferMesh(){
   double start = glfwGetTime();
 #endif
 
-  if(vao == -1){
+  if(vao == 0){
     glGenVertexArrays(1, &vao);
   }
 
