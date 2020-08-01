@@ -7,8 +7,8 @@
 #define CHUNK_SIZE_SQUARED 1024
 #define CHUNK_SIZE_CUBED 32768
 
-typedef char byte4[4];
-typedef char byte3[3];
+typedef uint8_t byte4[4];
+typedef uint8_t byte3[3];
 typedef int vec2i[2];
 typedef uint8_t block_t;
 

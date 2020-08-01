@@ -24,14 +24,14 @@ inline float halfPixelCorrection(float coord){
   // return (coord + 0.5f) / TEXTURE_SIZE;
 }
 
-inline void byte4Set(char x, char y, char z, char w, byte4 dest){
+inline void byte4Set(uint8_t x, uint8_t y, uint8_t z, uint8_t w, byte4 dest){
   dest[0] = x;
   dest[1] = y;
   dest[2] = z;
   dest[3] = w;
 }
 
-inline void byte3Set(char x, char y, char z, byte3 dest){
+inline void byte3Set(uint8_t x, uint8_t y, uint8_t z, byte3 dest){
   dest[0] = x;
   dest[1] = y;
   dest[2] = z;
@@ -64,10 +64,10 @@ Chunk::Chunk(int _x, int _y, int _z){
 #endif
 
   blocks = (block_t*)malloc(CHUNK_SIZE_CUBED * sizeof(block_t));
+  vao = 0;
   elements = 0;
   changed = false;
   meshChanged = false;
-  vao = 0;
 
   x = _x;
   y = _y;
@@ -115,7 +115,9 @@ for(uint8_t dx = 0; dx < CHUNK_SIZE; dx++){
 
 Chunk::~Chunk(){
   // delete the vertex array
-  glDeleteVertexArrays(1, &vao);
+  if(vao != 0){
+    glDeleteVertexArrays(1, &vao);
+  }
 
   // delete the stored data
   free(blocks);
@@ -153,7 +155,7 @@ bool Chunk::update(){
   for(uint8_t _y = 0; _y < CHUNK_SIZE; _y++){
     for(uint8_t _x = 0; _x < CHUNK_SIZE; _x++){
       for(uint8_t _z = 0; _z < CHUNK_SIZE; _z++){
-        block_t block = blocks[blockIndex(_x, _y, z)];
+        block_t block = blocks[blockIndex(_x, _y, _z)];
 
         if(!block){
           continue;
@@ -163,7 +165,7 @@ bool Chunk::update(){
         uint8_t w;
 
         // add a face if -x is transparent
-        if(isTransparent(get(_x - 1, _y, z))){
+        if(isTransparent(get(_x - 1, _y, _z))){
           w = BLOCKS[block][0]; // get texture coordinates
           // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
           du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
@@ -192,7 +194,7 @@ bool Chunk::update(){
         }
 
         // add a face if +x is transparent
-        if(isTransparent(get(_x + 1, _y, z))){
+        if(isTransparent(get(_x + 1, _y, _z))){
           w = BLOCKS[block][1]; // get texture coordinates
           // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
           du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
@@ -279,7 +281,7 @@ bool Chunk::update(){
         }
 
         // add a face if -y is transparent
-        if(isTransparent(get(_x, _y - 1, z))){
+        if(isTransparent(get(_x, _y - 1, _z))){
           w = BLOCKS[block][3]; // get texture coordinates
           // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
           du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
@@ -308,7 +310,7 @@ bool Chunk::update(){
         }
 
         // add a face if +y is transparent
-        if(isTransparent(get(_x, _y + 1, z))){
+        if(isTransparent(get(_x, _y + 1, _z))){
           w = BLOCKS[block][2]; // get texture coordinates
           // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
           du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
