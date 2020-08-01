@@ -1,7 +1,6 @@
 #define MULTI_THREADING
 
 #include <stdio.h>
-#include <map>
 #ifdef MULTI_THREADING
 #include <thread>
 #endif
@@ -22,17 +21,12 @@
 #include <Texture.h>
 #include <Camera.h>
 
+#include "common.h"
 #include "Chunk.h"
 
 #define MAX_CHUNKS_GENERATED_PER_FRAME 8
 #define MAX_CHUNKS_DELETED_PER_FRAME 32
 #define CHUNK_RENDER_RADIUS 6
-
-struct vec3i{
-	int x;
-	int y;
-	int z;
-};
 
 inline bool const operator==(const vec3i& l, const vec3i& r){
 	return l.x == r.x && l.y == r.y && l.z == r.z;
@@ -77,9 +71,6 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX = (float)windowWidth / 2.0f;
 float lastY = (float)windowHeight / 2.0f;
 bool firstMouse = true;
-
-std::map<vec3i, Chunk*> chunks;
-typedef std::map<vec3i, Chunk*>::iterator chunk_it;
 
 vec3i lastPos;
 bool fullscreenToggled = false;
@@ -253,8 +244,7 @@ void updateChunks(){
         chunkPos.y = cy;
         chunkPos.z = cz;
 
-        chunk_it it = chunks.find(chunkPos);
-        if(it != chunks.end()){
+        if(getChunk(chunkPos) != NULL){
           continue;
         }
 
