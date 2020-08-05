@@ -38,7 +38,7 @@ inline void byte3Set(uint8_t x, uint8_t y, uint8_t z, byte3 dest){
 }
 
 // use magic numbers >.> to check if a block ID is transparent
-inline unsigned char isTransparent(uint8_t block){
+inline unsigned char isTransparent(block_t block){
   switch(block){
     case 0:
     case 6:
