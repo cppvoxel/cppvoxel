@@ -4,9 +4,9 @@
 #include <map>
 
 struct vec3i{
-	int x;
-	int y;
-	int z;
+  int x;
+  int y;
+  int z;
 };
 
 class Chunk;

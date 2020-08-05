@@ -68,6 +68,10 @@ Chunk::Chunk(int _x, int _y, int _z){
   elements = 0;
   changed = false;
   meshChanged = false;
+  vertex = NULL;
+  brightness = NULL;
+  normal = NULL;
+  texCoords = NULL;
 
   x = _x;
   y = _y;
@@ -77,7 +81,7 @@ Chunk::Chunk(int _x, int _y, int _z){
   unsigned short count = 0;
 #endif
 
-for(uint8_t dx = 0; dx < CHUNK_SIZE; dx++){
+  for(uint8_t dx = 0; dx < CHUNK_SIZE; dx++){
     for(uint8_t dz = 0; dz < CHUNK_SIZE; dz++){
       int cx = x * CHUNK_SIZE + dx;
       int cz = z * CHUNK_SIZE + dz;
@@ -93,9 +97,10 @@ for(uint8_t dx = 0; dx < CHUNK_SIZE; dx++){
           h = 14;
           rh = h - y * CHUNK_SIZE;
         }
+        block = dy < rh ? block : 0;
 
-        blocks[blockIndex(dx, dy, dz)] = dy < rh ? block : 0;
-        if(!changed && blocks[blockIndex(dx, dy, dz)] > 0){
+        blocks[blockIndex(dx, dy, dz)] = block;
+        if(!changed && block > 0){
           changed = true;
         }
 
@@ -121,12 +126,30 @@ Chunk::~Chunk(){
 
   // delete the stored data
   free(blocks);
+
+  // delete buffers if needed
+  if(vertex != NULL){
+    free(vertex);
+    vertex = NULL;
+  }
+  if(brightness != NULL){
+    free(brightness);
+    brightness = NULL;
+  }
+  if(normal != NULL){
+    free(normal);
+    normal = NULL;
+  }
+  if(texCoords != NULL){
+    free(texCoords);
+    texCoords = NULL;
+  }
 }
 
 // update the chunk
 bool Chunk::update(){
   // if the chunk does not need to remesh then stop
-  if(!changed || meshChanged){
+  if(!changed){
     return false;
   }
 
@@ -145,24 +168,32 @@ bool Chunk::update(){
   float du, dv;
   float a = 0.0f;
   float b = 1.0f;
+  uint8_t w;
+
+  block_t block;
 
   // allocate space for vertices, lighting, brightness, 
-  vertex = (byte4*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(byte4));
-  brightness = (char*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(char));
-  normal = (byte3*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(byte3));
-  texCoords = (float*)malloc(CHUNK_SIZE_CUBED * 4 * sizeof(float));
+  if(vertex == NULL){
+    vertex = (byte4*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(byte4));
+  }
+  if(brightness == NULL){
+    brightness = (char*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(char));
+  }
+  if(normal == NULL){
+    normal = (byte3*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(byte3));
+  }
+  if(texCoords == NULL){
+    texCoords = (float*)malloc(CHUNK_SIZE_CUBED * 4 * sizeof(float));
+  }
 
   for(uint8_t _y = 0; _y < CHUNK_SIZE; _y++){
     for(uint8_t _x = 0; _x < CHUNK_SIZE; _x++){
       for(uint8_t _z = 0; _z < CHUNK_SIZE; _z++){
-        block_t block = blocks[blockIndex(_x, _y, _z)];
+        block = blocks[blockIndex(_x, _y, _z)];
 
         if(!block){
           continue;
         }
-
-        // texture coords
-        uint8_t w;
 
         // add a face if -x is transparent
         if(isTransparent(get(_x - 1, _y, _z))){
@@ -352,12 +383,12 @@ bool Chunk::update(){
 }
 
 void Chunk::draw(){
-  bufferMesh();
-
   // don't draw if chunk has no mesh
   if(!elements){
     return;
   }
+
+  bufferMesh();
 
   // render only if all neighbors exist
   // if(chunk->px == NULL || chunk->nx == NULL || chunk->py == NULL || chunk->ny == NULL || chunk->pz == NULL || chunk->nz == NULL){
@@ -369,7 +400,7 @@ void Chunk::draw(){
 }
 
 // if the chunk's mesh has been modified then send the new data to opengl (TODO: don't create a new buffer, just reuse the old one)
-void Chunk::bufferMesh(){
+inline void Chunk::bufferMesh(){
   // if the mesh has not been modified then don't bother
   if(!meshChanged){
     return;
@@ -408,9 +439,13 @@ void Chunk::bufferMesh(){
   glDeleteBuffers(1, &texureBuffer);
 
   free(vertex);
+  vertex = NULL;
   free(brightness);
+  brightness = NULL;
   free(normal);
+  normal = NULL;
   free(texCoords);
+  texCoords = NULL;
 
   meshChanged = false;
 
@@ -419,20 +454,21 @@ void Chunk::bufferMesh(){
 #endif
 }
 
-block_t Chunk::get(int _x, int _y, int _z){
-  if(_x < 0){
-    return VOID_BLOCK;
-  }else if(_x >= CHUNK_SIZE){
-    return VOID_BLOCK;
-  }else if(_y < 0){
-    return VOID_BLOCK;
-  }else if(_y >= CHUNK_SIZE){
-    return VOID_BLOCK;
-  }else if(_z < 0){
-    return VOID_BLOCK;
-  }else if(_z >= CHUNK_SIZE){
-    return VOID_BLOCK;
-  }else{
-    return blocks[blockIndex(_x, _y, _z)];
-  }
+inline block_t Chunk::get(int _x, int _y, int _z){
+  return _x < 0 || _x >= CHUNK_SIZE || _y < 0 || _y >= CHUNK_SIZE || _z < 0 || _z >= CHUNK_SIZE ? VOID_BLOCK : blocks[blockIndex(_x, _y, _z)];
+  // if(_x < 0){
+  //   return VOID_BLOCK;
+  // }else if(_x >= CHUNK_SIZE){
+  //   return VOID_BLOCK;
+  // }else if(_y < 0){
+  //   return VOID_BLOCK;
+  // }else if(_y >= CHUNK_SIZE){
+  //   return VOID_BLOCK;
+  // }else if(_z < 0){
+  //   return VOID_BLOCK;
+  // }else if(_z >= CHUNK_SIZE){
+  //   return VOID_BLOCK;
+  // }else{
+  //   return blocks[blockIndex(_x, _y, _z)];
+  // }
 }

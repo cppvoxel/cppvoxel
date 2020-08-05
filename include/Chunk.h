@@ -35,8 +35,8 @@ private:
   byte3* normal;
   float *texCoords;
 
-  void bufferMesh();
-  block_t get(int _x, int _y, int _z);
+  inline void bufferMesh();
+  inline block_t get(int _x, int _y, int _z);
 };
 
 #endif
