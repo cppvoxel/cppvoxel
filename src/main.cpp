@@ -24,39 +24,9 @@
 #include "common.h"
 #include "Chunk.h"
 
-#define MAX_CHUNKS_GENERATED_PER_FRAME 8
+#define MAX_CHUNKS_GENERATED_PER_FRAME 4
 #define MAX_CHUNKS_DELETED_PER_FRAME 32
-#define CHUNK_RENDER_RADIUS 2
-
-inline bool const operator==(const vec3i& l, const vec3i& r){
-	return l.x == r.x && l.y == r.y && l.z == r.z;
-};
-
-inline bool const operator!=(const vec3i& l, const vec3i& r){
-	return l.x != r.x || l.y != r.y || l.z != r.z;
-};
-
-inline bool const operator<(const vec3i& l, const vec3i& r){
-	if(l.x < r.x){
-    return true;
-  }else if(l.x > r.x){
-    return false;
-  }
-
-	if(l.y < r.y){
-    return true;
-  }else if(l.y > r.y){
-    return false;
-  }
-
-	if(l.z < r.z){
-    return true;
-  }else if(l.z > r.z){
-    return false;
-  }
-
-	return false;
-};
+#define CHUNK_RENDER_RADIUS 6
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -110,8 +80,9 @@ void main(){
   vNormal = mat3(transpose(inverse(model))) * normal;
   vTexCoord = texCoord;
 
-  vDiffuse = calcLight(vPosition, normalize(light_direction), normal);
+  // vDiffuse = calcLight(vPosition, normalize(light_direction), normal);
   // vDiffuse = max(0.0, dot(normal, light_direction));
+  vDiffuse = max(0.8, 0.9 * max(0.0, dot(normal, light_direction))) * vBrightness;
 
   gl_Position = projection * view * vec4(vPosition, 1.0);
 })";
@@ -136,12 +107,12 @@ void main(){
 
   vec3 normal = normalize(vNormal);
 
-  float ambient = daylight * 0.9;
-  vec3 light = vec3(max(max(0.5, daylight * 0.8), ambient * vDiffuse) * vBrightness);
+  // float ambient = daylight * 0.9;
+  // vec3 light = vec3(max(max(0.5, daylight * 0.8), ambient * vDiffuse) * vBrightness);
 
   float f = pow(clamp(gl_FragCoord.z / gl_FragCoord.w / 1000, 0, 0.8), 2);
 
-  FragColor = vec4(mix(color * light, vec3(0.53, 0.81, 0.92) * daylight, f), 1.0);
+  FragColor = vec4(mix(color * vec3(vDiffuse), vec3(0.53, 0.81, 0.92), f), 1.0);
 })";
 
 void framebufferResizeCallback(GLFWwindow* _window, int width, int height){
@@ -363,6 +334,11 @@ int main(int argc, char** argv){
     int dz;
     for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
       Chunk* chunk = it->second;
+      // don't draw if chunk has no mesh
+      if(!chunk->elements){
+        continue;
+      }
+
       dx = pos.x - chunk->x;
       dy = pos.y - chunk->y;
       dz = pos.z - chunk->z;

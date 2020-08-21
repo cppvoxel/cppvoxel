@@ -17,6 +17,7 @@ public:
   int x;
   int y;
   int z;
+  int elements;
 
   Chunk(int _x, int _y, int _z);
   ~Chunk();
@@ -27,7 +28,6 @@ public:
 private:
   block_t *blocks;
   unsigned int vao;
-  int elements;
   bool changed;
   bool meshChanged;
   byte4* vertex;
@@ -36,7 +36,7 @@ private:
   float *texCoords;
 
   inline void bufferMesh();
-  inline block_t get(int _x, int _y, int _z);
+  inline block_t get(int _x, int _y, int _z, Chunk* px, Chunk* nx, Chunk* py, Chunk* ny, Chunk* pz, Chunk* nz);
 };
 
 #endif

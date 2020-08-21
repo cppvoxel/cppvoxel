@@ -7,6 +7,7 @@
 #include <GL/glew.h>
 #include <glfw/glfw3.h>
 
+#include "common.h"
 #include "noise.h"
 #include "blocks.h"
 
@@ -186,6 +187,18 @@ bool Chunk::update(){
     texCoords = (float*)malloc(CHUNK_SIZE_CUBED * 4 * sizeof(float));
   }
 
+  // get chunk neighbors
+  Chunk* px = getChunk((vec3i){x + 1, y, z});
+  Chunk* nx = getChunk((vec3i){x - 1, y, z});
+  Chunk* py = getChunk((vec3i){x, y + 1, z});
+  Chunk* ny = getChunk((vec3i){x, y - 1, z});
+  Chunk* pz = getChunk((vec3i){x, y, z + 1});
+  Chunk* nz = getChunk((vec3i){x, y, z - 1});
+
+  // if(px == NULL || nx == NULL || py == NULL || ny == NULL || pz == NULL || nz == NULL){
+  //   return false;
+  // }
+
   for(uint8_t _y = 0; _y < CHUNK_SIZE; _y++){
     for(uint8_t _x = 0; _x < CHUNK_SIZE; _x++){
       for(uint8_t _z = 0; _z < CHUNK_SIZE; _z++){
@@ -196,7 +209,7 @@ bool Chunk::update(){
         }
 
         // add a face if -x is transparent
-        if(isTransparent(get(_x - 1, _y, _z))){
+        if(isTransparent(get(_x - 1, _y, _z, px, nx, py, ny, pz, nz))){
           w = BLOCKS[block][0]; // get texture coordinates
           // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
           du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
@@ -225,7 +238,7 @@ bool Chunk::update(){
         }
 
         // add a face if +x is transparent
-        if(isTransparent(get(_x + 1, _y, _z))){
+        if(isTransparent(get(_x + 1, _y, _z, px, nx, py, ny, pz, nz))){
           w = BLOCKS[block][1]; // get texture coordinates
           // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
           du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
@@ -254,7 +267,7 @@ bool Chunk::update(){
         }
 
         // add a face if -z is transparent
-        if(isTransparent(get(_x, _y, _z - 1))){
+        if(isTransparent(get(_x, _y, _z - 1, px, nx, py, ny, pz, nz))){
           w = BLOCKS[block][4]; // get texture coordinates
           // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
           du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
@@ -283,7 +296,7 @@ bool Chunk::update(){
         }
 
         // add a face if +z is transparent
-        if(isTransparent(get(_x, _y, _z + 1))){
+        if(isTransparent(get(_x, _y, _z + 1, px, nx, py, ny, pz, nz))){
           w = BLOCKS[block][5]; // get texture coordinates
           // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
           du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
@@ -312,7 +325,7 @@ bool Chunk::update(){
         }
 
         // add a face if -y is transparent
-        if(isTransparent(get(_x, _y - 1, _z))){
+        if(isTransparent(get(_x, _y - 1, _z, px, nx, py, ny, pz, nz))){
           w = BLOCKS[block][3]; // get texture coordinates
           // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
           du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
@@ -341,7 +354,7 @@ bool Chunk::update(){
         }
 
         // add a face if +y is transparent
-        if(isTransparent(get(_x, _y + 1, _z))){
+        if(isTransparent(get(_x, _y + 1, _z, px, nx, py, ny, pz, nz))){
           w = BLOCKS[block][2]; // get texture coordinates
           // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
           du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
@@ -454,21 +467,20 @@ inline void Chunk::bufferMesh(){
 #endif
 }
 
-inline block_t Chunk::get(int _x, int _y, int _z){
-  return _x < 0 || _x >= CHUNK_SIZE || _y < 0 || _y >= CHUNK_SIZE || _z < 0 || _z >= CHUNK_SIZE ? VOID_BLOCK : blocks[blockIndex(_x, _y, _z)];
-  // if(_x < 0){
-  //   return VOID_BLOCK;
-  // }else if(_x >= CHUNK_SIZE){
-  //   return VOID_BLOCK;
-  // }else if(_y < 0){
-  //   return VOID_BLOCK;
-  // }else if(_y >= CHUNK_SIZE){
-  //   return VOID_BLOCK;
-  // }else if(_z < 0){
-  //   return VOID_BLOCK;
-  // }else if(_z >= CHUNK_SIZE){
-  //   return VOID_BLOCK;
-  // }else{
-  //   return blocks[blockIndex(_x, _y, _z)];
-  // }
+inline block_t Chunk::get(int _x, int _y, int _z, Chunk* px, Chunk* nx, Chunk* py, Chunk* ny, Chunk* pz, Chunk* nz){
+  if(_x < 0){
+    return nx == NULL ? VOID_BLOCK : nx->blocks[blockIndex(CHUNK_SIZE + _x, _y, _z)];
+  }else if(_x >= CHUNK_SIZE){
+    return px == NULL ? VOID_BLOCK : px->blocks[blockIndex(_x % CHUNK_SIZE, _y, _z)];
+  }else if(_y < 0){
+    return ny == NULL ? VOID_BLOCK : ny->blocks[blockIndex(_x, CHUNK_SIZE + _y, _z)];
+  }else if(_y >= CHUNK_SIZE){
+    return py == NULL ? VOID_BLOCK : py->blocks[blockIndex(_x, _y % CHUNK_SIZE, _z)];
+  }else if(_z < 0){
+    return nz == NULL ? VOID_BLOCK : nz->blocks[blockIndex(_x, _y, CHUNK_SIZE + _z)];
+  }else if(_z >= CHUNK_SIZE){
+    return pz == NULL ? VOID_BLOCK : pz->blocks[blockIndex(_x, _y, _z % CHUNK_SIZE)];
+  }
+
+  return blocks[blockIndex(_x, _y, _z)];
 }
