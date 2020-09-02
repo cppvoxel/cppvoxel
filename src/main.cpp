@@ -175,26 +175,21 @@ void updateChunks(){
 
   // double start = glfwGetTime();
   // generate new chunks needed
-  int cx, cy, cz;
   vec3i chunkPos;
   Chunk* chunk;
   unsigned short chunksGenerated = 0;
   for(int8_t i = -CHUNK_RENDER_RADIUS; i <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; i++){
     for(int8_t j = -CHUNK_RENDER_RADIUS; j <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; j++){
       for(int8_t k = -CHUNK_RENDER_RADIUS; k <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; k++){
-        cx = lastPos.x + i;
-        cy = lastPos.y + k;
-        cz = lastPos.z + j;
-
-        chunkPos.x = cx;
-        chunkPos.y = cy;
-        chunkPos.z = cz;
+        chunkPos.x = lastPos.x + i;
+        chunkPos.y = lastPos.y + k;
+        chunkPos.z = lastPos.z + j;
 
         if(getChunk(chunkPos) != NULL){
           continue;
         }
 
-        chunk = new Chunk(cx, cy, cz);
+        chunk = new Chunk(chunkPos.x, chunkPos.y, chunkPos.z);
         chunks[chunkPos] = chunk;
 
         chunksGenerated++;

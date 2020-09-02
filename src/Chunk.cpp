@@ -158,6 +158,19 @@ bool Chunk::update(){
   double start = glfwGetTime();
 #endif
 
+  // get chunk neighbors
+  Chunk* px = getChunk((vec3i){x + 1, y, z});
+  Chunk* nx = getChunk((vec3i){x - 1, y, z});
+  Chunk* py = getChunk((vec3i){x, y + 1, z});
+  Chunk* ny = getChunk((vec3i){x, y - 1, z});
+  Chunk* pz = getChunk((vec3i){x, y, z + 1});
+  Chunk* nz = getChunk((vec3i){x, y, z - 1});
+
+  if(px == NULL || nx == NULL || py == NULL || ny == NULL || pz == NULL || nz == NULL){
+    // printf("missing neighbor(s) %d %d %d %d %d %d\n", px == NULL, nx == NULL, py == NULL, ny == NULL, pz == NULL, nz == NULL);
+    return false;
+  }
+
   // updating is taken care of - reset flag
   changed = false;
 
@@ -186,18 +199,6 @@ bool Chunk::update(){
   if(texCoords == NULL){
     texCoords = (float*)malloc(CHUNK_SIZE_CUBED * 4 * sizeof(float));
   }
-
-  // get chunk neighbors
-  Chunk* px = getChunk((vec3i){x + 1, y, z});
-  Chunk* nx = getChunk((vec3i){x - 1, y, z});
-  Chunk* py = getChunk((vec3i){x, y + 1, z});
-  Chunk* ny = getChunk((vec3i){x, y - 1, z});
-  Chunk* pz = getChunk((vec3i){x, y, z + 1});
-  Chunk* nz = getChunk((vec3i){x, y, z - 1});
-
-  // if(px == NULL || nx == NULL || py == NULL || ny == NULL || pz == NULL || nz == NULL){
-  //   return false;
-  // }
 
   for(uint8_t _y = 0; _y < CHUNK_SIZE; _y++){
     for(uint8_t _x = 0; _x < CHUNK_SIZE; _x++){
