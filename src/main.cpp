@@ -26,7 +26,7 @@
 
 #define MAX_CHUNKS_GENERATED_PER_FRAME 4
 #define MAX_CHUNKS_DELETED_PER_FRAME 32
-#define CHUNK_RENDER_RADIUS 6
+#define CHUNK_RENDER_RADIUS 8
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -52,52 +52,30 @@ layout (location = 1) in int brightness;
 layout (location = 2) in vec3 normal;
 layout (location = 3) in vec2 texCoord;
 
-out vec3 vPosition;
-out float vBrightness;
 out vec2 vTexCoord;
-out vec3 vNormal;
 out float vDiffuse;
 
 uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
-uniform vec3 camera_position;
-uniform vec3 light_direction = normalize(vec3(-0.8, 0.7, 0.3));
 
-float calcLight(vec3 position, vec3 lightDir, vec3 normal){
-  float diffuse = max(dot(normal, lightDir), 0.0);
-  /* specular */
-  vec3 viewDir = normalize(camera_position - position);
-  vec3 reflectDir = reflect(-lightDir, normal);
-  float spec = pow(max(dot(viewDir, reflectDir), 0.0), 8);
-
-  return diffuse + spec;
-}
+#define LIGHT_DIRECTION normalize(vec3(-0.8, 0.7, 0.3))
 
 void main(){
-  vPosition = vec3(model * vec4(coord.xyz, 1.0));
-  vBrightness = float(brightness) * 0.1 + 1.0;
-  vNormal = mat3(transpose(inverse(model))) * normal;
   vTexCoord = texCoord;
+  vec3 norm = mat3(transpose(inverse(model))) * normal;
+  vDiffuse = max(0.6, max(0.0, dot(norm, LIGHT_DIRECTION))) * float(brightness) * 0.1 + 1.0;
 
-  // vDiffuse = calcLight(vPosition, normalize(light_direction), normal);
-  // vDiffuse = max(0.0, dot(normal, light_direction));
-  vDiffuse = max(0.8, 0.9 * max(0.0, dot(normal, light_direction))) * vBrightness;
-
-  gl_Position = projection * view * vec4(vPosition, 1.0);
+  gl_Position = projection * view * model * vec4(coord.xyz, 1.0);
 })";
 
 const static char* voxelShaderFragmentSource = R"(#version 330 core
 out vec4 FragColor;
 
-in vec3 vPosition;
-in float vBrightness;
 in vec2 vTexCoord;
-in vec3 vNormal;
 in float vDiffuse;
 
 uniform sampler2D diffuse_texture;
-uniform float daylight = 1.0;
 
 void main(){
   vec3 color = texture(diffuse_texture, vTexCoord).rgb;
@@ -105,14 +83,7 @@ void main(){
     discard;
   }
 
-  vec3 normal = normalize(vNormal);
-
-  // float ambient = daylight * 0.9;
-  // vec3 light = vec3(max(max(0.5, daylight * 0.8), ambient * vDiffuse) * vBrightness);
-
-  float f = pow(clamp(gl_FragCoord.z / gl_FragCoord.w / 1000, 0, 0.8), 2);
-
-  FragColor = vec4(mix(color * vec3(vDiffuse), vec3(0.53, 0.81, 0.92), f), 1.0);
+  FragColor = vec4(color * vec3(vDiffuse), 1.0);
 })";
 
 void framebufferResizeCallback(GLFWwindow* _window, int width, int height){
@@ -317,7 +288,6 @@ int main(int argc, char** argv){
 
     cameraView = camera.getViewMatrix();
     shader.setMat4("view", cameraView);
-    shader.setVec3("camera_position", camera.position);
 
     pos.x = floorf(camera.position.x / CHUNK_SIZE);
     pos.y = floorf(camera.position.y / CHUNK_SIZE);
