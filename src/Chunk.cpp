@@ -60,7 +60,7 @@ unsigned int makeBuffer(GLenum target, GLsizei size, const void* data){
 }
 
 Chunk::Chunk(int _x, int _y, int _z){
-#if defined DEBUG && defined PRINT_TIMING
+#ifdef PRINT_TIMING
   double start = glfwGetTime();
 #endif
 
@@ -78,7 +78,7 @@ Chunk::Chunk(int _x, int _y, int _z){
   y = _y;
   z = _z;
 
-#if defined DEBUG && defined PRINT_TIMING
+#ifdef PRINT_TIMING
   unsigned short count = 0;
 #endif
 
@@ -93,7 +93,7 @@ Chunk::Chunk(int _x, int _y, int _z){
 
       for(uint8_t dy = 0; dy < CHUNK_SIZE; dy++){
         uint8_t thickness = rh - dy;
-        uint8_t block = h < 15 && thickness <= 10 ? 8 : h < 18 && thickness <= 3 ? 5 : h >= 140 && thickness <= 7 ? 7 : thickness == 1 ? 1 : thickness <= 6 ? 3 : 2;
+        block_t block = h < 15 && thickness <= 10 ? 8 : h < 18 && thickness <= 3 ? 5 : h >= 140 && thickness <= 7 ? 7 : thickness == 1 ? 1 : thickness <= 6 ? 3 : 2;
         if(block == 8 && h < 14){
           h = 14;
           rh = h - y * CHUNK_SIZE;
@@ -105,7 +105,7 @@ Chunk::Chunk(int _x, int _y, int _z){
           changed = true;
         }
 
-#if defined DEBUG && defined PRINT_TIMING
+#ifdef PRINT_TIMING
         if(dy < h){
           count++;
         }
@@ -114,7 +114,7 @@ Chunk::Chunk(int _x, int _y, int _z){
     }
   }
 
-#if defined DEBUG && defined PRINT_TIMING
+#ifdef PRINT_TIMING
   printf("chunk gen: %.2fms with %d blocks\n", (glfwGetTime() - start) * 1000.0, count);
 #endif
 }
@@ -154,7 +154,7 @@ bool Chunk::update(){
     return false;
   }
 
-#if defined DEBUG && defined PRINT_TIMING
+#ifdef PRINT_TIMING
   double start = glfwGetTime();
 #endif
 
@@ -388,7 +388,7 @@ bool Chunk::update(){
   elements = i; // set number of vertices
   meshChanged = true; // set mesh has changed flag
 
-#if defined DEBUG && defined PRINT_TIMING
+#ifdef PRINT_TIMING
   printf("created chunk with %d vertices in %.2fms\n", i, (glfwGetTime() - start) * 1000.0);
 #endif
 
@@ -419,7 +419,7 @@ inline void Chunk::bufferMesh(){
     return;
   }
 
-#if defined DEBUG && defined PRINT_TIMING
+#ifdef PRINT_TIMING
   double start = glfwGetTime();
 #endif
 
@@ -462,7 +462,7 @@ inline void Chunk::bufferMesh(){
 
   meshChanged = false;
 
-#if defined DEBUG && defined PRINT_TIMING
+#ifdef PRINT_TIMING
   printf("buffered chunk mesh in %.2fms\n", (glfwGetTime() - start) * 1000.0);
 #endif
 }
