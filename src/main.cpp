@@ -43,8 +43,8 @@ float lastY = (float)windowHeight / 2.0f;
 bool firstMouse = true;
 
 vec3i pos;
-vec3i lastPos;
 bool fullscreenToggled = false;
+bool perspectiveChanged = true;
 
 const static char* voxelShaderVertexSource = R"(#version 330 core
 layout (location = 0) in vec4 coord;
@@ -90,6 +90,7 @@ void framebufferResizeCallback(GLFWwindow* _window, int width, int height){
   glViewport(0, 0, width, height);
   windowWidth = width;
   windowHeight = height;
+  perspectiveChanged = true;
 }
 
 void processInput(GLFWwindow* _window){
@@ -157,9 +158,9 @@ void updateChunks(){
   for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
     Chunk* chunk = it->second;
 
-    int dx = lastPos.x - chunk->x;
-    int dy = lastPos.y - chunk->y;
-    int dz = lastPos.z - chunk->z;
+    int dx = pos.x - chunk->x;
+    int dy = pos.y - chunk->y;
+    int dz = pos.z - chunk->z;
 
     // delete chunks outside of render radius
     if(abs(dx) > CHUNK_RENDER_RADIUS || abs(dy) > CHUNK_RENDER_RADIUS || abs(dz) > CHUNK_RENDER_RADIUS){
@@ -181,9 +182,9 @@ void updateChunks(){
   for(int8_t i = -CHUNK_RENDER_RADIUS; i <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; i++){
     for(int8_t j = -CHUNK_RENDER_RADIUS; j <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; j++){
       for(int8_t k = -CHUNK_RENDER_RADIUS; k <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; k++){
-        chunkPos.x = lastPos.x + i;
-        chunkPos.y = lastPos.y + k;
-        chunkPos.z = lastPos.z + j;
+        chunkPos.x = pos.x + i;
+        chunkPos.y = pos.y + k;
+        chunkPos.z = pos.z + j;
 
         if(getChunk(chunkPos) != NULL){
           continue;
@@ -252,10 +253,6 @@ int main(int argc, char** argv){
   pos.y = floorf(camera.position.y / CHUNK_SIZE);
   pos.z = floorf(camera.position.z / CHUNK_SIZE);
 
-  lastPos.x = pos.x;
-  lastPos.y = pos.y;
-  lastPos.z = pos.z;
-
   float lastPrintTime = glfwGetTime();
   unsigned short frames = 0;
 
@@ -278,8 +275,11 @@ int main(int argc, char** argv){
 
     processInput(window.window);
 
-    projection = glm::perspective(glm::radians(camera.fov), (float)windowWidth/(float)windowHeight, 0.1f, 1000.0f);
-    shader.setMat4("projection", projection);
+    if(perspectiveChanged){
+      projection = glm::perspective(glm::radians(camera.fov), (float)windowWidth/(float)windowHeight, .1f, 1000.0f);
+      shader.setMat4("projection", projection);
+      perspectiveChanged = false;
+    }
 
     cameraView = camera.getViewMatrix();
     shader.setMat4("view", cameraView);
@@ -297,6 +297,7 @@ int main(int argc, char** argv){
     int dx;
     int dy;
     int dz;
+    // double start = glfwGetTime();
     for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
       Chunk* chunk = it->second;
       // don't draw if chunk has no mesh
@@ -313,16 +314,11 @@ int main(int argc, char** argv){
         continue;
       }
 
-      model = glm::mat4(1.0f);
-      model = glm::translate(model, glm::vec3(chunk->x * CHUNK_SIZE, chunk->y * CHUNK_SIZE, chunk->z * CHUNK_SIZE));
-      shader.setMat4("model", model);
+      shader.setMat4("model", chunk->model);
 
       chunk->draw();
     }
-
-    lastPos.x = pos.x;
-    lastPos.y = pos.y;
-    lastPos.z = pos.z;
+    // printf("draw all chunks %.4fms\n", (glfwGetTime() - start) * 1000.0);
 
     window.pollEvents();
     window.swapBuffers();

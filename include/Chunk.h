@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <glm/gtc/matrix_transform.hpp>
+
 #define CHUNK_SIZE 32
 #define CHUNK_SIZE_SQUARED 1024
 #define CHUNK_SIZE_CUBED 32768
@@ -18,6 +20,7 @@ public:
   int y;
   int z;
   int elements;
+  glm::mat4 model;
 
   Chunk(int _x, int _y, int _z);
   ~Chunk();
