@@ -26,7 +26,7 @@
 
 #define MAX_CHUNKS_GENERATED_PER_FRAME 8
 #define MAX_CHUNKS_DELETED_PER_FRAME 32
-#define CHUNK_RENDER_RADIUS 16
+#define CHUNK_RENDER_RADIUS 8
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -249,10 +249,6 @@ int main(int argc, char** argv){
   shader.use();
   shader.setInt("diffuse_texture", 0);
 
-  glm::mat4 projection = glm::mat4(1.0f);
-  glm::mat4 cameraView;
-  glm::mat4 model;
-
   pos.x = floorf(camera.position.x / CHUNK_SIZE);
   pos.y = floorf(camera.position.y / CHUNK_SIZE);
   pos.z = floorf(camera.position.z / CHUNK_SIZE);
@@ -266,6 +262,12 @@ int main(int argc, char** argv){
 
   float currentTime;
   unsigned int elements;
+
+  glm::mat4 projection = glm::mat4(1.0f);
+  glm::mat4 cameraView;
+  glm::mat4 mvp;
+  glm::vec4 center;
+
   while(!window.shouldClose()){
     currentTime = glfwGetTime();
     deltaTime = currentTime - lastFrame;
@@ -318,6 +320,15 @@ int main(int argc, char** argv){
 
       // don't render chunks outside of render radius
       if(abs(dx) > CHUNK_RENDER_RADIUS || abs(dy) > CHUNK_RENDER_RADIUS || abs(dz) > CHUNK_RENDER_RADIUS){
+        continue;
+      }
+
+      mvp = projection * cameraView * chunk->model;
+      center = mvp * glm::vec4(CHUNK_SIZE / 2, CHUNK_SIZE / 2, CHUNK_SIZE / 2, 1);
+      center.x /= center.w;
+      center.y /= center.w;
+
+      if(center.z < -CHUNK_SIZE / 2 || fabsf(center.x) > 1 + fabsf(CHUNK_SIZE * 2 / center.w) || fabsf(center.y) > 1 + fabsf(CHUNK_SIZE * 2 / center.w)){
         continue;
       }
 

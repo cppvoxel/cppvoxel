@@ -99,8 +99,7 @@ Chunk::Chunk(int _x, int _y, int _z){
       h = pow((f + 1) / 2 + 1, 9);
       rh = h - y * CHUNK_SIZE;
 
-      dy = 0;
-      for(; dy < CHUNK_SIZE; dy++){
+      for(dy = 0; dy < CHUNK_SIZE; dy++){
         thickness = rh - dy;
         block = h < 15 && thickness <= 10 ? 8 : h < 18 && thickness <= 3 ? 5 : h >= 140 && thickness <= 7 ? 7 : thickness == 1 ? 1 : thickness <= 6 ? 3 : 2;
         if(block == 8 && h < 14){
