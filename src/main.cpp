@@ -26,7 +26,7 @@
 
 #define MAX_CHUNKS_GENERATED_PER_FRAME 8
 #define MAX_CHUNKS_DELETED_PER_FRAME 32
-#define CHUNK_RENDER_RADIUS 8
+#define CHUNK_RENDER_RADIUS 16
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -45,6 +45,9 @@ bool firstMouse = true;
 vec3i pos;
 bool fullscreenToggled = false;
 bool perspectiveChanged = true;
+
+glm::mat4 projection = glm::mat4(1.0f);
+glm::mat4 cameraView;
 
 const static char* voxelShaderVertexSource = R"(#version 330 core
 layout (location = 0) in vec4 coord;
@@ -154,6 +157,15 @@ void scrollCallback(GLFWwindow* _window, double xoffset, double yoffset){
   camera.processMouseScroll(yoffset);
 }
 
+inline bool isChunkInsideFrustum(glm::mat4 model){
+  glm::mat4 mvp = projection * cameraView * model;
+  glm::vec4 center = mvp * glm::vec4(CHUNK_SIZE / 2, CHUNK_SIZE / 2, CHUNK_SIZE / 2, 1);
+  center.x /= center.w;
+  center.y /= center.w;
+
+  return !(center.z < -CHUNK_SIZE / 2 || fabsf(center.x) > 1 + fabsf(CHUNK_SIZE * 2 / center.w) || fabsf(center.y) > 1 + fabsf(CHUNK_SIZE * 2 / center.w));
+}
+
 void updateChunks(){
   // delete chunks
   unsigned short chunksDeleted = 0;
@@ -181,7 +193,8 @@ void updateChunks(){
   vec3i chunkPos;
   Chunk* chunk;
   unsigned short chunksGenerated = 0;
-  for(uint8_t distance = 0; distance <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; distance++){
+  // for(uint8_t distance = 0; distance <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; distance++){
+    uint8_t distance = CHUNK_RENDER_RADIUS;
     for(int8_t i = -distance; i <= distance && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; i++){
       for(int8_t j = -distance; j <= distance && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; j++){
         for(int8_t k = -distance; k <= distance && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; k++){
@@ -203,10 +216,12 @@ void updateChunks(){
     // printf("chunk generate %.2fms\n", (glfwGetTime() - start) * 1000.0);
 
     for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
-      it->second->update();
+      if(isChunkInsideFrustum(it->second->model)){
+        it->second->update();
+      }
     }
   }
-}
+// }
 
 #ifdef MULTI_THREADING
 void updateChunksThread(){
@@ -263,10 +278,9 @@ int main(int argc, char** argv){
   float currentTime;
   unsigned int elements;
 
-  glm::mat4 projection = glm::mat4(1.0f);
-  glm::mat4 cameraView;
-  glm::mat4 mvp;
-  glm::vec4 center;
+  int dx;
+  int dy;
+  int dz;
 
   while(!window.shouldClose()){
     currentTime = glfwGetTime();
@@ -303,9 +317,6 @@ int main(int argc, char** argv){
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    int dx;
-    int dy;
-    int dz;
     // double start = glfwGetTime();
     for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
       Chunk* chunk = it->second;
@@ -323,12 +334,7 @@ int main(int argc, char** argv){
         continue;
       }
 
-      mvp = projection * cameraView * chunk->model;
-      center = mvp * glm::vec4(CHUNK_SIZE / 2, CHUNK_SIZE / 2, CHUNK_SIZE / 2, 1);
-      center.x /= center.w;
-      center.y /= center.w;
-
-      if(center.z < -CHUNK_SIZE / 2 || fabsf(center.x) > 1 + fabsf(CHUNK_SIZE * 2 / center.w) || fabsf(center.y) > 1 + fabsf(CHUNK_SIZE * 2 / center.w)){
+      if(!isChunkInsideFrustum(chunk->model)){
         continue;
       }
 
