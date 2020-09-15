@@ -26,7 +26,7 @@
 
 #define MAX_CHUNKS_GENERATED_PER_FRAME 8
 #define MAX_CHUNKS_DELETED_PER_FRAME 32
-#define CHUNK_RENDER_RADIUS 8
+#define CHUNK_RENDER_RADIUS 16
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -181,28 +181,30 @@ void updateChunks(){
   vec3i chunkPos;
   Chunk* chunk;
   unsigned short chunksGenerated = 0;
-  for(int8_t i = -CHUNK_RENDER_RADIUS; i <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; i++){
-    for(int8_t j = -CHUNK_RENDER_RADIUS; j <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; j++){
-      for(int8_t k = -CHUNK_RENDER_RADIUS; k <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; k++){
-        chunkPos.x = pos.x + i;
-        chunkPos.y = pos.y + k;
-        chunkPos.z = pos.z + j;
+  for(uint8_t distance = 0; distance <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; distance++){
+    for(int8_t i = -distance; i <= distance && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; i++){
+      for(int8_t j = -distance; j <= distance && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; j++){
+        for(int8_t k = -distance; k <= distance && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; k++){
+          chunkPos.x = pos.x + i;
+          chunkPos.y = pos.y + k;
+          chunkPos.z = pos.z + j;
 
-        if(getChunk(chunkPos) != NULL){
-          continue;
+          if(getChunk(chunkPos) != NULL){
+            continue;
+          }
+
+          chunk = new Chunk(chunkPos.x, chunkPos.y, chunkPos.z);
+          chunks[chunkPos] = chunk;
+
+          chunksGenerated++;
         }
-
-        chunk = new Chunk(chunkPos.x, chunkPos.y, chunkPos.z);
-        chunks[chunkPos] = chunk;
-
-        chunksGenerated++;
       }
     }
-  }
-  // printf("chunk generate %.2fms\n", (glfwGetTime() - start) * 1000.0);
+    // printf("chunk generate %.2fms\n", (glfwGetTime() - start) * 1000.0);
 
-  for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
-    it->second->update();
+    for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
+      it->second->update();
+    }
   }
 }
 
