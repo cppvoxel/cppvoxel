@@ -24,7 +24,7 @@
 #include "common.h"
 #include "Chunk.h"
 
-#define MAX_CHUNKS_GENERATED_PER_FRAME 4
+#define MAX_CHUNKS_GENERATED_PER_FRAME 8
 #define MAX_CHUNKS_DELETED_PER_FRAME 32
 #define CHUNK_RENDER_RADIUS 8
 
@@ -59,12 +59,9 @@ uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
 
-#define LIGHT_DIRECTION normalize(vec3(-0.8, 0.7, 0.3))
-
 void main(){
   vTexCoord = texCoord;
-  vec3 norm = mat3(transpose(inverse(model))) * normal;
-  vDiffuse = max(0.6, max(0.0, dot(norm, LIGHT_DIRECTION))) * float(brightness) * 0.1 + 1.0;
+  vDiffuse = brightness / 5.0f;
 
   gl_Position = projection * view * model * vec4(coord.xyz, 1.0);
 })";
@@ -77,13 +74,18 @@ in float vDiffuse;
 
 uniform sampler2D diffuse_texture;
 
+const vec3 fogColor = vec3(0.6, 0.8, 1.0);
+const float fogDensity = 0.00001;
+
 void main(){
   vec3 color = texture(diffuse_texture, vTexCoord).rgb;
   if(color == vec3(1.0, 0.0, 1.0)){
     discard;
   }
 
-  FragColor = vec4(color * vec3(vDiffuse), 1.0);
+  float z = gl_FragCoord.z / gl_FragCoord.w;
+  float fog = clamp(exp(-fogDensity * z * z), 0.2, 1.0);
+  FragColor = vec4(mix(fogColor, color * vDiffuse, fog), 1.0);
 })";
 
 void framebufferResizeCallback(GLFWwindow* _window, int width, int height){
@@ -261,6 +263,7 @@ int main(int argc, char** argv){
 #endif
 
   float currentTime;
+  unsigned int elements;
   while(!window.shouldClose()){
     currentTime = glfwGetTime();
     deltaTime = currentTime - lastFrame;
@@ -268,12 +271,14 @@ int main(int argc, char** argv){
     frames++;
 
     if(currentTime - lastPrintTime >= 1.0f){
-      printf("%.1fms (%dfps) %d chunks\n", 1000.0f/(float)frames, frames, (int)chunks.size());
+      printf("%.1fms (%dfps) %d chunks (%u elements)\n", 1000.0f/(float)frames, frames, (int)chunks.size(), elements);
       frames = 0;
       lastPrintTime += 1.0f;
     }
 
     processInput(window.window);
+
+    elements = 0;
 
     if(perspectiveChanged){
       projection = glm::perspective(glm::radians(camera.fov), (float)windowWidth/(float)windowHeight, .1f, 1000.0f);
@@ -317,6 +322,7 @@ int main(int argc, char** argv){
       shader.setMat4("model", chunk->model);
 
       chunk->draw();
+      elements += chunk->elements;
     }
     // printf("draw all chunks %.4fms\n", (glfwGetTime() - start) * 1000.0);
 

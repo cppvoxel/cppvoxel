@@ -85,25 +85,32 @@ Chunk::Chunk(int _x, int _y, int _z){
   unsigned short count = 0;
 #endif
 
-  for(uint8_t dx = 0; dx < CHUNK_SIZE; dx++){
-    for(uint8_t dz = 0; dz < CHUNK_SIZE; dz++){
-      int cx = x * CHUNK_SIZE + dx;
-      int cz = z * CHUNK_SIZE + dz;
+  int dx, dz, cx, cz, h, rh;
+  float f;
+  uint8_t dy, thickness;
+  block_t block;
 
-      float f = simplex2(cx * 0.003f, cz * 0.003f, 6, 0.6f, 1.5f);
-      int h = pow((f + 1) / 2 + 1, 9);
-      int rh = h - y * CHUNK_SIZE;
+  for(dx = 0; dx < CHUNK_SIZE; dx++){
+    for(dz = 0; dz < CHUNK_SIZE; dz++){
+      cx = x * CHUNK_SIZE + dx;
+      cz = z * CHUNK_SIZE + dz;
 
-      for(uint8_t dy = 0; dy < CHUNK_SIZE; dy++){
-        uint8_t thickness = rh - dy;
-        block_t block = h < 15 && thickness <= 10 ? 8 : h < 18 && thickness <= 3 ? 5 : h >= 140 && thickness <= 7 ? 7 : thickness == 1 ? 1 : thickness <= 6 ? 3 : 2;
+      f = simplex2(cx * 0.003f, cz * 0.003f, 6, 0.6f, 1.5f);
+      h = pow((f + 1) / 2 + 1, 9);
+      rh = h - y * CHUNK_SIZE;
+
+      dy = 0;
+      for(; dy < CHUNK_SIZE; dy++){
+        thickness = rh - dy;
+        block = h < 15 && thickness <= 10 ? 8 : h < 18 && thickness <= 3 ? 5 : h >= 140 && thickness <= 7 ? 7 : thickness == 1 ? 1 : thickness <= 6 ? 3 : 2;
         if(block == 8 && h < 14){
           h = 14;
           rh = h - y * CHUNK_SIZE;
         }
-        block = dy < rh ? block : 0;
 
+        block = dy < rh ? block : VOID_BLOCK;
         blocks[blockIndex(dx, dy, dz)] = block;
+
         if(!changed && block > 0){
           changed = true;
         }
@@ -203,9 +210,9 @@ bool Chunk::update(){
     texCoords = (float*)malloc(CHUNK_SIZE_CUBED * 4 * sizeof(float));
   }
 
-  for(uint8_t _y = 0; _y < CHUNK_SIZE; _y++){
+  for(uint8_t _z = 0; _z < CHUNK_SIZE; _z++){
     for(uint8_t _x = 0; _x < CHUNK_SIZE; _x++){
-      for(uint8_t _z = 0; _z < CHUNK_SIZE; _z++){
+      for(uint8_t _y = 0; _y < CHUNK_SIZE; _y++){
         block = blocks[blockIndex(_x, _y, _z)];
 
         if(!block){
@@ -228,7 +235,7 @@ bool Chunk::update(){
 
           // set the brightness data for the face
           for(int k = 0; k < 6; k++){
-            brightness[j] = 0;
+            brightness[j] = 4;
             byte3Set(-1, 0, 0, normal[j++]);
           }
 
@@ -257,7 +264,7 @@ bool Chunk::update(){
 
           // set the brightness data for the face
           for(int k = 0; k < 6; k++){
-            brightness[j] = 0;
+            brightness[j] = 4;
             byte3Set(1, 0, 0, normal[j++]);
           }
 
@@ -286,7 +293,7 @@ bool Chunk::update(){
 
           // set the brightness data for the face
           for(int k = 0; k < 6; k++){
-            brightness[j] = 1;
+            brightness[j] = 3;
             byte3Set(0, 0, -1, normal[j++]);
           }
 
@@ -315,7 +322,7 @@ bool Chunk::update(){
 
           // set the brightness data for the face
           for(int k = 0; k < 6; k++){
-            brightness[j] = 1;
+            brightness[j] = 3;
             byte3Set(0, 0, 1, normal[j++]);
           }
 
@@ -373,7 +380,7 @@ bool Chunk::update(){
 
           // set the brightness data for the face
           for(int k = 0; k < 6; k++){
-            brightness[j] = 2;
+            brightness[j] = 5;
             byte3Set(0, 1, 0, normal[j++]);
           }
 
