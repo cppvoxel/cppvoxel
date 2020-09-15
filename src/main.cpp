@@ -23,10 +23,7 @@
 
 #include "common.h"
 #include "Chunk.h"
-
-#define MAX_CHUNKS_GENERATED_PER_FRAME 8
-#define MAX_CHUNKS_DELETED_PER_FRAME 32
-#define CHUNK_RENDER_RADIUS 8
+#include "config.h"
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -35,9 +32,15 @@ int windowWidth = 800;
 int windowHeight = 600;
 int windowedXPos, windowedYPos, windowedWidth, windowedHeight;
 
+Config config("res/config.conf");
 Window window(windowWidth, windowHeight, "cppvoxel");
 
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+// config
+int viewDistance;
+int maxChunksGeneratedPerFrame;
+int maxChunksDeletedPerFrame;
+
+Camera camera(glm::vec3(0.0f, 50.0f, 0.0f));
 float lastX = (float)windowWidth / 2.0f;
 float lastY = (float)windowHeight / 2.0f;
 bool firstMouse = true;
@@ -177,12 +180,12 @@ void updateChunks(){
     int dz = pos.z - chunk->z;
 
     // delete chunks outside of render radius
-    if(abs(dx) > CHUNK_RENDER_RADIUS || abs(dy) > CHUNK_RENDER_RADIUS || abs(dz) > CHUNK_RENDER_RADIUS){
+    if(abs(dx) > viewDistance || abs(dy) > viewDistance || abs(dz) > viewDistance){
       it = chunks.erase(it);
       delete chunk;
 
       chunksDeleted++;
-      if(chunksDeleted >= MAX_CHUNKS_DELETED_PER_FRAME){
+      if(chunksDeleted >= maxChunksDeletedPerFrame){
         break;
       }
     }
@@ -193,35 +196,34 @@ void updateChunks(){
   vec3i chunkPos;
   Chunk* chunk;
   unsigned short chunksGenerated = 0;
-  // for(uint8_t distance = 0; distance <= CHUNK_RENDER_RADIUS && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; distance++){
-    uint8_t distance = CHUNK_RENDER_RADIUS;
-    for(int8_t i = -distance; i <= distance && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; i++){
-      for(int8_t j = -distance; j <= distance && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; j++){
-        for(int8_t k = -distance; k <= distance && chunksGenerated < MAX_CHUNKS_GENERATED_PER_FRAME; k++){
-          chunkPos.x = pos.x + i;
-          chunkPos.y = pos.y + k;
-          chunkPos.z = pos.z + j;
+  for(int8_t i = -viewDistance; i <= viewDistance && chunksGenerated < maxChunksGeneratedPerFrame; i++){
+    for(int8_t j = -viewDistance; j <= viewDistance && chunksGenerated < maxChunksGeneratedPerFrame; j++){
+      for(int8_t k = -viewDistance; k <= viewDistance && chunksGenerated < maxChunksGeneratedPerFrame; k++){
+        chunkPos.x = pos.x + i;
+        chunkPos.y = pos.y + k;
+        chunkPos.z = pos.z + j;
 
-          if(getChunk(chunkPos) != NULL){
-            continue;
-          }
+        if(getChunk(chunkPos) != NULL){
+          continue;
+        }
 
-          chunk = new Chunk(chunkPos.x, chunkPos.y, chunkPos.z);
-          chunks[chunkPos] = chunk;
+        chunk = new Chunk(chunkPos.x, chunkPos.y, chunkPos.z);
+        chunks[chunkPos] = chunk;
 
+        if(chunk->changed){
           chunksGenerated++;
         }
       }
     }
-    // printf("chunk generate %.2fms\n", (glfwGetTime() - start) * 1000.0);
+  }
+  // printf("chunk generate %.2fms\n", (glfwGetTime() - start) * 1000.0);
 
-    for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
-      if(isChunkInsideFrustum(it->second->model)){
-        it->second->update();
-      }
+  for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
+    if(isChunkInsideFrustum(it->second->model)){
+      it->second->update();
     }
   }
-// }
+  }
 
 #ifdef MULTI_THREADING
 void updateChunksThread(){
@@ -240,12 +242,17 @@ void updateChunksThread(){
 #endif
 
 int main(int argc, char** argv){
+  viewDistance = config.getInt("viewDistance", 8);
+  maxChunksGeneratedPerFrame = config.getInt("maxChunksGeneratedPerFrame", 32);
+  maxChunksDeletedPerFrame = config.getInt("maxChunksDeletedPerFrame", 64);
+  bool vsync = config.getBool("vsync", false);
+
   glfwSetFramebufferSizeCallback(window.window, framebufferResizeCallback);
   glfwSetCursorPosCallback(window.window, mouseCallback);
   glfwSetScrollCallback(window.window, scrollCallback);
 
   glfwSetInputMode(window.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-  glfwSwapInterval(0);
+  glfwSwapInterval(vsync ? 1 : 0);
 
   glewExperimental = true;
   if(glewInit() != GLEW_OK){
@@ -332,7 +339,7 @@ int main(int argc, char** argv){
       dz = pos.z - chunk->z;
 
       // don't render chunks outside of render radius
-      if(abs(dx) > CHUNK_RENDER_RADIUS || abs(dy) > CHUNK_RENDER_RADIUS || abs(dz) > CHUNK_RENDER_RADIUS){
+      if(abs(dx) > viewDistance || abs(dy) > viewDistance || abs(dz) > viewDistance){
         continue;
       }
 

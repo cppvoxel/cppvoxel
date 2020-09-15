@@ -20,6 +20,7 @@ public:
   int y;
   int z;
   int elements;
+  bool changed;
   glm::mat4 model;
 
   Chunk(int _x, int _y, int _z);
@@ -31,7 +32,6 @@ public:
 private:
   block_t *blocks;
   unsigned int vao;
-  bool changed;
   bool meshChanged;
   byte4* vertex;
   char* brightness;
