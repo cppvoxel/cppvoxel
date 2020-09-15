@@ -406,11 +406,6 @@ bool Chunk::update(){
 }
 
 void Chunk::draw(){
-  // don't draw if chunk has no mesh
-  if(!elements){
-    return;
-  }
-
   bufferMesh();
 
   // render only if all neighbors exist

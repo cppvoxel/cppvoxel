@@ -26,7 +26,7 @@
 
 #define MAX_CHUNKS_GENERATED_PER_FRAME 8
 #define MAX_CHUNKS_DELETED_PER_FRAME 32
-#define CHUNK_RENDER_RADIUS 16
+#define CHUNK_RENDER_RADIUS 8
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -277,6 +277,7 @@ int main(int argc, char** argv){
 
   float currentTime;
   unsigned int elements;
+  unsigned int chunksDrawn;
 
   int dx;
   int dy;
@@ -289,7 +290,7 @@ int main(int argc, char** argv){
     frames++;
 
     if(currentTime - lastPrintTime >= 1.0f){
-      printf("%.1fms (%dfps) %d chunks (%u elements)\n", 1000.0f/(float)frames, frames, (int)chunks.size(), elements);
+      printf("%.2fms (%dfps) %d chunks (%u elements, %u chunks drawn)\n", 1000.0f/(float)frames, frames, (int)chunks.size(), elements, chunksDrawn);
       frames = 0;
       lastPrintTime += 1.0f;
     }
@@ -297,6 +298,7 @@ int main(int argc, char** argv){
     processInput(window.window);
 
     elements = 0;
+    chunksDrawn = 0;
 
     if(perspectiveChanged){
       projection = glm::perspective(glm::radians(camera.fov), (float)windowWidth/(float)windowHeight, .1f, 1000.0f);
@@ -339,9 +341,10 @@ int main(int argc, char** argv){
       }
 
       shader.setMat4("model", chunk->model);
-
       chunk->draw();
+
       elements += chunk->elements;
+      chunksDrawn++;
     }
     // printf("draw all chunks %.4fms\n", (glfwGetTime() - start) * 1000.0);
 
