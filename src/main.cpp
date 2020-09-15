@@ -1,6 +1,8 @@
 #define MULTI_THREADING
 
 #include <stdio.h>
+#include <signal.h>
+
 #ifdef MULTI_THREADING
 #include <thread>
 #endif
@@ -93,6 +95,11 @@ void main(){
   float fog = clamp(exp(-fogDensity * z * z), 0.2, 1.0);
   FragColor = vec4(mix(fogColor, color * vDiffuse, fog), 1.0);
 })";
+
+void signalHandler(int signum){
+  fprintf(stderr, "Interrupt signal %d received\n", signum);
+  exit(signum);  
+}
 
 void framebufferResizeCallback(GLFWwindow* _window, int width, int height){
   glViewport(0, 0, width, height);
@@ -242,6 +249,13 @@ void updateChunksThread(){
 #endif
 
 int main(int argc, char** argv){
+  signal(SIGABRT, signalHandler);
+  signal(SIGFPE, signalHandler);
+  signal(SIGILL, signalHandler);
+  signal(SIGINT, signalHandler);
+  signal(SIGSEGV, signalHandler);
+  signal(SIGTERM, signalHandler);
+
   viewDistance = config.getInt("viewDistance", 8);
   maxChunksGeneratedPerFrame = config.getInt("maxChunksGeneratedPerFrame", 32);
   maxChunksDeletedPerFrame = config.getInt("maxChunksDeletedPerFrame", 64);
@@ -300,6 +314,8 @@ int main(int argc, char** argv){
   int dx;
   int dy;
   int dz;
+  volatile int *pInt = 0x00000000;
+  *pInt = 20;
 
   while(!window.shouldClose()){
     currentTime = glfwGetTime();
