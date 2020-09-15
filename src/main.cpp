@@ -22,7 +22,7 @@
 #include <Camera.h>
 
 #include "common.h"
-#include "Chunk.h"
+#include "chunk.h"
 #include "config.h"
 
 float deltaTime = 0.0f;
