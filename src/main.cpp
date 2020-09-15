@@ -247,6 +247,17 @@ int main(int argc, char** argv){
   maxChunksDeletedPerFrame = config.getInt("maxChunksDeletedPerFrame", 64);
   bool vsync = config.getBool("vsync", false);
 
+#ifdef MULTI_THREADING
+  printf("multithreading enabled\n");
+#else
+  printf("multithreading disabled\n");
+#endif
+
+  printf("OpenGL version: %s\n", glGetString(GL_VERSION));
+  printf("OpenGL shading language version: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+  printf("OpenGL renderer: %s\n", glGetString(GL_RENDERER));
+  printf("OpenGL vendor: %s\n", glGetString(GL_VENDOR));
+
   glfwSetFramebufferSizeCallback(window.window, framebufferResizeCallback);
   glfwSetCursorPosCallback(window.window, mouseCallback);
   glfwSetScrollCallback(window.window, scrollCallback);
