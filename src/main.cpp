@@ -172,6 +172,7 @@ void processInput(GLFWwindow* _window){
   }
 
   if(!screenshotToggled && glfwGetKey(_window, GLFW_KEY_F2) == GLFW_PRESS){
+    // @FIXME: please
     screenshotToggled = true;
     printf("saving screenshot...");
 
@@ -183,15 +184,15 @@ void processInput(GLFWwindow* _window){
     glReadPixels(0, 0, windowWidth, windowHeight, GL_BGR, GL_UNSIGNED_BYTE, pixels);
 
     FILE* file = fopen("screenshot.tga", "w");
-    // short header[] = {0, 2, 0, 0, 0, 0, (short)windowWidth, (short)windowHeight, 24};
+    short header[] = {0, 2, 0, 0, 0, 0, (short)windowWidth, (short)windowHeight, 24};
 
-    // fwrite(&header, sizeof(header), 1, file);
+    fwrite(&header, sizeof(header), 1, file);
 
-    uint8_t tgaHeader[12] = {0,0,2,0,0,0,0,0,0,0,0,0};
-    uint8_t header[6] = {windowWidth%256, windowWidth/256, windowHeight%256, windowHeight/256, 24,0};
+    // uint8_t tgaHeader[12] = {0,0,2,0,0,0,0,0,0,0,0,0};
+    // uint8_t header[6] = {windowWidth%256, windowWidth/256, windowHeight%256, windowHeight/256, 24,0};
 
-    fwrite(tgaHeader, sizeof(uint8_t), 12, file);
-    fwrite(header, sizeof(uint8_t), 6, file);
+    // fwrite(tgaHeader, sizeof(uint8_t), 12, file);
+    // fwrite(header, sizeof(uint8_t), 6, file);
     fwrite(pixels, sizeof(uint8_t), pixelsSize, file);
     fclose(file);
 
