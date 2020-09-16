@@ -5,10 +5,14 @@
 
 #define SKYBOX_SIZE 1000
 
-extern Shader* skyboxShader;
+namespace Skybox{
 
-extern void createSkybox();
-extern void drawSkybox();
-extern void freeSkybox();
+extern Shader* shader;
+
+void create();
+void draw();
+void free();
+
+};
 
 #endif

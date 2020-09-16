@@ -320,7 +320,7 @@ int main(int argc, char** argv){
 
   Texture texture("tiles.png", GL_NEAREST);
 
-  createSkybox();
+  Skybox::create();
 
   Shader shader(voxelShaderVertexSource, voxelShaderFragmentSource);
   shader.use();
@@ -463,15 +463,15 @@ int main(int argc, char** argv){
     }
     // printf("draw all chunks %.4fms\n", (glfwGetTime() - start) * 1000.0);
 
-    skyboxShader->use();
-    skyboxShader->setMat4("view", cameraView);
+    Skybox::shader->use();
+    Skybox::shader->setMat4("view", cameraView);
 
     if(perspectiveChanged){
-      skyboxShader->setMat4("projection", projection);
+      Skybox::shader->setMat4("projection", projection);
       perspectiveChanged = false;
     }
 
-    drawSkybox();
+    Skybox::draw();
 
     Input::update();
     window.pollEvents();
@@ -487,7 +487,7 @@ int main(int argc, char** argv){
     delete chunk;
   }
 
-  freeSkybox();
+  Skybox::free();
 
   return 0;
 }
