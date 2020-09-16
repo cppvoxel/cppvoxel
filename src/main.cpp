@@ -49,6 +49,7 @@ bool firstMouse = true;
 
 vec3i pos;
 bool fullscreenToggled = false;
+bool screenshotToggled = false;
 bool perspectiveChanged = true;
 
 glm::mat4 projection = glm::mat4(1.0f);
@@ -168,6 +169,36 @@ void processInput(GLFWwindow* _window){
     }
   }else if(glfwGetKey(_window, GLFW_KEY_F11) == GLFW_RELEASE){
     fullscreenToggled = false;
+  }
+
+  if(!screenshotToggled && glfwGetKey(_window, GLFW_KEY_F2) == GLFW_PRESS){
+    screenshotToggled = true;
+    printf("saving screenshot...");
+
+    const int pixelsSize = windowWidth * windowHeight * 3;
+    uint8_t* pixels = new uint8_t[pixelsSize];
+
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadBuffer(GL_FRONT);
+    glReadPixels(0, 0, windowWidth, windowHeight, GL_BGR, GL_UNSIGNED_BYTE, pixels);
+
+    FILE* file = fopen("screenshot.tga", "w");
+    // short header[] = {0, 2, 0, 0, 0, 0, (short)windowWidth, (short)windowHeight, 24};
+
+    // fwrite(&header, sizeof(header), 1, file);
+
+    uint8_t tgaHeader[12] = {0,0,2,0,0,0,0,0,0,0,0,0};
+    uint8_t header[6] = {windowWidth%256, windowWidth/256, windowHeight%256, windowHeight/256, 24,0};
+
+    fwrite(tgaHeader, sizeof(uint8_t), 12, file);
+    fwrite(header, sizeof(uint8_t), 6, file);
+    fwrite(pixels, sizeof(uint8_t), pixelsSize, file);
+    fclose(file);
+
+    delete[] pixels;
+    printf("screenshot saved");
+  }else if(glfwGetKey(_window, GLFW_KEY_F11) == GLFW_RELEASE){
+    screenshotToggled = false;
   }
 
   camera.fast = glfwGetKey(_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;

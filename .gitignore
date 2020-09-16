@@ -7,3 +7,5 @@ Makefile
 # configs
 .vscode/
 .vs/
+
+screenshot.tga
