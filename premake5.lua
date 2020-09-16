@@ -60,6 +60,7 @@ workspace "cengine"
   }
 
 project "cppvoxel"
+  kind "ConsoleApp"
   language "C++"
   targetdir "bin"
   objdir "obj"
@@ -85,14 +86,12 @@ project "cppvoxel"
     links {"GLEW", "glfw", "rt", "m", "dl", "GL"}
 
   filter "configurations:Debug"
-    kind "ConsoleApp"
     defines {"DEBUG"}
     symbols "On"
     targetsuffix ".debug"
     buildoptions {"-g3", "-O0"}
 
   filter "configurations:Release"
-    kind "WindowedApp"
     defines {"NDEBUG"}
     optimize "Speed"
 

@@ -26,6 +26,7 @@
 #include "chunk.h"
 #include "config.h"
 #include "skybox.h"
+#include "input.h"
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -48,8 +49,6 @@ float lastY = (float)windowHeight / 2.0f;
 bool firstMouse = true;
 
 vec3i pos;
-bool fullscreenToggled = false;
-bool screenshotToggled = false;
 bool perspectiveChanged = true;
 
 glm::mat4 projection = glm::mat4(1.0f);
@@ -146,76 +145,6 @@ void framebufferResizeCallback(GLFWwindow* _window, int width, int height){
   windowWidth = width;
   windowHeight = height;
   perspectiveChanged = true;
-}
-
-void processInput(GLFWwindow* _window){
-  if(glfwGetKey(_window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
-    glfwSetWindowShouldClose(_window, true);
-  }
-
-  if(!fullscreenToggled && glfwGetKey(_window, GLFW_KEY_F11) == GLFW_PRESS){
-    fullscreenToggled = true;
-
-    if(glfwGetWindowMonitor(_window)){
-      glfwSetWindowMonitor(_window, NULL, windowedXPos, windowedYPos, windowedWidth, windowedHeight, 0);
-    }else{
-      GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-      if(monitor){
-        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-        glfwGetWindowPos(_window, &windowedXPos, &windowedYPos);
-        glfwGetWindowSize(_window, &windowedWidth, &windowedHeight);
-        glfwSetWindowMonitor(_window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
-      }
-    }
-  }else if(glfwGetKey(_window, GLFW_KEY_F11) == GLFW_RELEASE){
-    fullscreenToggled = false;
-  }
-
-  if(!screenshotToggled && glfwGetKey(_window, GLFW_KEY_F2) == GLFW_PRESS){
-    // @FIXME: please
-    screenshotToggled = true;
-    printf("saving screenshot...");
-
-    const int pixelsSize = windowWidth * windowHeight * 3;
-    uint8_t* pixels = new uint8_t[pixelsSize];
-
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadBuffer(GL_FRONT);
-    glReadPixels(0, 0, windowWidth, windowHeight, GL_BGR, GL_UNSIGNED_BYTE, pixels);
-
-    FILE* file = fopen("screenshot.tga", "w");
-    short header[] = {0, 2, 0, 0, 0, 0, (short)windowWidth, (short)windowHeight, 24};
-
-    fwrite(&header, sizeof(header), 1, file);
-
-    // uint8_t tgaHeader[12] = {0,0,2,0,0,0,0,0,0,0,0,0};
-    // uint8_t header[6] = {windowWidth%256, windowWidth/256, windowHeight%256, windowHeight/256, 24,0};
-
-    // fwrite(tgaHeader, sizeof(uint8_t), 12, file);
-    // fwrite(header, sizeof(uint8_t), 6, file);
-    fwrite(pixels, sizeof(uint8_t), pixelsSize, file);
-    fclose(file);
-
-    delete[] pixels;
-    printf("screenshot saved");
-  }else if(glfwGetKey(_window, GLFW_KEY_F11) == GLFW_RELEASE){
-    screenshotToggled = false;
-  }
-
-  camera.fast = glfwGetKey(_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
-
-  if(glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS){
-    camera.processKeyboard(FORWARD, deltaTime);
-  }
-  if(glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS){
-    camera.processKeyboard(BACKWARD, deltaTime);
-  }
-  if(glfwGetKey(_window, GLFW_KEY_A) == GLFW_PRESS){
-    camera.processKeyboard(LEFT, deltaTime);
-  }
-  if(glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS){
-    camera.processKeyboard(RIGHT, deltaTime);
-  }
 }
 
 void mouseCallback(GLFWwindow* _window, double xpos, double ypos){
@@ -362,6 +291,8 @@ int main(int argc, char** argv){
   glfwSetCursorPosCallback(window.window, mouseCallback);
   glfwSetScrollCallback(window.window, scrollCallback);
 
+  Input::init(window.window);
+
   glfwSetInputMode(window.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   glfwSwapInterval(vsync ? 1 : 0);
 
@@ -426,7 +357,59 @@ int main(int argc, char** argv){
       lastPrintTime += 1.0f;
     }
 
-    processInput(window.window);
+    if(Input::getKey(Input::F12).pressed || Input::getKey(Input::ESCAPE).pressed){
+      glfwSetWindowShouldClose(window.window, true);
+    }
+
+    if(Input::getKey(Input::F11).pressed){
+      if(glfwGetWindowMonitor(window.window)){
+        glfwSetWindowMonitor(window.window, NULL, windowedXPos, windowedYPos, windowedWidth, windowedHeight, 0);
+      }else{
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        if(monitor){
+          const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+          glfwGetWindowPos(window.window, &windowedXPos, &windowedYPos);
+          glfwGetWindowSize(window.window, &windowedWidth, &windowedHeight);
+          glfwSetWindowMonitor(window.window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+        }
+      }
+    }
+
+    if(Input::getKey(Input::F2).pressed){
+      // @FIXME: please
+      printf("saving screenshot...\n");
+
+      const int pixelsSize = windowWidth * windowHeight * 3;
+      uint8_t* pixels = new uint8_t[pixelsSize];
+
+      glPixelStorei(GL_PACK_ALIGNMENT, 1);
+      glReadBuffer(GL_FRONT);
+      glReadPixels(0, 0, windowWidth, windowHeight, GL_BGR, GL_UNSIGNED_BYTE, pixels);
+
+      FILE* file = fopen("screenshot.tga", "w");
+      short header[] = {0, 2, 0, 0, 0, 0, (short)windowWidth, (short)windowHeight, 24};
+
+      fwrite(&header, sizeof(header), 1, file);
+      fwrite(pixels, sizeof(uint8_t), pixelsSize, file);
+      fclose(file);
+
+      delete[] pixels;
+      printf("screenshot saved\n");
+    }
+
+    camera.fast = Input::getKey(Input::LEFT_SHIFT).down;
+    if(Input::getKey(Input::W).down){
+      camera.processKeyboard(FORWARD, deltaTime);
+    }
+    if(Input::getKey(Input::S).down){
+      camera.processKeyboard(BACKWARD, deltaTime);
+    }
+    if(Input::getKey(Input::A).down){
+      camera.processKeyboard(LEFT, deltaTime);
+    }
+    if(Input::getKey(Input::D).down){
+      camera.processKeyboard(RIGHT, deltaTime);
+    }
 
     elements = 0;
     chunksDrawn = 0;
@@ -490,6 +473,7 @@ int main(int argc, char** argv){
 
     drawSkybox();
 
+    Input::update();
     window.pollEvents();
     window.swapBuffers();
   }
