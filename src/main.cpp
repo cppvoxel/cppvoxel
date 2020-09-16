@@ -109,7 +109,7 @@ void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum 
   }
 
   printf("---------------\n");
-  printf("Debug message (%u): %d\n", id, message);
+  printf("Debug message (%u): %s\n", id, message);
 
   switch (source){
     case GL_DEBUG_SOURCE_API:             printf("Source: API\n"); break;

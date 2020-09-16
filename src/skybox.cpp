@@ -66,7 +66,7 @@ const unsigned char skyboxIndices[] = {
 unsigned int skyboxVao;
 Shader* skyboxShader;
 
-inline void createSkybox(){
+void createSkybox(){
   skyboxShader = new Shader(skyboxShaderVertexSource, skyboxShaderFragmentSource);
 
   unsigned int vbo, ebo;
@@ -91,11 +91,11 @@ inline void createSkybox(){
   glDeleteBuffers(1, &ebo);
 }
 
-inline void drawSkybox(){
+void drawSkybox(){
   glBindVertexArray(skyboxVao);
   glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
 }
 
-inline void freeSkybox(){
+void freeSkybox(){
   glDeleteVertexArrays(1, &skyboxVao);
 }
