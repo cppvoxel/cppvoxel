@@ -110,7 +110,7 @@ uniform mat4 model;
 
 void main(){
   vTexCoord = texCoord;
-  vDiffuse = brightness / 5.0f;
+  vDiffuse = brightness / 5.0;
 
   gl_Position = projection * view * model * vec4(coord.xyz, 1.0);
 })";
@@ -123,7 +123,7 @@ in float vDiffuse;
 
 uniform sampler2D diffuse_texture;
 
-const vec3 fogColor = vec3(0.3, 0.4, 0.5);
+const vec3 fogColor = vec3(0.15, 0.3, 0.4);
 const float fogDensity = 0.00001;
 
 void main(){
