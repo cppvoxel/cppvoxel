@@ -25,45 +25,7 @@
 #include "common.h"
 #include "chunk.h"
 #include "config.h"
-
-#define SKYBOX_SIZE 1000
-static glm::vec3 DAY_COLOR = {0.3f, 0.6f, 0.8f};
-
-const short skyboxVertices[] = {
-   SKYBOX_SIZE,  SKYBOX_SIZE,  SKYBOX_SIZE,
-  -SKYBOX_SIZE,  SKYBOX_SIZE,  SKYBOX_SIZE,
-  -SKYBOX_SIZE, -SKYBOX_SIZE,  SKYBOX_SIZE,
-   SKYBOX_SIZE, -SKYBOX_SIZE,  SKYBOX_SIZE,
-  -SKYBOX_SIZE,  SKYBOX_SIZE, -SKYBOX_SIZE,
-   SKYBOX_SIZE,  SKYBOX_SIZE, -SKYBOX_SIZE,
-   SKYBOX_SIZE, -SKYBOX_SIZE, -SKYBOX_SIZE,
-  -SKYBOX_SIZE, -SKYBOX_SIZE, -SKYBOX_SIZE,
-  -SKYBOX_SIZE,  SKYBOX_SIZE,  SKYBOX_SIZE,
-  -SKYBOX_SIZE,  SKYBOX_SIZE, -SKYBOX_SIZE,
-  -SKYBOX_SIZE, -SKYBOX_SIZE, -SKYBOX_SIZE,
-  -SKYBOX_SIZE, -SKYBOX_SIZE,  SKYBOX_SIZE,
-   SKYBOX_SIZE,  SKYBOX_SIZE, -SKYBOX_SIZE,
-   SKYBOX_SIZE,  SKYBOX_SIZE,  SKYBOX_SIZE,
-   SKYBOX_SIZE, -SKYBOX_SIZE,  SKYBOX_SIZE,
-   SKYBOX_SIZE, -SKYBOX_SIZE, -SKYBOX_SIZE,
-   SKYBOX_SIZE,  SKYBOX_SIZE, -SKYBOX_SIZE,
-  -SKYBOX_SIZE,  SKYBOX_SIZE, -SKYBOX_SIZE,
-  -SKYBOX_SIZE,  SKYBOX_SIZE,  SKYBOX_SIZE,
-   SKYBOX_SIZE,  SKYBOX_SIZE,  SKYBOX_SIZE,
-  -SKYBOX_SIZE, -SKYBOX_SIZE, -SKYBOX_SIZE,
-   SKYBOX_SIZE, -SKYBOX_SIZE, -SKYBOX_SIZE,
-   SKYBOX_SIZE, -SKYBOX_SIZE,  SKYBOX_SIZE,
-  -SKYBOX_SIZE, -SKYBOX_SIZE,  SKYBOX_SIZE
-};
-
-const unsigned char skyboxIndices[] = {
-  2, 1, 0, 0, 3, 2,
-  6, 5, 4, 4, 7, 6,
-  10, 9, 8, 8, 11, 10,
-  14, 13, 12, 12, 15, 14,
-  18, 17, 16, 16, 19, 18,
-  22, 21, 20, 20, 23, 22
-};
+#include "skybox.h"
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -91,8 +53,6 @@ bool perspectiveChanged = true;
 
 glm::mat4 projection = glm::mat4(1.0f);
 glm::mat4 cameraView;
-
-unsigned int skyboxVao;
 
 const static char* voxelShaderVertexSource = R"(#version 330 core
 layout (location = 0) in vec4 coord;
@@ -134,33 +94,6 @@ void main(){
   float z = gl_FragCoord.z / gl_FragCoord.w;
   float fog = clamp(exp(-fogDensity * z * z), 0.2, 1.0);
   FragColor = vec4(mix(fogColor, color * vDiffuse, fog), 1.0);
-})";
-
-const static char* skyboxShaderVertexSource = R"(#version 330 core
-layout (location = 0) in vec3 position;
-
-out vec3 vCoord;
-
-uniform mat4 projection;
-uniform mat4 view;
-
-void main(){
-  vCoord = position;
-
-  gl_Position = (projection * mat4(mat3(view))) * vec4(position, 1.0);
-})";
-
-const static char* skyboxShaderFragmentSource = R"(#version 330 core
-out vec4 FragColor;
-
-in vec3 vCoord;
-
-uniform vec3 color;
-
-void main(){
-  vec3 sky_normal = normalize(vCoord.xyz);
-  float gradient = dot(sky_normal, vec3(0.0, 1.0, 0.0));
-  FragColor = vec4(color * vec3(gradient + 0.5), 1.0);
 })";
 
 void signalHandler(int signum){
@@ -358,29 +291,6 @@ void updateChunksThread(){
 }
 #endif
 
-inline void createSkybox(){
-  unsigned int vbo, ebo;
-  glGenVertexArrays(1, &skyboxVao);
-  glGenBuffers(1, &vbo);
-  glGenBuffers(1, &ebo);
-
-  glBindVertexArray(skyboxVao);
-
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(skyboxIndices), skyboxIndices, GL_STATIC_DRAW);
-
-  // position
-  glVertexAttribPointer(0, 3, GL_SHORT, GL_FALSE, 3 * sizeof(short), (void*)0);
-  glEnableVertexAttribArray(0);
-
-  glBindVertexArray(0);
-  glDeleteBuffers(1, &vbo);
-  glDeleteBuffers(1, &ebo);
-}
-
 int main(int argc, char** argv){
   signal(SIGABRT, signalHandler);
   signal(SIGFPE, signalHandler);
@@ -450,10 +360,6 @@ int main(int argc, char** argv){
   glClearColor(0.2f, 0.6f, 0.8f, 1.0f);
 
   Texture texture("tiles.png", GL_NEAREST);
-
-  Shader skyboxShader(skyboxShaderVertexSource, skyboxShaderFragmentSource);
-  skyboxShader.use();
-  skyboxShader.setVec3("color", DAY_COLOR);
 
   createSkybox();
 
@@ -546,16 +452,15 @@ int main(int argc, char** argv){
     }
     // printf("draw all chunks %.4fms\n", (glfwGetTime() - start) * 1000.0);
 
-    skyboxShader.use();
-    skyboxShader.setMat4("view", cameraView);
+    skyboxShader->use();
+    skyboxShader->setMat4("view", cameraView);
 
     if(perspectiveChanged){
-      skyboxShader.setMat4("projection", projection);
+      skyboxShader->setMat4("projection", projection);
       perspectiveChanged = false;
     }
 
-    glBindVertexArray(skyboxVao);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
+    drawSkybox();
 
     window.pollEvents();
     window.swapBuffers();
@@ -570,7 +475,7 @@ int main(int argc, char** argv){
     delete chunk;
   }
 
-  glDeleteVertexArrays(1, &skyboxVao);
+  freeSkybox();
 
   return 0;
 }

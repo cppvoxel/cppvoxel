@@ -39,11 +39,12 @@ int Config::getInt(const char* varName, int defaultValue){
   if(temp != NULL){
     char* stop;
     ret = strtol(temp, &stop, 10);
-    free(temp);
 
     if(stop == temp){
       ret = defaultValue;
     }
+
+    free(temp);
   }
 
   if(ret < 1){
