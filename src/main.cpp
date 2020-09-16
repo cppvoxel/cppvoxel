@@ -97,7 +97,8 @@ void main(){
 })";
 
 void signalHandler(int signum){
-  fprintf(stderr, "Interrupt signal %d received\n", signum);
+  fprintf(stderr, "Interrupt signal %d received (pid: %d)\n", signum, getpid());
+
   exit(signum);  
 }
 
@@ -300,9 +301,6 @@ int main(int argc, char** argv){
   pos.y = floorf(camera.position.y / CHUNK_SIZE);
   pos.z = floorf(camera.position.z / CHUNK_SIZE);
 
-  float lastPrintTime = glfwGetTime();
-  unsigned short frames = 0;
-
 #ifdef MULTI_THREADING
   std::thread chunkThread(updateChunksThread);
 #endif
@@ -314,8 +312,9 @@ int main(int argc, char** argv){
   int dx;
   int dy;
   int dz;
-  volatile int *pInt = 0x00000000;
-  *pInt = 20;
+
+  unsigned short frames = 0;
+  float lastPrintTime = glfwGetTime();
 
   while(!window.shouldClose()){
     currentTime = glfwGetTime();
