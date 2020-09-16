@@ -12,6 +12,7 @@ char* Config::getString(const char* varName){
   FILE* file = fopen(path, "r");
   if(file == NULL){
     fprintf(stderr, "%s: %s not found\n", __func__, path);
+    return NULL;
   }
 
   char name[128];
@@ -33,12 +34,16 @@ char* Config::getString(const char* varName){
 int Config::getInt(const char* varName, int defaultValue){
   char* temp = getString(varName);
 
-  char* stop;
-  int ret = strtol(temp, &stop, 10);
-  free(temp);
+  int ret = defaultValue;
 
-  if(stop == temp){
-    ret = defaultValue;
+  if(temp != NULL){
+    char* stop;
+    ret = strtol(temp, &stop, 10);
+    free(temp);
+
+    if(stop == temp){
+      ret = defaultValue;
+    }
   }
 
   if(ret < 1){

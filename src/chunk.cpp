@@ -168,12 +168,12 @@ bool Chunk::update(){
 #endif
 
   // get chunk neighbors
-  Chunk* px = getChunk((vec3i){x + 1, y, z});
-  Chunk* nx = getChunk((vec3i){x - 1, y, z});
-  Chunk* py = getChunk((vec3i){x, y + 1, z});
-  Chunk* ny = getChunk((vec3i){x, y - 1, z});
-  Chunk* pz = getChunk((vec3i){x, y, z + 1});
-  Chunk* nz = getChunk((vec3i){x, y, z - 1});
+  Chunk* px = getChunk(vec3i{x + 1, y, z});
+  Chunk* nx = getChunk(vec3i{x - 1, y, z});
+  Chunk* py = getChunk(vec3i{x, y + 1, z});
+  Chunk* ny = getChunk(vec3i{x, y - 1, z});
+  Chunk* pz = getChunk(vec3i{x, y, z + 1});
+  Chunk* nz = getChunk(vec3i{x, y, z - 1});
 
   if(px == NULL || nx == NULL || py == NULL || ny == NULL || pz == NULL || nz == NULL){
     // printf("missing neighbor(s) %d %d %d %d %d %d\n", px == NULL, nx == NULL, py == NULL, ny == NULL, pz == NULL, nz == NULL);
