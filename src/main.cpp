@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <signal.h>
+#include <limits.h>
 
 #ifdef MULTI_THREADING
 #include <thread>
@@ -348,6 +349,7 @@ int main(int argc, char** argv){
   signal(SIGSEGV, signalHandler);
   signal(SIGTERM, signalHandler);
 
+  printf("== Config ==\n");
   viewDistance = config.getInt("viewDistance", 8);
   maxChunksGeneratedPerFrame = config.getInt("maxChunksGeneratedPerFrame", 32);
   maxChunksDeletedPerFrame = config.getInt("maxChunksDeletedPerFrame", 64);
@@ -359,10 +361,24 @@ int main(int argc, char** argv){
   printf("multithreading disabled\n");
 #endif
 
-  printf("OpenGL version: %s\n", glGetString(GL_VERSION));
-  printf("OpenGL shading language version: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-  printf("OpenGL renderer: %s\n", glGetString(GL_RENDERER));
-  printf("OpenGL vendor: %s\n", glGetString(GL_VENDOR));
+  printf("== OpenGL ==\n");
+  printf("version: %s\n", glGetString(GL_VERSION));
+  printf("shading language version: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+  printf("renderer: %s\n", glGetString(GL_RENDERER));
+  printf("vendor: %s\n", glGetString(GL_VENDOR));
+
+  printf("== System ==\n");
+  printf("CHAR_MAX  : %d\n", CHAR_MAX);
+  printf("CHAR_MIN  : %d\n", CHAR_MIN);
+  printf("INT_MAX   : %d\n", INT_MAX);
+  printf("INT_MIN   : %d\n", INT_MIN);
+  printf("SCHAR_MAX : %d\n", SCHAR_MAX);
+  printf("SCHAR_MIN : %d\n", SCHAR_MIN);
+  printf("SHRT_MAX  : %d\n", SHRT_MAX);
+  printf("SHRT_MIN  : %d\n", SHRT_MIN);
+  printf("UCHAR_MAX : %d\n", UCHAR_MAX);
+  printf("UINT_MAX  : %u\n", (unsigned int)UINT_MAX);
+  printf("USHRT_MAX : %d\n", (unsigned short)USHRT_MAX);
 
   glfwSetFramebufferSizeCallback(window.window, framebufferResizeCallback);
   glfwSetCursorPosCallback(window.window, mouseCallback);

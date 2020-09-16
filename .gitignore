@@ -6,3 +6,4 @@ Makefile
 
 # configs
 .vscode/
+.vs/

@@ -90,6 +90,7 @@ project "cppvoxel"
     defines {"DEBUG"}
     symbols "On"
     targetsuffix ".debug"
+    buildoptions {"-g3", "-O0"}
 
   filter "configurations:Release"
     defines {"NDEBUG"}
