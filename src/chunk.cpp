@@ -408,13 +408,8 @@ bool Chunk::update(){
 void Chunk::draw(){
   bufferMesh();
 
-  // render only if all neighbors exist
-  // if(chunk->px == NULL || chunk->nx == NULL || chunk->py == NULL || chunk->ny == NULL || chunk->pz == NULL || chunk->nz == NULL){
-  //   return;
-  // }
-
   glBindVertexArray(vao);
-  glDrawArrays(GL_TRIANGLES, 0, elements);
+  glDrawArrays(GL_TRIANGLES, 0, elements); CATCH_OPENGL_ERROR
 }
 
 // if the chunk's mesh has been modified then send the new data to opengl (TODO: don't create a new buffer, just reuse the old one)
@@ -442,9 +437,9 @@ inline void Chunk::bufferMesh(){
   glVertexAttribIPointer(1, 1, GL_BYTE, 0, 0);
   glEnableVertexAttribArray(1);
 
-  unsigned int normalBuffer = makeBuffer(GL_ARRAY_BUFFER, elements * sizeof(*normal), normal);
-  glVertexAttribPointer(2, 3, GL_BYTE, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(2);
+  // unsigned int normalBuffer = makeBuffer(GL_ARRAY_BUFFER, elements * sizeof(*normal), normal);
+  // glVertexAttribPointer(2, 3, GL_BYTE, GL_FALSE, 0, 0);
+  // glEnableVertexAttribArray(2);
 
   unsigned int texureBuffer = makeBuffer(GL_ARRAY_BUFFER, elements * 2 * sizeof(*texCoords), texCoords);
   glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -453,7 +448,7 @@ inline void Chunk::bufferMesh(){
   glBindVertexArray(0);
   glDeleteBuffers(1, &vertexBuffer);
   glDeleteBuffers(1, &brightnessBuffer);
-  glDeleteBuffers(1, &normalBuffer);
+  // glDeleteBuffers(1, &normalBuffer);
   glDeleteBuffers(1, &texureBuffer);
 
   free(vertex);

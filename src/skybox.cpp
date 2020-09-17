@@ -2,6 +2,8 @@
 
 #include <GL/glew.h>
 
+#include "common.h"
+
 const static char* shaderVertexSource = R"(#version 330 core
 layout (location = 0) in vec3 position;
 
@@ -96,7 +98,7 @@ void Skybox::create(){
 
 void Skybox::draw(){
   glBindVertexArray(vao);
-  glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
+  glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0); CATCH_OPENGL_ERROR
 }
 
 void Skybox::free(){

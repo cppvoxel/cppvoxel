@@ -3,6 +3,8 @@
 
 #include <map>
 
+#define CATCH_OPENGL_ERROR {GLenum err; while((err = glGetError()) != GL_NO_ERROR){fprintf(stderr, "[OpenGL Error] %s:%d (%s): %#8x\n", __FILE__, __LINE__, __func__, err);}}
+
 struct vec3i{
   int x;
   int y;
