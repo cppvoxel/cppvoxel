@@ -11,9 +11,16 @@
 #include "noise.h"
 #include "blocks.h"
 
+#define sign(_x) ({ __typeof__(_x) _xx = (_x);\
+  ((__typeof__(_x)) ( (((__typeof__(_x)) 0) < _xx) - (_xx < ((__typeof__(_x)) 0))));})
+
 #define TEXTURE_SIZE 4
 #define VOID_BLOCK 0 // block id if there is no neighbor for block
 // #define PRINT_TIMING
+
+inline float lerp(float a, float b, float t){
+  return a * (1.0f - t) + b * t;
+}
 
 inline unsigned short blockIndex(uint8_t x, uint8_t y, uint8_t z){
   return x | (y << 5) | (z << 10);
@@ -86,7 +93,7 @@ Chunk::Chunk(int _x, int _y, int _z){
 #endif
 
   int dx, dz, cx, cz, h, rh;
-  float f;
+  float f, biomeHeight, e;
   uint8_t dy, thickness;
   block_t block;
 
@@ -95,13 +102,16 @@ Chunk::Chunk(int _x, int _y, int _z){
       cx = x * CHUNK_SIZE + dx;
       cz = z * CHUNK_SIZE + dz;
 
-      f = simplex2(cx * 0.003f, cz * 0.003f, 6, 0.6f, 1.5f);
-      h = pow((f + 1) / 2 + 1, 9);
+      biomeHeight = simplex2(cx * 0.002f, cz * 0.002f, 2, 0.6f, 1.5f);
+      e = lerp(1.3f, 0.2f, (biomeHeight - 1.0f) / 2.0f);
+
+      f = simplex2(cx * 0.001f, cz * 0.001f, 6, 0.6f, 1.5f);
+      h = pow((f + 1) / 2 + 1, 9) * e;
       rh = h - y * CHUNK_SIZE;
 
       for(dy = 0; dy < CHUNK_SIZE; dy++){
         thickness = rh - dy;
-        block = h < 15 && thickness <= 10 ? 8 : h < 18 && thickness <= 3 ? 5 : h >= 140 && thickness <= 7 ? 7 : thickness == 1 ? 1 : thickness <= 6 ? 3 : 2;
+        block = h < 15 && thickness <= 10 ? 8 : h < 18 && thickness <= 3 ? 5 : h >= 160 && thickness <= 7 ? 7 : thickness == 1 ? 1 : thickness <= 6 ? 3 : 2;
         if(block == 8 && h < 14){
           h = 14;
           rh = h - y * CHUNK_SIZE;

@@ -520,7 +520,7 @@ int main(int argc, char** argv){
       perspectiveChanged = false;
     }
 
-    // Skybox::draw(); CATCH_OPENGL_ERROR
+    Skybox::draw(); CATCH_OPENGL_ERROR
 
     Input::update();
     window.pollEvents();
