@@ -68,6 +68,7 @@ layout (location = 1) in int brightness;
 // layout (location = 2) in vec3 normal;
 layout (location = 3) in vec2 texCoord;
 
+out vec3 vPosition;
 out vec2 vTexCoord;
 out float vDiffuse;
 
@@ -76,6 +77,7 @@ uniform mat4 view;
 uniform mat4 model;
 
 void main(){
+  vPosition = (view * model * vec4(coord.xyz, 1.0)).xyz;
   vTexCoord = texCoord;
   vDiffuse = brightness / 5.0;
 
@@ -85,23 +87,18 @@ void main(){
 const static char* voxelShaderFragmentSource = R"(#version 330 core
 out vec4 FragColor;
 
+in vec3 vPosition;
 in vec2 vTexCoord;
 in float vDiffuse;
 
 uniform sampler2D diffuse_texture;
 
-const vec3 fogColor = vec3(0.15, 0.3, 0.4);
-const float fogDensity = 0.00001;
+uniform int fog_near;
+uniform int fog_far;
 
 void main(){
-  vec3 color = texture(diffuse_texture, vTexCoord).rgb;
-  if(color == vec3(1.0, 0.0, 1.0)){
-    discard;
-  }
-
-  float z = gl_FragCoord.z / gl_FragCoord.w;
-  float fog = clamp(exp(-fogDensity * z * z), 0.2, 1.0);
-  FragColor = vec4(mix(fogColor, color * vDiffuse, fog), 1.0);
+  FragColor = vec4(texture(diffuse_texture, vTexCoord).rgb * vDiffuse, 1.0);
+  FragColor *= 1.0 - smoothstep(fog_near, fog_far, length(vPosition));
 })";
 
 void signalHandler(int signum){
@@ -238,6 +235,10 @@ void updateChunks(){
 
         if(chunk->changed){
           chunksGenerated++;
+
+          // if(isChunkInsideFrustum(chunk->model)){
+          //   chunk->update();
+          // }
         }
       }
     }
@@ -245,7 +246,7 @@ void updateChunks(){
   // printf("chunk generate %.2fms\n", (glfwGetTime() - start) * 1000.0);
 
   for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
-    if(isChunkInsideFrustum(it->second->model)){
+    if(it->second->changed && isChunkInsideFrustum(it->second->model)){
       it->second->update();
     }
   }
@@ -340,7 +341,9 @@ int main(int argc, char** argv){
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
-  glClearColor(0.2f, 0.6f, 0.8f, 1.0f);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
   Texture texture("tiles.png", GL_NEAREST);
 
@@ -349,6 +352,8 @@ int main(int argc, char** argv){
   Shader shader(voxelShaderVertexSource, voxelShaderFragmentSource);
   shader.use();
   shader.setInt("diffuse_texture", 0);
+  shader.setInt("fog_near", viewDistance * CHUNK_SIZE - 12);
+  shader.setInt("fog_far", viewDistance * CHUNK_SIZE - 6);
 
   CATCH_OPENGL_ERROR
 
@@ -460,6 +465,17 @@ int main(int argc, char** argv){
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    Skybox::shader->use();
+    Skybox::shader->setMat4("view", cameraView);
+
+    if(perspectiveChanged){
+      Skybox::shader->setMat4("projection", projection);
+      perspectiveChanged = false;
+    }
+
+    Skybox::draw(); CATCH_OPENGL_ERROR
+    shader.use();
+
 #if !defined(DELETE_CHUNKS_THREAD) || !defined(MULTI_THREADING)
     // deleteChunks();
 #endif
@@ -511,16 +527,6 @@ int main(int argc, char** argv){
     chunkThreadMutex.unlock();
 #endif
     // printf("draw all chunks %.4fms\n", (glfwGetTime() - start) * 1000.0);
-
-    Skybox::shader->use();
-    Skybox::shader->setMat4("view", cameraView);
-
-    if(perspectiveChanged){
-      Skybox::shader->setMat4("projection", projection);
-      perspectiveChanged = false;
-    }
-
-    Skybox::draw(); CATCH_OPENGL_ERROR
 
     Input::update();
     window.pollEvents();
