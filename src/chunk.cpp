@@ -146,6 +146,7 @@ Chunk::~Chunk(){
 
   // delete the stored data
   free(blocks);
+  blocks = NULL;
 
   // delete buffers if needed
   if(vertex != NULL){
@@ -169,7 +170,7 @@ Chunk::~Chunk(){
 // update the chunk
 bool Chunk::update(){
   // if the chunk does not need to remesh then stop
-  if(!changed){
+  if(!changed || blocks == NULL){
     return false;
   }
 

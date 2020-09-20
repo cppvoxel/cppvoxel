@@ -1,12 +1,11 @@
 #define MULTI_THREADING
-// #define DELETE_CHUNKS_THREAD
 
 #include <stdio.h>
 #include <signal.h>
 #include <limits.h>
-
 #include <thread>
-#if defined(DELETE_CHUNKS_THREAD) && defined(MULTI_THREADING)
+
+#ifdef MULTI_THREADING
 #include <mutex>
 #endif
 
@@ -58,7 +57,7 @@ bool perspectiveChanged = true;
 glm::mat4 projection = glm::mat4(1.0f);
 glm::mat4 cameraView;
 
-#if defined(DELETE_CHUNKS_THREAD) && defined(MULTI_THREADING)
+#ifdef MULTI_THREADING
 std::mutex chunkThreadMutex;
 #endif
 
@@ -181,38 +180,6 @@ inline bool isChunkInsideFrustum(glm::mat4 model){
   return !(center.z < -CHUNK_SIZE / 2 || fabsf(center.x) > 1 + fabsf(CHUNK_SIZE * 2 / center.w) || fabsf(center.y) > 1 + fabsf(CHUNK_SIZE * 2 / center.w));
 }
 
-void deleteChunks(){
-  unsigned short chunksDeleted = 0;
-#if defined(DELETE_CHUNKS_THREAD) && defined(MULTI_THREADING)
-  chunkThreadMutex.lock();
-#endif
-
-  for(chunk_it it = chunks.begin(); it != chunks.end();){
-    Chunk* chunk = it->second;
-
-    int dx = pos.x - chunk->x;
-    int dy = pos.y - chunk->y;
-    int dz = pos.z - chunk->z;
-
-    // delete chunks outside of render radius
-    if(abs(dx) > viewDistance || abs(dy) > viewDistance || abs(dz) > viewDistance){
-      it = chunks.erase(it);
-      delete chunk;
-
-      chunksDeleted++;
-      if(chunksDeleted >= maxChunksDeletedPerFrame){
-        break;
-      }
-    }else{
-      it++;
-    }
-  }
-
-#if defined(DELETE_CHUNKS_THREAD) && defined(MULTI_THREADING)
-  chunkThreadMutex.unlock();
-#endif
-}
-
 void updateChunks(){
   // double start = glfwGetTime();
   // generate new chunks needed
@@ -235,10 +202,6 @@ void updateChunks(){
 
         if(chunk->changed){
           chunksGenerated++;
-
-          // if(isChunkInsideFrustum(chunk->model)){
-          //   chunk->update();
-          // }
         }
       }
     }
@@ -256,9 +219,6 @@ void updateChunks(){
 void updateChunksThread(){
   while(!window.shouldClose()){
   // double start = glfwGetTime();
-#ifdef DELETE_CHUNKS_THREAD
-    deleteChunks();
-#endif
     updateChunks();
   // printf("chunk thread %.2fms\n", (glfwGetTime() - start) * 1000.0);
 
@@ -445,16 +405,6 @@ int main(int argc, char** argv){
     elements = 0;
     chunksDrawn = 0;
 
-    shader.use();
-
-    if(perspectiveChanged){
-      projection = glm::perspective(glm::radians(camera.fov), (float)windowWidth/(float)windowHeight, .1f, SKYBOX_SIZE * 2.0f);
-      shader.setMat4("projection", projection);
-    }
-
-    cameraView = camera.getViewMatrix();
-    shader.setMat4("view", cameraView);
-
     pos.x = (int)floorf(camera.position.x / CHUNK_SIZE);
     pos.y = (int)floorf(camera.position.y / CHUNK_SIZE);
     pos.z = (int)floorf(camera.position.z / CHUNK_SIZE);
@@ -465,25 +415,30 @@ int main(int argc, char** argv){
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    cameraView = camera.getViewMatrix();
+
     Skybox::shader->use();
     Skybox::shader->setMat4("view", cameraView);
 
     if(perspectiveChanged){
+      projection = glm::perspective(glm::radians(camera.fov), (float)windowWidth/(float)windowHeight, .1f, SKYBOX_SIZE * 2.0f);
       Skybox::shader->setMat4("projection", projection);
-      perspectiveChanged = false;
     }
 
     Skybox::draw(); CATCH_OPENGL_ERROR
-    shader.use();
 
-#if !defined(DELETE_CHUNKS_THREAD) || !defined(MULTI_THREADING)
-    // deleteChunks();
-#endif
+    shader.use();
+    if(perspectiveChanged){
+      shader.setMat4("projection", projection);
+      perspectiveChanged = false;
+    }
+
+    shader.setMat4("view", cameraView);
 
     unsigned short chunksDeleted = 0;
     // double start = glfwGetTime();
-#if defined(DELETE_CHUNKS_THREAD) && defined(MULTI_THREADING)
-    chunkThreadMutex.lock();
+#ifdef MULTI_THREADING
+    // chunkThreadMutex.lock();
 #endif
     for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
       Chunk* chunk = it->second;
@@ -498,13 +453,11 @@ int main(int argc, char** argv){
 
       // don't render chunks outside of render radius
       if(abs(dx) > viewDistance || abs(dy) > viewDistance || abs(dz) > viewDistance){
-#if !defined(DELETE_CHUNKS_THREAD) || !defined(MULTI_THREADING)
         if(chunksDeleted < maxChunksDeletedPerFrame){
           it = chunks.erase(it);
           delete chunk;
           chunksDeleted++;
         }
-#endif
         continue;
       }
 
@@ -523,8 +476,8 @@ int main(int argc, char** argv){
       elements += chunk->elements;
       chunksDrawn++;
     }
-#if defined(DELETE_CHUNKS_THREAD) && defined(MULTI_THREADING)
-    chunkThreadMutex.unlock();
+#ifdef MULTI_THREADING
+    // chunkThreadMutex.unlock();
 #endif
     // printf("draw all chunks %.4fms\n", (glfwGetTime() - start) * 1000.0);
 
