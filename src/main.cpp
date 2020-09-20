@@ -80,7 +80,7 @@ void main(){
   vTexCoord = texCoord;
   vDiffuse = brightness / 5.0;
 
-  gl_Position = projection * view * model * vec4(coord.xyz, 1.0);
+  gl_Position = projection * vec4(vPosition, 1.0);
 })";
 
 const static char* voxelShaderFragmentSource = R"(#version 330 core
