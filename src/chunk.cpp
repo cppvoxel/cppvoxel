@@ -85,8 +85,7 @@ Chunk::Chunk(int _x, int _y, int _z){
   y = _y;
   z = _z;
 
-  model = glm::mat4(1.0f);
-  model = glm::translate(model, glm::vec3(x * CHUNK_SIZE, y * CHUNK_SIZE, z * CHUNK_SIZE));
+  model = glm::translate(glm::mat4(1.0f), glm::vec3(x * CHUNK_SIZE, y * CHUNK_SIZE, z * CHUNK_SIZE));
 
 #ifdef PRINT_TIMING
   unsigned short count = 0;

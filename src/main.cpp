@@ -46,7 +46,7 @@ int viewDistance;
 int maxChunksGeneratedPerFrame;
 int maxChunksDeletedPerFrame;
 
-Camera camera(glm::vec3(0.0f, 50.0f, 0.0f));
+Camera camera(glm::vec3(0.0f, 150.0f, 0.0f));
 float lastX = (float)windowWidth / 2.0f;
 float lastY = (float)windowHeight / 2.0f;
 bool firstMouse = true;
@@ -185,6 +185,7 @@ void updateChunks(){
   // generate new chunks needed
   vec3i chunkPos;
   Chunk* chunk;
+  glm::mat4 model;
   unsigned short chunksGenerated = 0;
   for(int i = -viewDistance; i <= viewDistance && chunksGenerated < maxChunksGeneratedPerFrame; i++){
     for(int j = -viewDistance; j <= viewDistance && chunksGenerated < maxChunksGeneratedPerFrame; j++){
@@ -193,7 +194,8 @@ void updateChunks(){
         chunkPos.y = pos.y + k;
         chunkPos.z = pos.z + j;
 
-        if(getChunk(chunkPos) != NULL){
+        model = glm::translate(glm::mat4(1.0f), glm::vec3(chunkPos.x * CHUNK_SIZE, chunkPos.y * CHUNK_SIZE, chunkPos.z * CHUNK_SIZE));
+        if(getChunk(chunkPos) != NULL || !isChunkInsideFrustum(model)){
           continue;
         }
 
