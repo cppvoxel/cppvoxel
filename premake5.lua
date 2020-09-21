@@ -1,4 +1,4 @@
-workspace "cengine"
+workspace "cppvoxel"
   configurations {"Debug", "Release"}
   architecture "x64"
   location "build"

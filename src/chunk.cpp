@@ -101,10 +101,10 @@ Chunk::Chunk(int _x, int _y, int _z){
       cx = x * CHUNK_SIZE + dx;
       cz = z * CHUNK_SIZE + dz;
 
-      biomeHeight = simplex2(cx * 0.002f, cz * 0.002f, 2, 0.6f, 1.5f);
+      biomeHeight = simplex2(cx * 0.003f, cz * 0.003f, 2, 0.6f, 1.5f);
       e = lerp(1.3f, 0.2f, (biomeHeight - 1.0f) / 2.0f);
 
-      f = simplex2(cx * 0.001f, cz * 0.001f, 6, 0.6f, 1.5f);
+      f = simplex2(cx * 0.002f, cz * 0.002f, 6, 0.6f, 1.5f);
       h = pow((f + 1) / 2 + 1, 9) * e;
       rh = h - y * CHUNK_SIZE;
 
