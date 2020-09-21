@@ -99,6 +99,7 @@ uniform int fog_far;
 void main(){
   FragColor = vec4(texture(texture_array, vTexCoord).rgb * vDiffuse, 1.0);
   FragColor *= 1.0 - smoothstep(fog_near, fog_far, length(vPosition));
+  FragColor = vec4(pow(FragColor.rgb, vec3(1.0 / 2.2)), FragColor.a);
 })";
 
 void signalHandler(int signum){

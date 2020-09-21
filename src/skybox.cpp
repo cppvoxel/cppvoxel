@@ -26,7 +26,7 @@ in vec3 vCoord;
 void main(){
   vec3 sky_normal = normalize(vCoord.xyz);
   float gradient = dot(sky_normal, vec3(0.0, 1.0, 0.0));
-  FragColor = vec4(vec3(0.3f, 0.6f, 0.8f) * vec3(gradient + 0.5), 1.0);
+  FragColor = vec4(pow(vec3(0.3f, 0.7f, 1.0f) * vec3(gradient + 0.5), vec3(1.0 / 2.2)), 1.0);
 })";
 
 const short vertices[] = {
