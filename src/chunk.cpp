@@ -79,7 +79,7 @@ Chunk::Chunk(int _x, int _y, int _z){
   changed = false;
   meshChanged = false;
   vertex = NULL;
-  brightness = NULL;
+  // brightness = NULL;
   normal = NULL;
   texCoords = NULL;
 
@@ -154,10 +154,10 @@ Chunk::~Chunk(){
     free(vertex);
     vertex = NULL;
   }
-  if(brightness != NULL){
-    free(brightness);
-    brightness = NULL;
-  }
+  // if(brightness != NULL){
+  //   free(brightness);
+  //   brightness = NULL;
+  // }
   if(normal != NULL){
     free(normal);
     normal = NULL;
@@ -211,9 +211,9 @@ bool Chunk::update(){
   if(vertex == NULL){
     vertex = (byte4*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(byte4));
   }
-  if(brightness == NULL){
-    brightness = (char*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(char));
-  }
+  // if(brightness == NULL){
+  //   brightness = (char*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(char));
+  // }
   if(normal == NULL){
     normal = (byte3*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(byte3));
   }
@@ -246,7 +246,7 @@ bool Chunk::update(){
 
           // set the brightness data for the face
           for(int k = 0; k < 6; k++){
-            brightness[j] = 4;
+            // brightness[j] = 4;
             byte3Set(-1, 0, 0, normal[j++]);
           }
 
@@ -275,7 +275,7 @@ bool Chunk::update(){
 
           // set the brightness data for the face
           for(int k = 0; k < 6; k++){
-            brightness[j] = 4;
+            // brightness[j] = 4;
             byte3Set(1, 0, 0, normal[j++]);
           }
 
@@ -304,7 +304,7 @@ bool Chunk::update(){
 
           // set the brightness data for the face
           for(int k = 0; k < 6; k++){
-            brightness[j] = 3;
+            // brightness[j] = 3;
             byte3Set(0, 0, -1, normal[j++]);
           }
 
@@ -333,7 +333,7 @@ bool Chunk::update(){
 
           // set the brightness data for the face
           for(int k = 0; k < 6; k++){
-            brightness[j] = 3;
+            // brightness[j] = 3;
             byte3Set(0, 0, 1, normal[j++]);
           }
 
@@ -362,7 +362,7 @@ bool Chunk::update(){
 
           // set the brightness data for the face
           for(int k = 0; k < 6; k++){
-            brightness[j] = 2;
+            // brightness[j] = 2;
             byte3Set(0, -1, 0, normal[j++]);
           }
 
@@ -391,7 +391,7 @@ bool Chunk::update(){
 
           // set the brightness data for the face
           for(int k = 0; k < 6; k++){
-            brightness[j] = 5;
+            // brightness[j] = 5;
             byte3Set(0, 1, 0, normal[j++]);
           }
 
@@ -445,13 +445,13 @@ inline void Chunk::bufferMesh(){
   glVertexAttribPointer(0, 4, GL_BYTE, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(0);
 
-  unsigned int brightnessBuffer = makeBuffer(GL_ARRAY_BUFFER, elements * sizeof(*brightness), brightness);
-  glVertexAttribIPointer(1, 1, GL_BYTE, 0, 0);
-  glEnableVertexAttribArray(1);
+  // unsigned int brightnessBuffer = makeBuffer(GL_ARRAY_BUFFER, elements * sizeof(*brightness), brightness);
+  // glVertexAttribIPointer(1, 1, GL_BYTE, 0, 0);
+  // glEnableVertexAttribArray(1);
 
-  // unsigned int normalBuffer = makeBuffer(GL_ARRAY_BUFFER, elements * sizeof(*normal), normal);
-  // glVertexAttribPointer(2, 3, GL_BYTE, GL_FALSE, 0, 0);
-  // glEnableVertexAttribArray(2);
+  unsigned int normalBuffer = makeBuffer(GL_ARRAY_BUFFER, elements * sizeof(*normal), normal);
+  glVertexAttribPointer(2, 3, GL_BYTE, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(2);
 
   unsigned int texureBuffer = makeBuffer(GL_ARRAY_BUFFER, elements * 2 * sizeof(*texCoords), texCoords);
   glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -459,14 +459,14 @@ inline void Chunk::bufferMesh(){
 
   glBindVertexArray(0);
   glDeleteBuffers(1, &vertexBuffer);
-  glDeleteBuffers(1, &brightnessBuffer);
-  // glDeleteBuffers(1, &normalBuffer);
+  // glDeleteBuffers(1, &brightnessBuffer);
+  glDeleteBuffers(1, &normalBuffer);
   glDeleteBuffers(1, &texureBuffer);
 
   free(vertex);
   vertex = NULL;
-  free(brightness);
-  brightness = NULL;
+  // free(brightness);
+  // brightness = NULL;
   free(normal);
   normal = NULL;
   free(texCoords);

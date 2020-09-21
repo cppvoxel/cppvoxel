@@ -64,8 +64,8 @@ std::mutex chunkThreadMutex;
 
 const static char* voxelShaderVertexSource = R"(#version 330 core
 layout (location = 0) in vec4 coord;
-layout (location = 1) in int brightness;
-// layout (location = 2) in vec3 normal;
+// layout (location = 1) in int brightness;
+layout (location = 2) in vec3 normal;
 layout (location = 3) in vec2 texCoord;
 
 out vec3 vPosition;
@@ -76,10 +76,13 @@ uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
 
+const vec3 sun_direction = normalize(vec3(1, 3, 2));
+const float ambient = 0.4f;
+
 void main(){
   vPosition = (view * model * vec4(coord.xyz, 1.0)).xyz;
   vTexCoord = vec3(texCoord.xy, coord.w);
-  vDiffuse = brightness / 5.0;
+  vDiffuse = (max(dot(normal, sun_direction), 0.0) + ambient) /** (brightness / 5.0)*/;
 
   gl_Position = projection * vec4(vPosition, 1.0);
 })";

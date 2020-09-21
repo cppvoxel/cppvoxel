@@ -34,7 +34,7 @@ private:
   unsigned int vao;
   bool meshChanged;
   byte4* vertex;
-  char* brightness;
+  // char* brightness;
   byte3* normal;
   float *texCoords;
 
