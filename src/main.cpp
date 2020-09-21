@@ -19,10 +19,11 @@
 #include <glfw/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 #include <Window.h>
 #include <Shader.h>
-#include <Texture.h>
 #include <Camera.h>
 
 #include "common.h"
@@ -68,7 +69,7 @@ layout (location = 1) in int brightness;
 layout (location = 3) in vec2 texCoord;
 
 out vec3 vPosition;
-out vec2 vTexCoord;
+out vec3 vTexCoord;
 out float vDiffuse;
 
 uniform mat4 projection;
@@ -77,7 +78,7 @@ uniform mat4 model;
 
 void main(){
   vPosition = (view * model * vec4(coord.xyz, 1.0)).xyz;
-  vTexCoord = texCoord;
+  vTexCoord = vec3(texCoord.xy, coord.w);
   vDiffuse = brightness / 5.0;
 
   gl_Position = projection * vec4(vPosition, 1.0);
@@ -87,16 +88,16 @@ const static char* voxelShaderFragmentSource = R"(#version 330 core
 out vec4 FragColor;
 
 in vec3 vPosition;
-in vec2 vTexCoord;
+in vec3 vTexCoord;
 in float vDiffuse;
 
-uniform sampler2D diffuse_texture;
+uniform sampler2DArray texture_array;
 
 uniform int fog_near;
 uniform int fog_far;
 
 void main(){
-  FragColor = vec4(texture(diffuse_texture, vTexCoord).rgb * vDiffuse, 1.0);
+  FragColor = vec4(texture(texture_array, vTexCoord).rgb * vDiffuse, 1.0);
   FragColor *= 1.0 - smoothstep(fog_near, fog_far, length(vPosition));
 })";
 
@@ -307,13 +308,43 @@ int main(int argc, char** argv){
   glEnable(GL_BLEND);
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-  Texture texture("tiles.png", GL_NEAREST);
+  const int NUM_TEXTURES = 11;
+  const int TEXTURE_RES = 16;
+  const char* const TEXTURE_NAMES[NUM_TEXTURES] = {"dirt", "stone", "bedrock", "sand", "grass_side", "glass", "snow", "water", "grass", "log", "log_top"};
+
+  glActiveTexture(GL_TEXTURE0);
+  unsigned int textureArray;
+  glGenTextures(1, &textureArray);
+  glBindTexture(GL_TEXTURE_2D_ARRAY, textureArray);
+  glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_SRGB_ALPHA, TEXTURE_RES, TEXTURE_RES, NUM_TEXTURES, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+  for(int i = 0; i < NUM_TEXTURES; i++){
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true);
+
+    const char* texPath = ("res/" + std::string(TEXTURE_NAMES[i]) + ".png").c_str();
+    uint8_t* imageData = stbi_load(texPath, &width, &height, &nrChannels, STBI_rgb_alpha);
+    if(imageData){
+      glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, TEXTURE_RES, TEXTURE_RES, 1, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
+      printf("loaded texture: %s\n", texPath);
+    }else{
+      fprintf(stderr, "failed to load texture: %s\n", texPath);
+    }
+
+    stbi_image_free(imageData);
+  }
+
+  glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+  glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   Skybox::create();
 
   Shader shader(voxelShaderVertexSource, voxelShaderFragmentSource);
   shader.use();
-  shader.setInt("diffuse_texture", 0);
+  shader.setInt("texture_array", 0);
   shader.setInt("fog_near", viewDistance * CHUNK_SIZE - 12);
   shader.setInt("fog_far", viewDistance * CHUNK_SIZE - 6);
 
@@ -499,6 +530,8 @@ int main(int argc, char** argv){
   }
 
   Skybox::free();
+
+  glDeleteTextures(1, &textureArray);
 
   return 0;
 }
