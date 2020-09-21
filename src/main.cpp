@@ -214,12 +214,6 @@ void updateChunks(){
     }
   }
   // printf("chunk generate %.2fms\n", (glfwGetTime() - start) * 1000.0);
-
-  for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
-    if(it->second->changed && isChunkInsideFrustum(it->second->model)){
-      it->second->update();
-    }
-  }
 }
 
 #ifdef MULTI_THREADING
@@ -404,7 +398,7 @@ int main(int argc, char** argv){
     }
 
     if(Input::getKey(Input::F2).pressed){
-      // @FIXME: please
+      // FIXME: please
       printf("saving screenshot...\n");
 
       const int pixelsSize = windowWidth * windowHeight * 3;
@@ -480,6 +474,7 @@ int main(int argc, char** argv){
     for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
       Chunk* chunk = it->second;
 
+      // FIXME: this should not be needed
       if(chunk == NULL){
         continue;
       }
@@ -496,6 +491,10 @@ int main(int argc, char** argv){
           chunksDeleted++;
         }
         continue;
+      }
+
+      if(chunk->changed){
+        chunk->update();
       }
 
       // don't draw if chunk has no mesh
