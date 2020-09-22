@@ -52,7 +52,7 @@ int windowWidth = 800;
 int windowHeight = 600;
 int windowedXPos, windowedYPos, windowedWidth, windowedHeight;
 
-Config config("res/config.conf");
+Config config("config.conf");
 Window window(windowWidth, windowHeight, "cppvoxel");
 
 // config

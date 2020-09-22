@@ -10,4 +10,4 @@ Makefile
 .vs/
 
 screenshot.tga
-res/config.conf
+config.conf
