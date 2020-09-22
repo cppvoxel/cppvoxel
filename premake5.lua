@@ -62,6 +62,7 @@ workspace "cppvoxel"
 project "cppvoxel"
   kind "ConsoleApp"
   language "C++"
+  cppdialect "C++11"
   targetdir "bin"
   objdir "obj"
 
