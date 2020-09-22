@@ -446,6 +446,11 @@ int main(int argc, char** argv){
       }
     }
 
+    if(Input::getKey(Input::F10).pressed){
+      vsync = !vsync;
+      glfwSwapInterval(vsync ? 1 : 0);
+    }
+
     if(Input::getKey(Input::F2).pressed){
       // FIXME: please
       printf("saving screenshot...\n");
