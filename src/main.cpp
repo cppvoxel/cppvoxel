@@ -205,10 +205,11 @@ inline void updateChunks(){
   vec3i chunkPos;
   Chunk* chunk;
   // unsigned short chunksGenerated = 0;
+  int distance = viewDistance + 1;
 
-  for(int i = -viewDistance; i <= viewDistance; i++){
-    for(int j = -viewDistance; j <= viewDistance; j++){
-      for(int k = -viewDistance; k <= viewDistance; k++){
+  for(int i = -distance; i <= distance; i++){
+    for(int j = -distance; j <= distance; j++){
+      for(int k = -distance; k <= distance; k++){
         chunkPos.x = camPos.x + i;
         chunkPos.y = camPos.y + k;
         chunkPos.z = camPos.z + j;
@@ -524,7 +525,7 @@ int main(int argc, char** argv){
       Chunk* chunk = it->second;
 
       // FIXME: this should not be needed
-      if(chunk == NULL || chunk->empty){
+      if(chunk == NULL){
         continue;
       }
 
@@ -533,16 +534,17 @@ int main(int argc, char** argv){
       dz = pos.z - chunk->z;
 
       // don't render chunks outside of render radius
-      if(abs(dx) > viewDistance || abs(dy) > viewDistance || abs(dz) > viewDistance){
+      if(abs(dx) > viewDistance + 1 || abs(dy) > viewDistance + 1 || abs(dz) > viewDistance + 1){
         if(chunksDeleted < maxChunksDeletedPerFrame){
           it = chunks.erase(it);
           delete chunk;
           chunksDeleted++;
         }
+
         continue;
       }
 
-      if(!isChunkInsideFrustum(chunk->model)){
+      if(chunk->empty || abs(dx) > viewDistance || abs(dy) > viewDistance || abs(dz) > viewDistance || !isChunkInsideFrustum(chunk->model)){
         continue;
       }
 
