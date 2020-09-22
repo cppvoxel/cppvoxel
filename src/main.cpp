@@ -32,6 +32,19 @@
 #include "skybox.h"
 #include "input.h"
 
+// textures
+#include "dirt.h"
+#include "stone.h"
+#include "bedrock.h"
+#include "sand.h"
+#include "grass_side.h"
+#include "glass.h"
+#include "snow.h"
+#include "water.h"
+#include "grass.h"
+#include "log.h"
+#include "log_top.h"
+
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
@@ -305,7 +318,6 @@ int main(int argc, char** argv){
 
   const int NUM_TEXTURES = 11;
   const int TEXTURE_RES = 16;
-  const char* const TEXTURE_NAMES[NUM_TEXTURES] = {"dirt", "stone", "bedrock", "sand", "grass_side", "glass", "snow", "water", "grass", "log", "log_top"};
 
   glActiveTexture(GL_TEXTURE0);
   unsigned int textureArray;
@@ -313,17 +325,56 @@ int main(int argc, char** argv){
   glBindTexture(GL_TEXTURE_2D_ARRAY, textureArray);
   glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_SRGB_ALPHA, TEXTURE_RES, TEXTURE_RES, NUM_TEXTURES, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
+  stbi_set_flip_vertically_on_load(true);
   for(int i = 0; i < NUM_TEXTURES; i++){
     int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true);
 
-    const char* texPath = ("res/" + std::string(TEXTURE_NAMES[i]) + ".png").c_str();
-    uint8_t* imageData = stbi_load(texPath, &width, &height, &nrChannels, STBI_rgb_alpha);
+    uint8_t* imageData;
+    switch(i){
+      case 0:
+        imageData = stbi_load_from_memory(IMAGE_DIRT_BYTES, sizeof(IMAGE_DIRT_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+        break;
+      case 1:
+        imageData = stbi_load_from_memory(IMAGE_STONE_BYTES, sizeof(IMAGE_STONE_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+        break;
+      case 2:
+        imageData = stbi_load_from_memory(IMAGE_BEDROCK_BYTES, sizeof(IMAGE_BEDROCK_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+        break;
+      case 3:
+        imageData = stbi_load_from_memory(IMAGE_SAND_BYTES, sizeof(IMAGE_SAND_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+        break;
+      case 4:
+        imageData = stbi_load_from_memory(IMAGE_GRASS_SIDE_BYTES, sizeof(IMAGE_GRASS_SIDE_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+        break;
+      case 5:
+        imageData = stbi_load_from_memory(IMAGE_GLASS_BYTES, sizeof(IMAGE_GLASS_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+        break;
+      case 6:
+        imageData = stbi_load_from_memory(IMAGE_SNOW_BYTES, sizeof(IMAGE_SNOW_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+        break;
+      case 7:
+        imageData = stbi_load_from_memory(IMAGE_WATER_BYTES, sizeof(IMAGE_WATER_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+        break;
+      case 8:
+        imageData = stbi_load_from_memory(IMAGE_GRASS_BYTES, sizeof(IMAGE_GRASS_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+        break;
+      case 9:
+        imageData = stbi_load_from_memory(IMAGE_LOG_BYTES, sizeof(IMAGE_LOG_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+      case 10:
+        imageData = stbi_load_from_memory(IMAGE_LOG_TOP_BYTES, sizeof(IMAGE_LOG_TOP_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+        break;
+        break;
+      default:
+        fprintf(stderr, "invalid texture id\n");
+        exit(-1);
+        break;
+    }
+
     if(imageData){
       glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, TEXTURE_RES, TEXTURE_RES, 1, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
-      printf("loaded texture: %s\n", texPath);
+      printf("loaded texture %d\n", i);
     }else{
-      fprintf(stderr, "failed to load texture: %s\n", texPath);
+      fprintf(stderr, "failed to load texture %d\n", i);
     }
 
     stbi_image_free(imageData);
