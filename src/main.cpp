@@ -45,14 +45,13 @@
 #include "log.h"
 #include "log_top.h"
 
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
+double deltaTime;
+double lastFrame;
 
 int windowWidth = 800;
 int windowHeight = 600;
 int windowedXPos, windowedYPos, windowedWidth, windowedHeight;
 
-Config config("config.conf");
 Window window(windowWidth, windowHeight, "cppvoxel");
 
 // config
@@ -72,7 +71,7 @@ glm::mat4 projection = glm::mat4(1.0f);
 glm::mat4 cameraView;
 
 #ifdef MULTI_THREADING
-std::mutex chunkThreadMutex;
+// std::mutex chunkThreadMutex;
 #endif
 
 const static char* voxelShaderVertexSource = R"(#version 330 core
@@ -204,7 +203,6 @@ inline void updateChunks(){
   vec3i camPos = pos;
   vec3i chunkPos;
   Chunk* chunk;
-  // unsigned short chunksGenerated = 0;
   int distance = viewDistance + 1;
 
   for(int i = -distance; i <= distance; i++){
@@ -220,8 +218,9 @@ inline void updateChunks(){
 
         chunk = new Chunk(chunkPos.x, chunkPos.y, chunkPos.z);
         chunks[chunkPos] = chunk;
-
-        // chunksGenerated++;
+        // if(!chunks.insert(std::make_pair(chunkPos, chunk)).second){
+        //   printf("¯\\_(ツ)_/¯\n");
+        // }
       }
     }
   }
@@ -250,6 +249,8 @@ int main(int argc, char** argv){
   signal(SIGINT, signalHandler);
   signal(SIGSEGV, signalHandler);
   signal(SIGTERM, signalHandler);
+
+  Config config("config.conf");
 
   printf("== Config ==\n");
   viewDistance = config.getInt("viewDistance", 8);
@@ -376,6 +377,7 @@ int main(int argc, char** argv){
       printf("loaded texture %d\n", i);
     }else{
       fprintf(stderr, "failed to load texture %d\n", i);
+      exit(-1);
     }
 
     stbi_image_free(imageData);
@@ -405,7 +407,7 @@ int main(int argc, char** argv){
   std::thread chunkThread(updateChunksThread);
 #endif
 
-  float currentTime;
+  double currentTime;
   unsigned int elements = 0;
   unsigned int chunksDrawn =0;
 
@@ -414,18 +416,18 @@ int main(int argc, char** argv){
   int dz;
 
   unsigned short frames = 0;
-  float lastPrintTime = (float)glfwGetTime();
+  double lastPrintTime = glfwGetTime();
 
   while(!window.shouldClose()){
-    currentTime = (float)glfwGetTime();
+    currentTime = glfwGetTime();
     deltaTime = currentTime - lastFrame;
     lastFrame = currentTime;
     frames++;
 
-    if(currentTime - lastPrintTime >= 1.0f){
+    if(currentTime - lastPrintTime >= 1.0){
       printf("%.2fms (%dfps) %d chunks (%u elements, %u chunks drawn)\n", 1000.0f/(float)frames, frames, (int)chunks.size(), elements, chunksDrawn);
       frames = 0;
-      lastPrintTime += 1.0f;
+      lastPrintTime += 1.0;
     }
 
     if(Input::getKey(Input::F12).pressed || Input::getKey(Input::ESCAPE).pressed){
@@ -531,6 +533,7 @@ int main(int argc, char** argv){
 
       // FIXME: this should not be needed
       if(chunk == NULL){
+        printf("you see, this should never happen, but it just did; something is very wrong\n");
         continue;
       }
 
