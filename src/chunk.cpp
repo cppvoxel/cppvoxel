@@ -77,6 +77,7 @@ Chunk::Chunk(int _x, int _y, int _z){
   vao = 0;
   elements = 0;
   changed = false;
+  empty = true;
   meshChanged = false;
   vertex = NULL;
   // brightness = NULL;
@@ -121,8 +122,9 @@ Chunk::Chunk(int _x, int _y, int _z){
         block = dy < rh ? block : VOID_BLOCK;
         blocks[blockIndex(dx, dy, dz)] = block;
 
-        if(!changed && block > 0){
+        if((!changed || empty) && block > 0){
           changed = true;
+          empty = false;
         }
 
 #ifdef PRINT_TIMING

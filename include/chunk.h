@@ -21,6 +21,7 @@ public:
   int z;
   int elements;
   bool changed;
+  bool empty;
   glm::mat4 model;
 
   Chunk(int _x, int _y, int _z);

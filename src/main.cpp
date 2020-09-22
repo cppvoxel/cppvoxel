@@ -185,43 +185,40 @@ inline bool isChunkInsideFrustum(glm::mat4 model){
   return !(center.z < -CHUNK_SIZE / 2 || fabsf(center.x) > 1 + fabsf(CHUNK_SIZE * 2 / center.w) || fabsf(center.y) > 1 + fabsf(CHUNK_SIZE * 2 / center.w));
 }
 
-void updateChunks(){
+inline void updateChunks(){
   // double start = glfwGetTime();
   // generate new chunks needed
+  vec3i camPos = pos;
   vec3i chunkPos;
   Chunk* chunk;
-  glm::mat4 model;
-  unsigned short chunksGenerated = 0;
-  for(int i = -viewDistance; i <= viewDistance && chunksGenerated < maxChunksGeneratedPerFrame; i++){
-    for(int j = -viewDistance; j <= viewDistance && chunksGenerated < maxChunksGeneratedPerFrame; j++){
-      for(int k = -viewDistance; k <= viewDistance && chunksGenerated < maxChunksGeneratedPerFrame; k++){
-        chunkPos.x = pos.x + i;
-        chunkPos.y = pos.y + k;
-        chunkPos.z = pos.z + j;
+  // unsigned short chunksGenerated = 0;
 
-        model = glm::translate(glm::mat4(1.0f), glm::vec3(chunkPos.x * CHUNK_SIZE, chunkPos.y * CHUNK_SIZE, chunkPos.z * CHUNK_SIZE));
-        if(getChunk(chunkPos) != NULL || !isChunkInsideFrustum(model)){
+  for(int i = -viewDistance; i <= viewDistance; i++){
+    for(int j = -viewDistance; j <= viewDistance; j++){
+      for(int k = -viewDistance; k <= viewDistance; k++){
+        chunkPos.x = camPos.x + i;
+        chunkPos.y = camPos.y + k;
+        chunkPos.z = camPos.z + j;
+
+        if(getChunk(chunkPos) != NULL){
           continue;
         }
 
         chunk = new Chunk(chunkPos.x, chunkPos.y, chunkPos.z);
         chunks[chunkPos] = chunk;
 
-        if(chunk->changed){
-          chunksGenerated++;
-        }
+        // chunksGenerated++;
       }
     }
   }
-  // printf("chunk generate %.2fms\n", (glfwGetTime() - start) * 1000.0);
+
+  // printf("chunk generate: %u in %.4fms\n", chunksGenerated, (glfwGetTime() - start) * 1000.0);
 }
 
 #ifdef MULTI_THREADING
 void updateChunksThread(){
   while(!window.shouldClose()){
-  // double start = glfwGetTime();
     updateChunks();
-  // printf("chunk thread %.2fms\n", (glfwGetTime() - start) * 1000.0);
 
 #ifdef _WIN32
     Sleep(0);
@@ -467,6 +464,7 @@ int main(int argc, char** argv){
     shader.setMat4("view", cameraView);
 
     unsigned short chunksDeleted = 0;
+    unsigned short chunksGenerated = 0;
     // double start = glfwGetTime();
 #ifdef MULTI_THREADING
     // chunkThreadMutex.lock();
@@ -475,7 +473,7 @@ int main(int argc, char** argv){
       Chunk* chunk = it->second;
 
       // FIXME: this should not be needed
-      if(chunk == NULL){
+      if(chunk == NULL || chunk->empty){
         continue;
       }
 
@@ -493,16 +491,16 @@ int main(int argc, char** argv){
         continue;
       }
 
-      if(chunk->changed){
-        chunk->update();
+      if(!isChunkInsideFrustum(chunk->model)){
+        continue;
+      }
+
+      if(chunksGenerated < maxChunksGeneratedPerFrame && chunk->changed){
+        chunksGenerated += chunk->update();
       }
 
       // don't draw if chunk has no mesh
       if(!chunk->elements){
-        continue;
-      }
-
-      if(!isChunkInsideFrustum(chunk->model)){
         continue;
       }
 
