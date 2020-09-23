@@ -45,6 +45,19 @@
 #include "log.h"
 #include "log_top.h"
 
+std::string stackTraceName;
+std::string stackTraceFile;
+unsigned int stackTraceLine;
+std::string stackTraceFunc;
+void stackTracePush(const char* name, const char* file, unsigned int line, const char* func){
+  stackTraceName = name;
+  stackTraceFile = file;
+  stackTraceLine = line;
+  stackTraceFunc = func;
+}
+
+#define STACK_TRACE_PUSH(x) stackTracePush(x, __FILE__, __LINE__, __func__);
+
 double deltaTime;
 double lastFrame;
 
@@ -119,6 +132,7 @@ void main(){
 
 void signalHandler(int signum){
   fprintf(stderr, "Interrupt signal %d received (pid: %d)\n", signum, getpid());
+  fprintf(stderr, "%s:%u (%s): %s", stackTraceFile.c_str(), stackTraceLine, stackTraceFile.c_str(), stackTraceName.c_str());
 
   exit(signum);  
 }
@@ -217,6 +231,7 @@ inline void updateChunks(){
         }
 
         chunk = new Chunk(chunkPos.x, chunkPos.y, chunkPos.z);
+        STACK_TRACE_PUSH("add chunk")
         chunks[chunkPos] = chunk;
         // if(!chunks.insert(std::make_pair(chunkPos, chunk)).second){
         //   printf("¯\\_(ツ)_/¯\n");
@@ -249,6 +264,8 @@ int main(int argc, char** argv){
   signal(SIGINT, signalHandler);
   signal(SIGSEGV, signalHandler);
   signal(SIGTERM, signalHandler);
+
+  STACK_TRACE_PUSH("init")
 
   Config config("config.conf");
 
@@ -544,6 +561,7 @@ int main(int argc, char** argv){
       // don't render chunks outside of render radius
       if(abs(dx) > viewDistance + 1 || abs(dy) > viewDistance + 1 || abs(dz) > viewDistance + 1){
         if(chunksDeleted < maxChunksDeletedPerFrame){
+          STACK_TRACE_PUSH("remove chunk")
           it = chunks.erase(it);
           delete chunk;
           chunksDeleted++;
