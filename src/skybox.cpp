@@ -103,4 +103,5 @@ void Skybox::draw(){
 
 void Skybox::free(){
   glDeleteVertexArrays(1, &vao);
+  delete shader;
 }

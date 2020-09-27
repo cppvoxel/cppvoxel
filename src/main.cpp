@@ -5,10 +5,6 @@
 #include <limits.h>
 #include <thread>
 
-#ifdef MULTI_THREADING
-#include <mutex>
-#endif
-
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -27,6 +23,7 @@
 #include <Camera.h>
 
 #include "common.h"
+#include "chunk_manager.h"
 #include "chunk.h"
 #include "config.h"
 #include "skybox.h"
@@ -44,19 +41,6 @@
 #include "grass.h"
 #include "log.h"
 #include "log_top.h"
-
-std::string stackTraceName;
-std::string stackTraceFile;
-unsigned int stackTraceLine;
-std::string stackTraceFunc;
-void stackTracePush(const char* name, const char* file, unsigned int line, const char* func){
-  stackTraceName = name;
-  stackTraceFile = file;
-  stackTraceLine = line;
-  stackTraceFunc = func;
-}
-
-#define STACK_TRACE_PUSH(x) stackTracePush(x, __FILE__, __LINE__, __func__);
 
 double deltaTime;
 double lastFrame;
@@ -82,53 +66,6 @@ bool perspectiveChanged = true;
 
 glm::mat4 projection = glm::mat4(1.0f);
 glm::mat4 cameraView;
-
-#ifdef MULTI_THREADING
-// std::mutex chunkThreadMutex;
-#endif
-
-const static char* voxelShaderVertexSource = R"(#version 330 core
-layout (location = 0) in vec4 coord;
-// layout (location = 1) in int brightness;
-layout (location = 2) in vec3 normal;
-layout (location = 3) in vec2 texCoord;
-
-out vec3 vPosition;
-out vec3 vTexCoord;
-out float vDiffuse;
-
-uniform mat4 projection;
-uniform mat4 view;
-uniform mat4 model;
-
-const vec3 sun_direction = normalize(vec3(1, 3, 2));
-const float ambient = 0.4f;
-
-void main(){
-  vPosition = (view * model * vec4(coord.xyz, 1.0)).xyz;
-  vTexCoord = vec3(texCoord.xy, coord.w);
-  vDiffuse = (max(dot(normal, sun_direction), 0.0) + ambient) /** (brightness / 5.0)*/;
-
-  gl_Position = projection * vec4(vPosition, 1.0);
-})";
-
-const static char* voxelShaderFragmentSource = R"(#version 330 core
-out vec4 FragColor;
-
-in vec3 vPosition;
-in vec3 vTexCoord;
-in float vDiffuse;
-
-uniform sampler2DArray texture_array;
-
-uniform int fog_near;
-uniform int fog_far;
-
-void main(){
-  FragColor = vec4(texture(texture_array, vTexCoord).rgb * vDiffuse, 1.0);
-  FragColor *= 1.0 - smoothstep(fog_near, fog_far, length(vPosition));
-  FragColor = vec4(pow(FragColor.rgb, vec3(1.0 / 2.2)), FragColor.a);
-})";
 
 void signalHandler(int signum){
   fprintf(stderr, "Interrupt signal %d received (pid: %d)\n", signum, getpid());
@@ -211,42 +148,10 @@ inline bool isChunkInsideFrustum(glm::mat4 model){
   return !(center.z < -CHUNK_SIZE / 2 || fabsf(center.x) > 1 + fabsf(CHUNK_SIZE * 2 / center.w) || fabsf(center.y) > 1 + fabsf(CHUNK_SIZE * 2 / center.w));
 }
 
-inline void updateChunks(){
-  // double start = glfwGetTime();
-  // generate new chunks needed
-  vec3i camPos = pos;
-  vec3i chunkPos;
-  Chunk* chunk;
-  int distance = viewDistance + 1;
-
-  for(int i = -distance; i <= distance; i++){
-    for(int j = -distance; j <= distance; j++){
-      for(int k = -distance; k <= distance; k++){
-        chunkPos.x = camPos.x + i;
-        chunkPos.y = camPos.y + k;
-        chunkPos.z = camPos.z + j;
-
-        if(getChunk(chunkPos) != NULL){
-          continue;
-        }
-
-        chunk = new Chunk(chunkPos.x, chunkPos.y, chunkPos.z);
-        STACK_TRACE_PUSH("add chunk")
-        chunks[chunkPos] = chunk;
-        // if(!chunks.insert(std::make_pair(chunkPos, chunk)).second){
-        //   printf("¯\\_(ツ)_/¯\n");
-        // }
-      }
-    }
-  }
-
-  // printf("chunk generate: %u in %.4fms\n", chunksGenerated, (glfwGetTime() - start) * 1000.0);
-}
-
 #ifdef MULTI_THREADING
 void updateChunksThread(){
   while(!window.shouldClose()){
-    updateChunks();
+    ChunkManager::update(pos, viewDistance + 1);
 
 #ifdef _WIN32
     Sleep(0);
@@ -407,12 +312,12 @@ int main(int argc, char** argv){
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   Skybox::create();
+  ChunkManager::init();
 
-  Shader shader(voxelShaderVertexSource, voxelShaderFragmentSource);
-  shader.use();
-  shader.setInt("texture_array", 0);
-  shader.setInt("fog_near", viewDistance * CHUNK_SIZE - 12);
-  shader.setInt("fog_far", viewDistance * CHUNK_SIZE - 6);
+  ChunkManager::shader->use();
+  ChunkManager::shader->setInt("texture_array", 0);
+  ChunkManager::shader->setInt("fog_near", viewDistance * CHUNK_SIZE - 12);
+  ChunkManager::shader->setInt("fog_far", viewDistance * CHUNK_SIZE - 6);
 
   CATCH_OPENGL_ERROR
 
@@ -442,7 +347,7 @@ int main(int argc, char** argv){
     frames++;
 
     if(currentTime - lastPrintTime >= 1.0){
-      printf("%.2fms (%dfps) %d chunks (%u elements, %u chunks drawn)\n", 1000.0f/(float)frames, frames, (int)chunks.size(), elements, chunksDrawn);
+      printf("%.2fms (%dfps) %d chunks (%u elements, %u chunks drawn)\n", 1000.0f/(float)frames, frames, (int)ChunkManager::chunks.size(), elements, chunksDrawn);
       frames = 0;
       lastPrintTime += 1.0;
     }
@@ -514,7 +419,7 @@ int main(int argc, char** argv){
     pos.z = (int)floorf(camera.position.z / CHUNK_SIZE);
 
 #ifndef MULTI_THREADING
-    updateChunks();
+    ChunkManager::update(pos, viewDistance + 1);
 #endif
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -531,21 +436,18 @@ int main(int argc, char** argv){
 
     Skybox::draw(); CATCH_OPENGL_ERROR
 
-    shader.use();
+    ChunkManager::shader->use();
     if(perspectiveChanged){
-      shader.setMat4("projection", projection);
+      ChunkManager::shader->setMat4("projection", projection);
       perspectiveChanged = false;
     }
 
-    shader.setMat4("view", cameraView);
+    ChunkManager::shader->setMat4("view", cameraView);
 
     unsigned short chunksDeleted = 0;
     unsigned short chunksGenerated = 0;
     // double start = glfwGetTime();
-#ifdef MULTI_THREADING
-    // chunkThreadMutex.lock();
-#endif
-    for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
+    for(chunk_it it = ChunkManager::chunks.begin(); it != ChunkManager::chunks.end(); it++){
       Chunk* chunk = it->second;
 
       // FIXME: this should not be needed
@@ -562,7 +464,7 @@ int main(int argc, char** argv){
       if(abs(dx) > viewDistance + 1 || abs(dy) > viewDistance + 1 || abs(dz) > viewDistance + 1){
         if(chunksDeleted < maxChunksDeletedPerFrame){
           STACK_TRACE_PUSH("remove chunk")
-          it = chunks.erase(it);
+          it = ChunkManager::chunks.erase(it);
           delete chunk;
           chunksDeleted++;
         }
@@ -583,15 +485,12 @@ int main(int argc, char** argv){
         continue;
       }
 
-      shader.setMat4("model", chunk->model);
+      ChunkManager::shader->setMat4("model", chunk->model);
       chunk->draw(); CATCH_OPENGL_ERROR
 
       elements += chunk->elements;
       chunksDrawn++;
     }
-#ifdef MULTI_THREADING
-    // chunkThreadMutex.unlock();
-#endif
     // printf("draw all chunks %.4fms\n", (glfwGetTime() - start) * 1000.0);
 
     Input::update();
@@ -604,11 +503,7 @@ int main(int argc, char** argv){
   chunkThread.join();
 #endif
 
-  for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
-    Chunk* chunk = it->second;
-    delete chunk;
-  }
-
+  ChunkManager::free();
   Skybox::free();
 
   glDeleteTextures(1, &textureArray);

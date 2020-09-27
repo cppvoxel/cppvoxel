@@ -1,12 +1,12 @@
 #include "common.h"
 
-std::map<vec3i, Chunk*> chunks;
-
-Chunk* getChunk(vec3i pos){
-  chunk_it it = chunks.find(pos);
-  if(it != chunks.end()){
-    return it->second;
-  }
-
-  return NULL;
+std::string stackTraceName;
+std::string stackTraceFile;
+unsigned int stackTraceLine;
+std::string stackTraceFunc;
+void stackTracePush(const char* name, const char* file, unsigned int line, const char* func){
+  stackTraceName = name;
+  stackTraceFile = file;
+  stackTraceLine = line;
+  stackTraceFunc = func;
 }

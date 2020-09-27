@@ -82,6 +82,11 @@ workspace "cppvoxel"
       end
   }
 
+project "embed_images"
+  targetdir "bin/tools"
+
+  files {"tools/embed_images.cpp"}
+
 project "cppvoxel"
   files {"src/**.cpp"}
 
@@ -98,8 +103,3 @@ project "cppvoxel"
     links {"GLEW", "glfw", "rt", "m", "dl", "GL"}
 
   filter {}
-
-project "embed_images"
-  targetdir "bin/tools"
-
-  files {"tools/embed_images.cpp"}

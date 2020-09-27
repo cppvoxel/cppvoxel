@@ -5,6 +5,14 @@
 
 #define CATCH_OPENGL_ERROR {GLenum err; while((err = glGetError()) != GL_NO_ERROR){fprintf(stderr, "[OpenGL Error] %s:%d (%s): %#8x\n", __FILE__, __LINE__, __func__, err);}}
 
+extern std::string stackTraceName;
+extern std::string stackTraceFile;
+extern unsigned int stackTraceLine;
+extern std::string stackTraceFunc;
+void stackTracePush(const char* name, const char* file, unsigned int line, const char* func);
+
+#define STACK_TRACE_PUSH(x) stackTracePush(x, __FILE__, __LINE__, __func__);
+
 struct vec3i{
   int x;
   int y;
@@ -40,11 +48,5 @@ inline bool const operator<(const vec3i& l, const vec3i& r){
 
 	return false;
 };
-
-class Chunk;
-extern std::map<vec3i, Chunk*> chunks;
-typedef std::map<vec3i, Chunk*>::iterator chunk_it;
-
-Chunk* getChunk(vec3i pos);
 
 #endif

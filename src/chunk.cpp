@@ -10,6 +10,7 @@
 #include "common.h"
 #include "noise.h"
 #include "blocks.h"
+#include "chunk_manager.h"
 
 #define sign(_x) ({ __typeof__(_x) _xx = (_x);\
   ((__typeof__(_x)) ( (((__typeof__(_x)) 0) < _xx) - (_xx < ((__typeof__(_x)) 0))));})
@@ -182,12 +183,12 @@ bool Chunk::update(){
 #endif
 
   // get chunk neighbors
-  Chunk* px = getChunk(vec3i{x + 1, y, z});
-  Chunk* nx = getChunk(vec3i{x - 1, y, z});
-  Chunk* py = getChunk(vec3i{x, y + 1, z});
-  Chunk* ny = getChunk(vec3i{x, y - 1, z});
-  Chunk* pz = getChunk(vec3i{x, y, z + 1});
-  Chunk* nz = getChunk(vec3i{x, y, z - 1});
+  Chunk* px = ChunkManager::getChunk(vec3i{x + 1, y, z});
+  Chunk* nx = ChunkManager::getChunk(vec3i{x - 1, y, z});
+  Chunk* py = ChunkManager::getChunk(vec3i{x, y + 1, z});
+  Chunk* ny = ChunkManager::getChunk(vec3i{x, y - 1, z});
+  Chunk* pz = ChunkManager::getChunk(vec3i{x, y, z + 1});
+  Chunk* nz = ChunkManager::getChunk(vec3i{x, y, z - 1});
 
   if(px == NULL || nx == NULL || py == NULL || ny == NULL || pz == NULL || nz == NULL){
     // printf("missing neighbor(s) %d %d %d %d %d %d\n", px == NULL, nx == NULL, py == NULL, ny == NULL, pz == NULL, nz == NULL);
