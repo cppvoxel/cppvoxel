@@ -63,6 +63,7 @@ bool firstMouse = true;
 
 vec3i pos;
 bool perspectiveChanged = true;
+bool cursorLocked = true;
 
 glm::mat4 projection = glm::mat4(1.0f);
 glm::mat4 cameraView;
@@ -120,6 +121,10 @@ void framebufferResizeCallback(GLFWwindow* _window, int width, int height){
 }
 
 void mouseCallback(GLFWwindow* _window, double xpos, double ypos){
+  if(!cursorLocked){
+    return;
+  }
+
   if(firstMouse){
     lastX = (float)xpos;
     lastY = (float)ypos;
@@ -352,8 +357,19 @@ int main(int argc, char** argv){
       lastPrintTime += 1.0;
     }
 
-    if(Input::getKey(Input::F12).pressed || Input::getKey(Input::ESCAPE).pressed){
+    if(Input::getKey(Input::F12).pressed){
       glfwSetWindowShouldClose(window.window, true);
+    }
+
+    if(Input::getKey(Input::ESCAPE).pressed){
+      if(cursorLocked){
+        glfwSetInputMode(window.window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        firstMouse = true;
+      }else{
+        glfwSetInputMode(window.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+      }
+
+      cursorLocked = !cursorLocked;
     }
 
     if(Input::getKey(Input::F11).pressed){
