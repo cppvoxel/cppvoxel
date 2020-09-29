@@ -317,7 +317,7 @@ int main(int argc, char** argv){
   ChunkManager::shader->use();
   ChunkManager::shader->setInt("texture_array", 0);
   ChunkManager::shader->setInt("fog_near", viewDistance * CHUNK_SIZE - 12);
-  ChunkManager::shader->setInt("fog_far", viewDistance * CHUNK_SIZE - 6);
+  ChunkManager::shader->setInt("fog_far", viewDistance * CHUNK_SIZE - 8);
 
   CATCH_OPENGL_ERROR
 

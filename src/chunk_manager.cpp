@@ -88,6 +88,9 @@ void ChunkManager::update(vec3i camPos, int distance){
         chunk = new Chunk(chunkPos.x, chunkPos.y, chunkPos.z);
         STACK_TRACE_PUSH("add chunk")
         chunks[chunkPos] = chunk;
+        // if(!chunks.insert(std::make_pair(chunkPos, chunk)).second){
+        //   printf("something idk %d %d %d\n", chunkPos.x, chunkPos.y, chunkPos.z);
+        // }
       }
     }
   }
