@@ -428,7 +428,7 @@ void Chunk::draw(){
 }
 
 // if the chunk's mesh has been modified then send the new data to opengl (TODO: don't create a new buffer, just reuse the old one)
-inline void Chunk::bufferMesh(){
+void Chunk::bufferMesh(){
   // if the mesh has not been modified then don't bother
   if(!meshChanged){
     return;
@@ -482,7 +482,7 @@ inline void Chunk::bufferMesh(){
 #endif
 }
 
-inline block_t Chunk::get(int _x, int _y, int _z, Chunk* px, Chunk* nx, Chunk* py, Chunk* ny, Chunk* pz, Chunk* nz){
+block_t Chunk::get(int _x, int _y, int _z, Chunk* px, Chunk* nx, Chunk* py, Chunk* ny, Chunk* pz, Chunk* nz){
   if(_x < 0){
     return nx == NULL ? VOID_BLOCK : nx->blocks[blockIndex(CHUNK_SIZE + _x, _y, _z)];
   }else if(_x >= CHUNK_SIZE){
@@ -498,4 +498,9 @@ inline block_t Chunk::get(int _x, int _y, int _z, Chunk* px, Chunk* nx, Chunk* p
   }
 
   return blocks[blockIndex(_x, _y, _z)];
+}
+
+void Chunk::set(int _x, int _y, int _z, block_t block){
+  blocks[blockIndex(_x, _y, _z)] = block;
+  changed = true;
 }

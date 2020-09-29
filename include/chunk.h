@@ -30,6 +30,12 @@ public:
   bool update();
   void draw();
 
+  block_t get(int _x, int _y, int _z, Chunk* px, Chunk* nx, Chunk* py, Chunk* ny, Chunk* pz, Chunk* nz);
+  block_t get(int _x, int _y, int _z){
+    return get(_x, _y, _z, NULL, NULL, NULL, NULL, NULL, NULL);
+  }
+  void set(int _x, int _y, int _z, block_t block);
+
 private:
   block_t *blocks;
   unsigned int vao;
@@ -40,7 +46,6 @@ private:
   float *texCoords;
 
   inline void bufferMesh();
-  inline block_t get(int _x, int _y, int _z, Chunk* px, Chunk* nx, Chunk* py, Chunk* ny, Chunk* pz, Chunk* nz);
 };
 
 #endif

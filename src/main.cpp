@@ -42,6 +42,8 @@
 #include "log.h"
 #include "log_top.h"
 
+#define REACH_DISTANCE 20.0f
+
 double deltaTime;
 double lastFrame;
 
@@ -166,6 +168,50 @@ void updateChunksThread(){
   }
 }
 #endif
+
+/* if 'infinite' is 2 ^ 32
+   start your map at 2 ^ 32 / 2
+
+   - Verc
+*/ 
+bool VercidiumRayMarch(int *bx, int *by, int *bz, int *cx, int *cy, int *cz){
+  float vx = camera.front.x;
+  float vy = camera.front.y;
+  float vz = camera.front.z;
+
+  float t = 0.0f;
+
+  while(t < REACH_DISTANCE){
+    float rayx = camera.position.x + vx * t;
+    float rayy = camera.position.y + vy * t;
+    float rayz = camera.position.z + vz * t;
+
+    Chunk* chunk = ChunkManager::get({(int)floorf(rayx / CHUNK_SIZE), (int)floorf(rayy / CHUNK_SIZE), (int)floorf(rayz / CHUNK_SIZE)});
+    if(chunk != NULL){
+      int nx = abs(roundf(rayx));
+      int ny = abs(roundf(rayy));
+      int nz = abs(roundf(rayz));
+
+      uint8_t block = chunk->get(nx % CHUNK_SIZE, ny % CHUNK_SIZE, nz % CHUNK_SIZE);
+      if(block > 0){
+        // printf("chunk: %d %d %d\n", chunk->x, chunk->y, chunk->z);
+        // printf("hit block %d at %d %d %d\n", block, nx % CHUNK_SIZE, ny % CHUNK_SIZE, nz % CHUNK_SIZE);
+        *bx = nx;
+        *by = ny;
+        *bz = nz;
+        *cx = chunk->x;
+        *cy = chunk->y;
+        *cz = chunk->z;
+
+        return true;
+      }
+    }
+
+    t += 0.01f;
+  }
+
+  return false;
+}
 
 int main(int argc, char** argv){
   signal(SIGABRT, signalHandler);
@@ -425,6 +471,19 @@ int main(int argc, char** argv){
     }
     if(Input::getKey(Input::D).down){
       camera.processKeyboard(RIGHT, deltaTime);
+    }
+
+    bool leftMouse = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    bool rightMouse = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+
+    if(leftMouse || rightMouse){
+      int hx, hy, hz, cx, cy, cz;
+      if(VercidiumRayMarch(&hx, &hy, &hz, &cx, &cy, &cz)){
+        Chunk* chunk = ChunkManager::get({cx, cy, cz});
+        if(chunk != NULL){
+          chunk->set(hx % CHUNK_SIZE, hy % CHUNK_SIZE, hz % CHUNK_SIZE, leftMouse ? 0 : 1);
+        }
+      }
     }
 
     elements = 0;
