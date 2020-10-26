@@ -2,22 +2,23 @@
 #define CHUNK_MANAGER_H_
 
 #include <map>
+#include <memory>
 
-#include <Shader.h>
-
+#include "shader.h"
 #include "common.h"
 #include "chunk.h"
 
-typedef std::map<vec3i, Chunk*>::iterator chunk_it;
+using chunk_map = std::map<vec3i, std::shared_ptr<Chunk>>;
+using chunk_it = chunk_map::iterator;
 
 namespace ChunkManager{
 
-extern std::map<vec3i, Chunk*> chunks;
+extern chunk_map chunks;
 extern Shader* shader;
 
 void init();
 void free();
-Chunk* get(vec3i pos);
+std::shared_ptr<Chunk> get(vec3i pos);
 void update(vec3i camPos, int distance);
 
 }

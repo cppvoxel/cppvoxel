@@ -90,9 +90,7 @@ project "embed_images"
 project "cppvoxel"
   files {"src/**.cpp"}
 
-  includedirs {"../cppgl/include", "../cppgl/vendors", "../cppgl/vendors/glm", "include", "res/embed"}
-  libdirs "../cppgl/bin"
-  links {"cppgl"}
+  includedirs {"../cppgl/vendors", "../cppgl/vendors/glm", "include", "res/embed"}
   defines {"GLEW_STATIC"}
 
   filter {"system:windows"}

@@ -2,6 +2,7 @@
 #define COMMON_H_
 
 #include <map>
+#include <string>
 
 #define CATCH_OPENGL_ERROR {GLenum err; while((err = glGetError()) != GL_NO_ERROR){fprintf(stderr, "[OpenGL Error] %s:%d (%s): %#8x\n", __FILE__, __LINE__, __func__, err);}}
 
@@ -48,5 +49,10 @@ inline bool const operator<(const vec3i& l, const vec3i& r){
 
 	return false;
 };
+
+// config
+extern int viewDistance;
+extern int maxChunksGeneratedPerFrame;
+extern int maxChunksDeletedPerFrame;
 
 #endif

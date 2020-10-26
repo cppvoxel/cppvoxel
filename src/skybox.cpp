@@ -15,7 +15,7 @@ uniform mat4 view;
 void main(){
   vCoord = position;
 
-  gl_Position = (projection * mat4(mat3(view))) * vec4(position, 1.0);
+  gl_Position = ((projection * mat4(mat3(view))) * vec4(position, 1.0)).xyww;
 })";
 
 const static char* shaderFragmentSource = R"(#version 330 core
@@ -71,7 +71,7 @@ namespace Skybox{
   Shader* shader;
 }
 
-void Skybox::create(){
+void Skybox::init(){
   shader = new Shader(shaderVertexSource, shaderFragmentSource);
 
   unsigned int vbo, ebo;
@@ -97,8 +97,10 @@ void Skybox::create(){
 }
 
 void Skybox::draw(){
+  glDepthFunc(GL_LEQUAL);
   glBindVertexArray(vao);
   glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0); CATCH_OPENGL_ERROR
+  glDepthFunc(GL_LESS);
 }
 
 void Skybox::free(){

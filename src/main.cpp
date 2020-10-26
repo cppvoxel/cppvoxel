@@ -1,6 +1,7 @@
-#define MULTI_THREADING
+// #define MULTI_THREADING
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <limits.h>
 #include <thread>
@@ -18,16 +19,15 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#include <Window.h>
-#include <Shader.h>
-#include <Camera.h>
-
 #include "common.h"
+#include "window.h"
+#include "shader.h"
+#include "config.h"
+#include "input.h"
+#include "camera.h"
 #include "chunk_manager.h"
 #include "chunk.h"
-#include "config.h"
 #include "skybox.h"
-#include "input.h"
 
 // textures
 #include "dirt.h"
@@ -169,10 +169,11 @@ void updateChunksThread(){
 }
 #endif
 
-/* if 'infinite' is 2 ^ 32
-   start your map at 2 ^ 32 / 2
+/* try 31?
+  if 'infinite' is 2 ^ 32
+  start your map at 2 ^ 32 / 2
 
-   - Verc
+  - Verc
 */ 
 bool VercidiumRayMarch(int *bx, int *by, int *bz, int *cx, int *cy, int *cz){
   float vx = camera.front.x;
@@ -186,8 +187,8 @@ bool VercidiumRayMarch(int *bx, int *by, int *bz, int *cx, int *cy, int *cz){
     float rayy = camera.position.y + vy * t;
     float rayz = camera.position.z + vz * t;
 
-    Chunk* chunk = ChunkManager::get({(int)floorf(rayx / CHUNK_SIZE), (int)floorf(rayy / CHUNK_SIZE), (int)floorf(rayz / CHUNK_SIZE)});
-    if(chunk != NULL){
+    std::shared_ptr<Chunk> chunk = ChunkManager::get({(int)floorf(rayx / CHUNK_SIZE), (int)floorf(rayy / CHUNK_SIZE), (int)floorf(rayz / CHUNK_SIZE)});
+    if(chunk != nullptr){
       int nx = abs(roundf(rayx));
       int ny = abs(roundf(rayy));
       int nz = abs(roundf(rayz));
@@ -226,9 +227,9 @@ int main(int argc, char** argv){
   Config config("config.conf");
 
   printf("== Config ==\n");
-  viewDistance = config.getInt("viewDistance", 8);
-  maxChunksGeneratedPerFrame = config.getInt("maxChunksGeneratedPerFrame", 32);
-  maxChunksDeletedPerFrame = config.getInt("maxChunksDeletedPerFrame", 64);
+  viewDistance = config.getInt("viewDistance", 6);
+  maxChunksGeneratedPerFrame = config.getInt("maxChunksGeneratedPerFrame", 8);
+  maxChunksDeletedPerFrame = config.getInt("maxChunksDeletedPerFrame", 16);
   bool vsync = config.getBool("vsync", false);
 
 #ifdef MULTI_THREADING
@@ -362,13 +363,9 @@ int main(int argc, char** argv){
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-  Skybox::create();
-  ChunkManager::init();
+  Skybox::init();
 
-  ChunkManager::shader->use();
-  ChunkManager::shader->setInt("texture_array", 0);
-  ChunkManager::shader->setInt("fog_near", viewDistance * CHUNK_SIZE - 12);
-  ChunkManager::shader->setInt("fog_far", viewDistance * CHUNK_SIZE - 8);
+  ChunkManager::init();
 
   CATCH_OPENGL_ERROR
 
@@ -382,14 +379,12 @@ int main(int argc, char** argv){
 
   double currentTime;
   unsigned int elements = 0;
-  unsigned int chunksDrawn =0;
-
-  int dx;
-  int dy;
-  int dz;
+  unsigned int chunksDrawn = 0;
 
   unsigned short frames = 0;
   double lastPrintTime = glfwGetTime();
+
+  STACK_TRACE_PUSH("main loop")
 
   while(!window.shouldClose()){
     currentTime = glfwGetTime();
@@ -479,7 +474,7 @@ int main(int argc, char** argv){
     if(leftMouse || rightMouse){
       int hx, hy, hz, cx, cy, cz;
       if(VercidiumRayMarch(&hx, &hy, &hz, &cx, &cy, &cz)){
-        Chunk* chunk = ChunkManager::get({cx, cy, cz});
+        std::shared_ptr<Chunk> chunk = ChunkManager::get({cx, cy, cz});
         if(chunk != NULL){
           chunk->set(hx % CHUNK_SIZE, hy % CHUNK_SIZE, hz % CHUNK_SIZE, leftMouse ? 0 : 1);
         }
@@ -501,35 +496,21 @@ int main(int argc, char** argv){
 
     cameraView = camera.getViewMatrix();
 
-    Skybox::shader->use();
-    Skybox::shader->setMat4("view", cameraView);
-
-    if(perspectiveChanged){
-      projection = glm::perspective(glm::radians(camera.fov), (float)windowWidth/(float)windowHeight, .1f, SKYBOX_SIZE * 2.0f);
-      Skybox::shader->setMat4("projection", projection);
-    }
-
-    Skybox::draw(); CATCH_OPENGL_ERROR
-
     ChunkManager::shader->use();
     if(perspectiveChanged){
+      projection = glm::perspective(glm::radians(camera.fov), (float)windowWidth/(float)windowHeight, .1f, 10000.0f);
       ChunkManager::shader->setMat4("projection", projection);
-      perspectiveChanged = false;
     }
 
     ChunkManager::shader->setMat4("view", cameraView);
 
-    unsigned short chunksDeleted = 0;
-    unsigned short chunksGenerated = 0;
+    uint32_t chunksDeleted = 0;
+    uint32_t chunksGenerated = 0;
+    int dx, dy, dz;
+
     // double start = glfwGetTime();
     for(chunk_it it = ChunkManager::chunks.begin(); it != ChunkManager::chunks.end(); it++){
-      Chunk* chunk = it->second;
-
-      // FIXME: this should not be needed
-      if(chunk == NULL){
-        printf("you see, this should never happen, but it just did; something is very wrong\n");
-        continue;
-      }
+      std::shared_ptr<Chunk> chunk = it->second;
 
       dx = pos.x - chunk->x;
       dy = pos.y - chunk->y;
@@ -537,26 +518,29 @@ int main(int argc, char** argv){
 
       // don't render chunks outside of render radius
       if(abs(dx) > viewDistance + 1 || abs(dy) > viewDistance + 1 || abs(dz) > viewDistance + 1){
-        if(chunksDeleted < maxChunksDeletedPerFrame){
+        if(chunksDeleted < (uint32_t)maxChunksDeletedPerFrame){
           STACK_TRACE_PUSH("remove chunk")
           it = ChunkManager::chunks.erase(it);
-          delete chunk;
+          chunk.reset();
           chunksDeleted++;
         }
 
         continue;
       }
 
+      // don't render invisible chunks
       if(chunk->empty || abs(dx) > viewDistance || abs(dy) > viewDistance || abs(dz) > viewDistance || !isChunkInsideFrustum(chunk->model)){
         continue;
       }
 
-      if(chunksGenerated < maxChunksGeneratedPerFrame && chunk->changed){
-        chunksGenerated += chunk->update();
+      if(chunk->changed && chunksGenerated < (uint32_t)maxChunksGeneratedPerFrame){
+        if(chunk->update() && chunk->elements > 0){
+          chunksGenerated++;
+        }
       }
 
       // don't draw if chunk has no mesh
-      if(!chunk->elements){
+      if(chunk->elements == 0){
         continue;
       }
 
@@ -567,6 +551,16 @@ int main(int argc, char** argv){
       chunksDrawn++;
     }
     // printf("draw all chunks %.4fms\n", (glfwGetTime() - start) * 1000.0);
+
+    Skybox::shader->use();
+    Skybox::shader->setMat4("view", cameraView);
+
+    if(perspectiveChanged){
+      Skybox::shader->setMat4("projection", projection);
+      perspectiveChanged = false;
+    }
+
+    Skybox::draw(); CATCH_OPENGL_ERROR
 
     Input::update();
     window.pollEvents();

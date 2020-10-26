@@ -3,13 +3,13 @@
 
 #include <Shader.h>
 
-#define SKYBOX_SIZE 1000
+#define SKYBOX_SIZE 1
 
 namespace Skybox{
 
 extern Shader* shader;
 
-void create();
+void init();
 void draw();
 void free();
 

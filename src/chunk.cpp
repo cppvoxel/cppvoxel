@@ -15,9 +15,17 @@
 #define sign(_x) ({ __typeof__(_x) _xx = (_x);\
   ((__typeof__(_x)) ( (((__typeof__(_x)) 0) < _xx) - (_xx < ((__typeof__(_x)) 0))));})
 
-#define TEXTURE_SIZE 4
 #define VOID_BLOCK 0 // block id if there is no neighbor for block
 // #define PRINT_TIMING
+
+enum NORMAL_FACES : uint8_t{
+  PY = 0,
+  NY,
+  PX,
+  NX,
+  PZ,
+  NZ
+};
 
 inline float lerp(float a, float b, float t){
   return a * (1.0f - t) + b * t;
@@ -25,14 +33,6 @@ inline float lerp(float a, float b, float t){
 
 inline unsigned short blockIndex(uint8_t x, uint8_t y, uint8_t z){
   return x | (y << 5) | (z << 10);
-}
-
-inline float halfPixelCorrection(float coord, float coord2){
-  return coord;
-  // coord = coord + coord2;
-  // coord *= (1.0f / TEXTURE_SIZE); // convert texture pos to uv coord
-  // return coord;
-  // return (coord + 0.5f) / TEXTURE_SIZE;
 }
 
 inline void byte4Set(uint8_t x, uint8_t y, uint8_t z, uint8_t w, byte4 dest){
@@ -49,13 +49,13 @@ inline void byte3Set(uint8_t x, uint8_t y, uint8_t z, byte3 dest){
 }
 
 // use magic numbers >.> to check if a block ID is transparent
-inline unsigned char isTransparent(block_t block){
+inline bool isTransparent(block_t block){
   switch(block){
     case 0:
     case 6:
-      return 1;
+      return true;
     default:
-      return 0;
+      return false;
   }
 }
 
@@ -69,21 +69,31 @@ unsigned int makeBuffer(GLenum target, GLsizei size, const void* data){
   return buffer;
 }
 
+/*
+  x y z 6 bits
+  normal 3 bits
+  textureId 8 bits
+  texX 1 bit
+  texY 1 bit
+*/
+inline int packVertex(uint8_t x, uint8_t y, uint8_t z, NORMAL_FACES normal, uint8_t textureId, uint8_t texX, uint8_t texY){
+  return x | (y << 6) | (z << 12) | (normal << 18) | (textureId << 21) | (texX << 29) | (texY << 30);
+}
+
 Chunk::Chunk(int _x, int _y, int _z){
 #ifdef PRINT_TIMING
   double start = glfwGetTime();
 #endif
 
   blocks = (block_t*)malloc(CHUNK_SIZE_CUBED * sizeof(block_t));
+  if(blocks == NULL){
+    fprintf(stderr, ";-;\n");
+  }
   vao = 0;
   elements = 0;
   changed = false;
   empty = true;
   meshChanged = false;
-  vertex = NULL;
-  // brightness = NULL;
-  normal = NULL;
-  texCoords = NULL;
 
   x = _x;
   y = _y;
@@ -151,24 +161,6 @@ Chunk::~Chunk(){
   // delete the stored data
   free(blocks);
   blocks = NULL;
-
-  // delete buffers if needed
-  if(vertex != NULL){
-    free(vertex);
-    vertex = NULL;
-  }
-  // if(brightness != NULL){
-  //   free(brightness);
-  //   brightness = NULL;
-  // }
-  if(normal != NULL){
-    free(normal);
-    normal = NULL;
-  }
-  if(texCoords != NULL){
-    free(texCoords);
-    texCoords = NULL;
-  }
 }
 
 // update the chunk
@@ -182,47 +174,28 @@ bool Chunk::update(){
   double start = glfwGetTime();
 #endif
 
-  // get chunk neighbors
-  Chunk* px = ChunkManager::get({x + 1, y, z});
-  Chunk* nx = ChunkManager::get({x - 1, y, z});
-  Chunk* py = ChunkManager::get({x, y + 1, z});
-  Chunk* ny = ChunkManager::get({x, y - 1, z});
-  Chunk* pz = ChunkManager::get({x, y, z + 1});
-  Chunk* nz = ChunkManager::get({x, y, z - 1});
+  STACK_TRACE_PUSH("chunk neighbors")
 
-  if(px == NULL || nx == NULL || py == NULL || ny == NULL || pz == NULL || nz == NULL){
-    // printf("missing neighbor(s) %d %d %d %d %d %d\n", px == NULL, nx == NULL, py == NULL, ny == NULL, pz == NULL, nz == NULL);
+  // get chunk neighbors
+  std::shared_ptr<Chunk> px = ChunkManager::get({x + 1, y, z});
+  std::shared_ptr<Chunk> nx = ChunkManager::get({x - 1, y, z});
+  std::shared_ptr<Chunk> py = ChunkManager::get({x, y + 1, z});
+  std::shared_ptr<Chunk> ny = ChunkManager::get({x, y - 1, z});
+  std::shared_ptr<Chunk> pz = ChunkManager::get({x, y, z + 1});
+  std::shared_ptr<Chunk> nz = ChunkManager::get({x, y, z - 1});
+
+  if(!px || !nx || !py || !ny || !pz || !nz){ // plz work 🥺
+    printf("a\n");
     return false;
   }
+
+  STACK_TRACE_PUSH("update chunk")
 
   // updating is taken care of - reset flag
   changed = false;
 
-  unsigned int i = 0; // vertex index
-  unsigned int j = 0; // lighting and normal index
-  unsigned int texCoord = 0;
-
-  // texure coordinates
-  float du, dv;
-  float a = 0.0f;
-  float b = 1.0f;
   uint8_t w;
-
   block_t block;
-
-  // allocate space for vertices, lighting, brightness, 
-  if(vertex == NULL){
-    vertex = (byte4*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(byte4));
-  }
-  // if(brightness == NULL){
-  //   brightness = (char*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(char));
-  // }
-  if(normal == NULL){
-    normal = (byte3*)malloc(CHUNK_SIZE_CUBED * 2 * sizeof(byte3));
-  }
-  if(texCoords == NULL){
-    texCoords = (float*)malloc(CHUNK_SIZE_CUBED * 4 * sizeof(float));
-  }
 
   for(uint8_t _z = 0; _z < CHUNK_SIZE; _z++){
     for(uint8_t _x = 0; _x < CHUNK_SIZE; _x++){
@@ -236,181 +209,79 @@ bool Chunk::update(){
         // add a face if -x is transparent
         if(isTransparent(get(_x - 1, _y, _z, px, nx, py, ny, pz, nz))){
           w = BLOCKS[block][0]; // get texture coordinates
-          // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
-          du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
 
-          // set the vertex data for the face
-          byte4Set(_x, _y, _z, w, vertex[i++]);
-          byte4Set(_x, _y + 1, _z + 1, w, vertex[i++]);
-          byte4Set(_x, _y + 1, _z, w, vertex[i++]);
-          byte4Set(_x, _y, _z, w, vertex[i++]);
-          byte4Set(_x, _y, _z + 1, w, vertex[i++]);
-          byte4Set(_x, _y + 1, _z + 1, w, vertex[i++]);
-
-          // set the brightness data for the face
-          for(int k = 0; k < 6; k++){
-            // brightness[j] = 4;
-            byte3Set(-1, 0, 0, normal[j++]);
-          }
-
-          // set the texture data for the face
-          texCoords[texCoord++] = halfPixelCorrection(a, du); texCoords[texCoord++] = halfPixelCorrection(a, dv);
-          texCoords[texCoord++] = halfPixelCorrection(b, du); texCoords[texCoord++] = halfPixelCorrection(b, dv);
-          texCoords[texCoord++] = halfPixelCorrection(a, du); texCoords[texCoord++] = halfPixelCorrection(b, dv);
-          texCoords[texCoord++] = halfPixelCorrection(a, du); texCoords[texCoord++] = halfPixelCorrection(a, dv);
-          texCoords[texCoord++] = halfPixelCorrection(b, du); texCoords[texCoord++] = halfPixelCorrection(a, dv);
-          texCoords[texCoord++] = halfPixelCorrection(b, du); texCoords[texCoord++] = halfPixelCorrection(b, dv);
+          vertexData.push_back(packVertex(_x    , _y    , _z    , NX, w, 0, 0));
+          vertexData.push_back(packVertex(_x    , _y + 1, _z + 1, NX, w, 1, 1));
+          vertexData.push_back(packVertex(_x    , _y + 1, _z    , NX, w, 0, 1));
+          vertexData.push_back(packVertex(_x    , _y    , _z    , NX, w, 0, 0));
+          vertexData.push_back(packVertex(_x    , _y    , _z + 1, NX, w, 1, 0));
+          vertexData.push_back(packVertex(_x    , _y + 1, _z + 1, NX, w, 1, 1));
         }
 
         // add a face if +x is transparent
         if(isTransparent(get(_x + 1, _y, _z, px, nx, py, ny, pz, nz))){
           w = BLOCKS[block][1]; // get texture coordinates
-          // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
-          du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
 
-          // set the vertex data for the face
-          byte4Set(_x + 1, _y, _z, w, vertex[i++]);
-          byte4Set(_x + 1, _y + 1, _z + 1, w, vertex[i++]);
-          byte4Set(_x + 1, _y, _z + 1, w, vertex[i++]);
-          byte4Set(_x + 1, _y, _z, w, vertex[i++]);
-          byte4Set(_x + 1, _y + 1, _z, w, vertex[i++]);
-          byte4Set(_x + 1, _y + 1, _z + 1, w, vertex[i++]);
-
-          // set the brightness data for the face
-          for(int k = 0; k < 6; k++){
-            // brightness[j] = 4;
-            byte3Set(1, 0, 0, normal[j++]);
-          }
-
-          // set the texture data for the face
-          texCoords[texCoord++] = halfPixelCorrection(b, du); texCoords[texCoord++] = halfPixelCorrection(a, dv);
-          texCoords[texCoord++] = halfPixelCorrection(a, du); texCoords[texCoord++] = halfPixelCorrection(b, dv);
-          texCoords[texCoord++] = halfPixelCorrection(a, du); texCoords[texCoord++] = halfPixelCorrection(a, dv);
-          texCoords[texCoord++] = halfPixelCorrection(b, du); texCoords[texCoord++] = halfPixelCorrection(a, dv);
-          texCoords[texCoord++] = halfPixelCorrection(b, du); texCoords[texCoord++] = halfPixelCorrection(b, dv);
-          texCoords[texCoord++] = halfPixelCorrection(a, du); texCoords[texCoord++] = halfPixelCorrection(b, dv);
+          vertexData.push_back(packVertex(_x + 1, _y    , _z    , PX, w, 1, 0));
+          vertexData.push_back(packVertex(_x + 1, _y + 1, _z + 1, PX, w, 0, 1));
+          vertexData.push_back(packVertex(_x + 1, _y    , _z + 1, PX, w, 0, 0));
+          vertexData.push_back(packVertex(_x + 1, _y    , _z    , PX, w, 1, 0));
+          vertexData.push_back(packVertex(_x + 1, _y + 1, _z    , PX, w, 1, 1));
+          vertexData.push_back(packVertex(_x + 1, _y + 1, _z + 1, PX, w, 0, 1));
         }
 
         // add a face if -z is transparent
         if(isTransparent(get(_x, _y, _z - 1, px, nx, py, ny, pz, nz))){
           w = BLOCKS[block][4]; // get texture coordinates
-          // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
-          du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
 
-          // set the vertex data for the face
-          byte4Set(_x, _y, _z, w, vertex[i++]);
-          byte4Set(_x + 1, _y + 1, _z, w, vertex[i++]);
-          byte4Set(_x + 1, _y, _z, w, vertex[i++]);
-          byte4Set(_x, _y, _z, w, vertex[i++]);
-          byte4Set(_x, _y + 1, _z, w, vertex[i++]);
-          byte4Set(_x + 1, _y + 1, _z, w, vertex[i++]);
-
-          // set the brightness data for the face
-          for(int k = 0; k < 6; k++){
-            // brightness[j] = 3;
-            byte3Set(0, 0, -1, normal[j++]);
-          }
-
-          // set the texture data for the face
-          texCoords[texCoord++] = halfPixelCorrection(a, du); texCoords[texCoord++] = halfPixelCorrection(a, dv);
-          texCoords[texCoord++] = halfPixelCorrection(b, du); texCoords[texCoord++] = halfPixelCorrection(b, dv);
-          texCoords[texCoord++] = halfPixelCorrection(b, du); texCoords[texCoord++] = halfPixelCorrection(a, dv);
-          texCoords[texCoord++] = halfPixelCorrection(a, du); texCoords[texCoord++] = halfPixelCorrection(a, dv);
-          texCoords[texCoord++] = halfPixelCorrection(a, du); texCoords[texCoord++] = halfPixelCorrection(b, dv);
-          texCoords[texCoord++] = halfPixelCorrection(b, du); texCoords[texCoord++] = halfPixelCorrection(b, dv);
+          vertexData.push_back(packVertex(_x    , _y    , _z    , NZ, w, 0, 0));
+          vertexData.push_back(packVertex(_x + 1, _y + 1, _z    , NZ, w, 1, 1));
+          vertexData.push_back(packVertex(_x + 1, _y    , _z    , NZ, w, 1, 0));
+          vertexData.push_back(packVertex(_x    , _y    , _z    , NZ, w, 0, 0));
+          vertexData.push_back(packVertex(_x    , _y + 1, _z    , NZ, w, 0, 1));
+          vertexData.push_back(packVertex(_x + 1, _y + 1, _z    , NZ, w, 1, 1));
         }
 
         // add a face if +z is transparent
         if(isTransparent(get(_x, _y, _z + 1, px, nx, py, ny, pz, nz))){
           w = BLOCKS[block][5]; // get texture coordinates
-          // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
-          du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
 
-          // set the vertex data for the face
-          byte4Set(_x, _y, _z + 1, w, vertex[i++]);
-          byte4Set(_x + 1, _y, _z + 1, w, vertex[i++]);
-          byte4Set(_x + 1, _y + 1, _z + 1, w, vertex[i++]);
-          byte4Set(_x, _y, _z + 1, w, vertex[i++]);
-          byte4Set(_x + 1, _y + 1, _z + 1, w, vertex[i++]);
-          byte4Set(_x, _y + 1, _z + 1, w, vertex[i++]);
-
-          // set the brightness data for the face
-          for(int k = 0; k < 6; k++){
-            // brightness[j] = 3;
-            byte3Set(0, 0, 1, normal[j++]);
-          }
-
-          // set the texture data for the face
-          texCoords[texCoord++] = halfPixelCorrection(a, du); texCoords[texCoord++] = halfPixelCorrection(a, dv);
-          texCoords[texCoord++] = halfPixelCorrection(b, du); texCoords[texCoord++] = halfPixelCorrection(a, dv);
-          texCoords[texCoord++] = halfPixelCorrection(b, du); texCoords[texCoord++] = halfPixelCorrection(b, dv);
-          texCoords[texCoord++] = halfPixelCorrection(a, du); texCoords[texCoord++] = halfPixelCorrection(a, dv);
-          texCoords[texCoord++] = halfPixelCorrection(b, du); texCoords[texCoord++] = halfPixelCorrection(b, dv);
-          texCoords[texCoord++] = halfPixelCorrection(a, du); texCoords[texCoord++] = halfPixelCorrection(b, dv);
+          vertexData.push_back(packVertex(_x    , _y    , _z + 1, PZ, w, 0, 0));
+          vertexData.push_back(packVertex(_x + 1, _y    , _z + 1, PZ, w, 1, 0));
+          vertexData.push_back(packVertex(_x + 1, _y + 1, _z + 1, PZ, w, 1, 1));
+          vertexData.push_back(packVertex(_x    , _y    , _z + 1, PZ, w, 0, 0));
+          vertexData.push_back(packVertex(_x + 1, _y + 1, _z + 1, PZ, w, 1, 1));
+          vertexData.push_back(packVertex(_x    , _y + 1, _z + 1, PZ, w, 0, 1));
         }
 
         // add a face if -y is transparent
         if(isTransparent(get(_x, _y - 1, _z, px, nx, py, ny, pz, nz))){
           w = BLOCKS[block][3]; // get texture coordinates
-          // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
-          du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
 
-          // set the vertex data for the face
-          byte4Set(_x, _y, _z, w, vertex[i++]);
-          byte4Set(_x + 1, _y, _z, w, vertex[i++]);
-          byte4Set(_x + 1, _y, _z + 1, w, vertex[i++]);
-          byte4Set(_x, _y, _z, w, vertex[i++]);
-          byte4Set(_x + 1, _y, _z + 1, w, vertex[i++]);
-          byte4Set(_x, _y, _z + 1, w, vertex[i++]);
-
-          // set the brightness data for the face
-          for(int k = 0; k < 6; k++){
-            // brightness[j] = 2;
-            byte3Set(0, -1, 0, normal[j++]);
-          }
-
-          // set the texture data for the face
-          texCoords[texCoord++] = halfPixelCorrection(a, du); texCoords[texCoord++] = halfPixelCorrection(a, dv);
-          texCoords[texCoord++] = halfPixelCorrection(b, du); texCoords[texCoord++] = halfPixelCorrection(a, dv);
-          texCoords[texCoord++] = halfPixelCorrection(b, du); texCoords[texCoord++] = halfPixelCorrection(b, dv);
-          texCoords[texCoord++] = halfPixelCorrection(a, du); texCoords[texCoord++] = halfPixelCorrection(a, dv);
-          texCoords[texCoord++] = halfPixelCorrection(b, du); texCoords[texCoord++] = halfPixelCorrection(b, dv);
-          texCoords[texCoord++] = halfPixelCorrection(a, du); texCoords[texCoord++] = halfPixelCorrection(b, dv);
+          vertexData.push_back(packVertex(_x    , _y    , _z    , NY, w, 0, 0));
+          vertexData.push_back(packVertex(_x + 1, _y    , _z    , NY, w, 1, 0));
+          vertexData.push_back(packVertex(_x + 1, _y    , _z + 1, NY, w, 1, 1));
+          vertexData.push_back(packVertex(_x    , _y    , _z    , NY, w, 0, 0));
+          vertexData.push_back(packVertex(_x + 1, _y    , _z + 1, NY, w, 1, 1));
+          vertexData.push_back(packVertex(_x    , _y    , _z + 1, NY, w, 0, 1));
         }
 
         // add a face if +y is transparent
         if(isTransparent(get(_x, _y + 1, _z, px, nx, py, ny, pz, nz))){
           w = BLOCKS[block][2]; // get texture coordinates
-          // du = (w % TEXTURE_SIZE) * s; dv = (w / TEXTURE_SIZE) * s;
-          du = w % TEXTURE_SIZE; dv = w / TEXTURE_SIZE;
 
-          // set the vertex data for the face
-          byte4Set(_x, _y + 1, _z, w, vertex[i++]);
-          byte4Set(_x, _y + 1, _z + 1, w, vertex[i++]);
-          byte4Set(_x + 1, _y + 1, _z + 1, w, vertex[i++]);
-          byte4Set(_x, _y + 1, _z, w, vertex[i++]);
-          byte4Set(_x + 1, _y + 1, _z + 1, w, vertex[i++]);
-          byte4Set(_x + 1, _y + 1, _z, w, vertex[i++]);
-
-          // set the brightness data for the face
-          for(int k = 0; k < 6; k++){
-            // brightness[j] = 5;
-            byte3Set(0, 1, 0, normal[j++]);
-          }
-
-          // set the texture data for the face
-          texCoords[texCoord++] = halfPixelCorrection(a, du); texCoords[texCoord++] = halfPixelCorrection(b, dv);
-          texCoords[texCoord++] = halfPixelCorrection(a, du); texCoords[texCoord++] = halfPixelCorrection(a, dv);
-          texCoords[texCoord++] = halfPixelCorrection(b, du); texCoords[texCoord++] = halfPixelCorrection(a, dv);
-          texCoords[texCoord++] = halfPixelCorrection(a, du); texCoords[texCoord++] = halfPixelCorrection(b, dv);
-          texCoords[texCoord++] = halfPixelCorrection(b, du); texCoords[texCoord++] = halfPixelCorrection(a, dv);
-          texCoords[texCoord++] = halfPixelCorrection(b, du); texCoords[texCoord++] = halfPixelCorrection(b, dv);
+          vertexData.push_back(packVertex(_x    , _y + 1, _z    , PY, w, 0, 1));
+          vertexData.push_back(packVertex(_x    , _y + 1, _z + 1, PY, w, 0, 0));
+          vertexData.push_back(packVertex(_x + 1, _y + 1, _z + 1, PY, w, 1, 0));
+          vertexData.push_back(packVertex(_x    , _y + 1, _z    , PY, w, 0, 1));
+          vertexData.push_back(packVertex(_x + 1, _y + 1, _z + 1, PY, w, 1, 0));
+          vertexData.push_back(packVertex(_x + 1, _y + 1, _z    , PY, w, 1, 1));
         }
       }
     }
   }
 
-  elements = i; // set number of vertices
+  elements = (int)vertexData.size(); // set number of vertices
   meshChanged = true; // set mesh has changed flag
 
 #ifdef PRINT_TIMING
@@ -444,36 +315,15 @@ void Chunk::bufferMesh(){
 
   glBindVertexArray(vao);
 
-  unsigned int vertexBuffer = makeBuffer(GL_ARRAY_BUFFER, elements * sizeof(*vertex), vertex);
-  glVertexAttribPointer(0, 4, GL_BYTE, GL_FALSE, 0, 0);
+  unsigned int vertexDataBuffer = makeBuffer(GL_ARRAY_BUFFER, elements * sizeof(int), vertexData.data());
+  glVertexAttribIPointer(0, 1, GL_INT, 0, 0);
   glEnableVertexAttribArray(0);
 
-  // unsigned int brightnessBuffer = makeBuffer(GL_ARRAY_BUFFER, elements * sizeof(*brightness), brightness);
-  // glVertexAttribIPointer(1, 1, GL_BYTE, 0, 0);
-  // glEnableVertexAttribArray(1);
-
-  unsigned int normalBuffer = makeBuffer(GL_ARRAY_BUFFER, elements * sizeof(*normal), normal);
-  glVertexAttribPointer(2, 3, GL_BYTE, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(2);
-
-  unsigned int texureBuffer = makeBuffer(GL_ARRAY_BUFFER, elements * 2 * sizeof(*texCoords), texCoords);
-  glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(3);
-
   glBindVertexArray(0);
-  glDeleteBuffers(1, &vertexBuffer);
-  // glDeleteBuffers(1, &brightnessBuffer);
-  glDeleteBuffers(1, &normalBuffer);
-  glDeleteBuffers(1, &texureBuffer);
+  glDeleteBuffers(1, &vertexDataBuffer);
 
-  free(vertex);
-  vertex = NULL;
-  // free(brightness);
-  // brightness = NULL;
-  free(normal);
-  normal = NULL;
-  free(texCoords);
-  texCoords = NULL;
+  vertexData.clear();
+  vertexData.shrink_to_fit();
 
   meshChanged = false;
 
@@ -482,25 +332,25 @@ void Chunk::bufferMesh(){
 #endif
 }
 
-block_t Chunk::get(int _x, int _y, int _z, Chunk* px, Chunk* nx, Chunk* py, Chunk* ny, Chunk* pz, Chunk* nz){
+block_t Chunk::get(uint8_t _x, uint8_t _y, uint8_t _z, std::shared_ptr<Chunk> px, std::shared_ptr<Chunk> nx, std::shared_ptr<Chunk> py, std::shared_ptr<Chunk> ny, std::shared_ptr<Chunk> pz, std::shared_ptr<Chunk> nz){
   if(_x < 0){
-    return nx == NULL ? VOID_BLOCK : nx->blocks[blockIndex(CHUNK_SIZE + _x, _y, _z)];
+    return nx == nullptr ? VOID_BLOCK : nx->blocks[blockIndex(CHUNK_SIZE + _x, _y, _z)];
   }else if(_x >= CHUNK_SIZE){
-    return px == NULL ? VOID_BLOCK : px->blocks[blockIndex(_x % CHUNK_SIZE, _y, _z)];
+    return px == nullptr ? VOID_BLOCK : px->blocks[blockIndex(_x % CHUNK_SIZE, _y, _z)];
   }else if(_y < 0){
-    return ny == NULL ? VOID_BLOCK : ny->blocks[blockIndex(_x, CHUNK_SIZE + _y, _z)];
+    return ny == nullptr ? VOID_BLOCK : ny->blocks[blockIndex(_x, CHUNK_SIZE + _y, _z)];
   }else if(_y >= CHUNK_SIZE){
-    return py == NULL ? VOID_BLOCK : py->blocks[blockIndex(_x, _y % CHUNK_SIZE, _z)];
+    return py == nullptr ? VOID_BLOCK : py->blocks[blockIndex(_x, _y % CHUNK_SIZE, _z)];
   }else if(_z < 0){
-    return nz == NULL ? VOID_BLOCK : nz->blocks[blockIndex(_x, _y, CHUNK_SIZE + _z)];
+    return nz == nullptr ? VOID_BLOCK : nz->blocks[blockIndex(_x, _y, CHUNK_SIZE + _z)];
   }else if(_z >= CHUNK_SIZE){
-    return pz == NULL ? VOID_BLOCK : pz->blocks[blockIndex(_x, _y, _z % CHUNK_SIZE)];
+    return pz == nullptr ? VOID_BLOCK : pz->blocks[blockIndex(_x, _y, _z % CHUNK_SIZE)];
   }
 
   return blocks[blockIndex(_x, _y, _z)];
 }
 
-void Chunk::set(int _x, int _y, int _z, block_t block){
+void Chunk::set(uint8_t _x, uint8_t _y, uint8_t _z, block_t block){
   blocks[blockIndex(_x, _y, _z)] = block;
   changed = true;
 }
