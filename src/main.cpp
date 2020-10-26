@@ -77,6 +77,7 @@ void signalHandler(int signum){
   exit(signum);  
 }
 
+#ifdef DEBUG
 void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char *message, const void *userParam){
   // ignore non-significant error/warning codes
   if(id == 131169 || id == 131185 || id == 131218 || id == 131204){
@@ -114,6 +115,7 @@ void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum 
     case GL_DEBUG_SEVERITY_NOTIFICATION: printf("severity: notification\n"); break;
   }
 }
+#endif
 
 void framebufferResizeCallback(GLFWwindow* _window, int width, int height){
   glViewport(0, 0, width, height);
@@ -272,6 +274,7 @@ int main(int argc, char** argv){
     return -1;
   }
 
+#ifdef DEBUG
   int flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
   if(flags & GL_CONTEXT_FLAG_DEBUG_BIT){
     printf("OpenGL debug supported\n");
@@ -282,6 +285,7 @@ int main(int argc, char** argv){
   }else{
     printf("OpenGL debug not supported\n");
   }
+#endif
 
   CATCH_OPENGL_ERROR
 
