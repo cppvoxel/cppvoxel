@@ -299,6 +299,8 @@ int main(int argc, char** argv){
   const int NUM_TEXTURES = 11;
   const int TEXTURE_RES = 16;
 
+  printf("loading textures: ");
+
   glActiveTexture(GL_TEXTURE0);
   unsigned int textureArray;
   glGenTextures(1, &textureArray);
@@ -343,18 +345,17 @@ int main(int argc, char** argv){
       case 10:
         imageData = stbi_load_from_memory(IMAGE_LOG_TOP_BYTES, sizeof(IMAGE_LOG_TOP_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
         break;
-        break;
       default:
-        fprintf(stderr, "invalid texture id\n");
+        fprintf(stderr, "i%d;", i);
         exit(-1);
         break;
     }
 
     if(imageData){
       glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, TEXTURE_RES, TEXTURE_RES, 1, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
-      printf("loaded texture %d\n", i);
+      printf("%d;", i);
     }else{
-      fprintf(stderr, "failed to load texture %d\n", i);
+      fprintf(stderr, "f%d;", i);
       exit(-1);
     }
 
@@ -366,6 +367,8 @@ int main(int argc, char** argv){
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+  printf(" done!\n");
 
   Skybox::init();
 
