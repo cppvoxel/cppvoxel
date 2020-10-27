@@ -28,6 +28,7 @@
 #include "chunk_manager.h"
 #include "chunk.h"
 #include "skybox.h"
+#include "particle_manager.h"
 
 // textures
 #include "dirt.h"
@@ -371,8 +372,8 @@ int main(int argc, char** argv){
   printf(" done!\n");
 
   Skybox::init();
-
   ChunkManager::init();
+  ParticleManager::init();
 
   CATCH_OPENGL_ERROR
 
@@ -400,7 +401,7 @@ int main(int argc, char** argv){
     frames++;
 
     if(currentTime - lastPrintTime >= 1.0){
-      printf("%.2fms (%dfps) %d chunks (%u elements, %u chunks drawn)\n", 1000.0f/(float)frames, frames, (int)ChunkManager::chunks.size(), elements, chunksDrawn);
+      printf("%.2fms (%dfps) %d chunks (%u elements, %u chunks drawn) %d particles\n", 1000.0f/(float)frames, frames, (int)ChunkManager::chunks.size(), elements, chunksDrawn, (int)ParticleManager::particles.size());
       frames = 0;
       lastPrintTime += 1.0;
     }
@@ -498,6 +499,7 @@ int main(int argc, char** argv){
 #ifndef MULTI_THREADING
     ChunkManager::update(pos, viewDistance + 1);
 #endif
+    ParticleManager::update(deltaTime, camera.position);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -559,6 +561,8 @@ int main(int argc, char** argv){
     }
     // printf("draw all chunks %.4fms\n", (glfwGetTime() - start) * 1000.0);
 
+    ParticleManager::draw(projection, cameraView);
+
     Skybox::shader->use();
     Skybox::shader->setMat4("view", cameraView);
 
@@ -579,6 +583,7 @@ int main(int argc, char** argv){
   chunkThread.join();
 #endif
 
+  ParticleManager::free();
   ChunkManager::free();
   Skybox::free();
 

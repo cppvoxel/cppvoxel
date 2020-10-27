@@ -163,10 +163,10 @@ const unsigned char indices[] = {
   22, 21, 20, 20, 23, 22
 };
 
-unsigned int vao;
-
 namespace Skybox{
   Shader* shader;
+
+  unsigned int vao;
 }
 
 void Skybox::init(){
