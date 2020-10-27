@@ -63,7 +63,6 @@ uniform int fog_far;
 void main(){
   vec4 color = vec4(texture(texture_array, vTexCoord).rgb * vDiffuse, 1.0);
   color *= 1.0 - smoothstep(fog_near, fog_far, length(vPosition));
-  color = vec4(pow(color.rgb, vec3(1.0 / 2.2)), color.a);
 
   if(color.a < 0.1){
     discard;

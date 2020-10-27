@@ -290,6 +290,7 @@ int main(int argc, char** argv){
 
   CATCH_OPENGL_ERROR
 
+  glEnable(GL_FRAMEBUFFER_SRGB); 
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
