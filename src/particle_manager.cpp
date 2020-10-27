@@ -81,9 +81,9 @@ int findUnusedParticle(){
 
 void respawnParticle(ParticleManager::particle_t& particle, glm::vec3 cameraPos){
   particle.size = (rand() % 11) / 100.0f + 0.1f;
-  particle.pos = glm::vec3((rand() % 1000) - 500, 200.0f - (rand() % 100), (rand() % 1000) - 500) + cameraPos;
-  particle.life = 3.0f;
-  particle.speed = {0.0f, -250.0f, 0.0f};
+  particle.pos = glm::vec3((rand() % 1000) - 500, 250.0f - (rand() % 50), (rand() % 1000) - 500) + cameraPos;
+  particle.life = 2.5f;
+  particle.speed = {0.0f, -300.0f, 0.0f};
 }
 
 namespace ParticleManager{
