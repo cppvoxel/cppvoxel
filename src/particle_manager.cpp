@@ -1,5 +1,7 @@
 #include "particle_manager.h"
 
+#include <glfw/glfw3.h>
+
 const static float vertices[] = {
   -1.0f,-1.0f,-1.0f,
   -1.0f,-1.0f, 1.0f,
@@ -53,9 +55,20 @@ void main(){
 const static char* shaderFragmentSource = R"(#version 330 core
 out vec4 FragColor;
 
+uniform vec3 color;
+
 void main(){
-  FragColor = vec4(0.2, 0.3, 1.0, 1.0);
+  FragColor = vec4(color, 1.0);
 })";
+
+enum WeatherType{
+  NONE,
+  RAIN,
+  SNOW
+};
+
+double timeToEndWeatherCycle;
+WeatherType weather = NONE;
 
 int lastUsedParticle = 0;
 int findUnusedParticle(){
@@ -80,10 +93,38 @@ int findUnusedParticle(){
 }
 
 void respawnParticle(ParticleManager::particle_t& particle, glm::vec3 cameraPos){
-  particle.size = (rand() % 11) / 100.0f + 0.1f;
   particle.pos = glm::vec3((rand() % 1000) - 500, 250.0f - (rand() % 50), (rand() % 1000) - 500) + cameraPos;
-  particle.life = 2.5f;
-  particle.speed = {0.0f, -300.0f, 0.0f};
+  if(weather == RAIN){
+    float size = (rand() % 11) / 100.0f + 0.1f;
+    particle.size = {size, size * 12.0f, size};
+    particle.life = 2.5f;
+    particle.speed = {0.0f, -300.0f, 0.0f};
+  }else{
+    float size = (rand() % 11) / 100.0f + 0.2f;
+    particle.size = {size, size, size};
+    particle.life = 30.0f;
+    particle.speed = {0.0f, -30.0f, 0.0f};
+  }
+}
+
+void setWeatherCycle(){
+  if(weather != NONE){
+    timeToEndWeatherCycle = glfwGetTime() + 15.0;
+    weather = NONE;
+    return;
+  }
+
+  ParticleManager::particles.clear();
+  weather = (WeatherType)((rand() % 2) + 1);
+  timeToEndWeatherCycle = glfwGetTime() + 30.0;
+
+  glm::vec3 color = {1.0f, 1.0f, 1.0f};
+  if(weather == RAIN){
+    color = {0.2f, 0.3f, 1.0f};
+  }
+
+  ParticleManager::shader->use();
+  ParticleManager::shader->setVec3("color", color);
 }
 
 namespace ParticleManager{
@@ -100,6 +141,7 @@ void ParticleManager::init(){
   }
 
   shader = new Shader(shaderVertexSource, shaderFragmentSource);
+  setWeatherCycle();
 
   glGenVertexArrays(1, &vao);
 
@@ -126,9 +168,15 @@ void ParticleManager::free(){
 }
 
 void ParticleManager::update(double delta, glm::vec3 cameraPos){
-  for(unsigned int i = 0; i < 20; i++){
-    int unusedParticle = findUnusedParticle();
-    respawnParticle(particles[unusedParticle], cameraPos);
+  if(glfwGetTime() > timeToEndWeatherCycle){
+    setWeatherCycle();
+  }
+
+  if(weather != NONE){
+    for(unsigned int i = 0; i < 20; i++){
+      int unusedParticle = findUnusedParticle();
+      respawnParticle(particles[unusedParticle], cameraPos);
+    }
   }
 
   for(particle_t& p : particles){
@@ -148,7 +196,7 @@ void ParticleManager::draw(glm::mat4 projection, glm::mat4 view){
   for(particle_t& p : particles){
     if(p.life > 0.0f){
       glm::mat4 model = glm::translate(glm::mat4(1.0f), p.pos);
-      model = glm::scale(model, {p.size, p.size * 12.0f, p.size});
+      model = glm::scale(model, p.size);
       shader->setMat4("model", model);
 
       glDrawArrays(GL_TRIANGLES, 0, 36);
