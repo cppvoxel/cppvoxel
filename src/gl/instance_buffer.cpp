@@ -1,0 +1,81 @@
+#include "gl/instance_buffer.h"
+
+#include <stdio.h>
+#include <math.h>
+#include <typeinfo>
+
+#include <GL/glew.h>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include "common.h"
+
+// reference: https://github.com/Vercidium/particles/blob/master/source/InstanceBuffer.cs
+
+namespace GL{
+
+template <typename T>
+InstanceBuffer<T>::InstanceBuffer(unsigned int vao, int initialSize, unsigned int attrib){
+  glGenBuffers(1, &vbo);
+  glBindVertexArray(vao);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+  if(typeid(T) == typeid(unsigned int)){
+    vertexSize = sizeof(unsigned int);
+    glEnableVertexAttribArray(attrib);
+    // unsigned int is treated as 4 bytes so it can be used as a color in the shader
+    glVertexAttribPointer(attrib, 4, GL_UNSIGNED_BYTE, GL_TRUE, vertexSize, (void*)0);
+    // must set attribute divisor
+    glVertexAttribDivisor(attrib, 1);
+  }else if(typeid(T) == typeid(glm::mat4)){
+    vertexSize = sizeof(glm::mat4);
+    for(unsigned int i = 0; i < 4; i++){
+      glEnableVertexAttribArray(attrib + i);
+      // mat4 is treated as 4 sets of 4 floats in the shader
+      glVertexAttribPointer(attrib + i, 4, GL_FLOAT, GL_FALSE, vertexSize, (void*)(sizeof(float) * 4 * i));
+      // must set attrivute divisor
+      glVertexAttribDivisor(attrib + i, 1);
+    }
+  }else{
+    fprintf(stderr, "unknown InstanceBuffer data type\n");
+    exit(-1);
+  }
+
+  bufferData(initialSize);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindVertexArray(0);
+}
+
+template <typename T>
+InstanceBuffer<T>::~InstanceBuffer(){
+  glDeleteBuffers(1, &vbo);
+}
+
+template <typename T>
+void InstanceBuffer<T>::bind(){
+  glBindBuffer(GL_ARRAY_BUFFER, vbo);
+}
+
+template <typename T>
+void InstanceBuffer<T>::expand(int newLength){
+  if(newLength < currentLength){
+    return;
+  }
+
+  newLength = MAX(newLength, currentLength * 2); // make sure we only increase by a sizeable amount instead of lots of small increases
+  bufferData(newLength);
+}
+
+template <typename T>
+void InstanceBuffer<T>::bufferData(int newLength){
+  currentLength = newLength;
+
+  bind();
+  glBufferData(GL_ARRAY_BUFFER, (unsigned int)(currentLength * vertexSize), (void*)0, GL_DYNAMIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+// tell the compiler we will be using these data types
+template class InstanceBuffer<unsigned int>;
+template class InstanceBuffer<glm::mat4>;
+
+}
