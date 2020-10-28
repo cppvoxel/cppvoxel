@@ -71,6 +71,14 @@ bool cursorLocked = true;
 glm::mat4 projection = glm::mat4(1.0f);
 glm::mat4 cameraView;
 
+namespace ShaderUniformLocations{
+  int chunkProjection;
+  int chunkView;
+  int chunkModel;
+  int skyboxProjection;
+  int skyboxView;
+}
+
 void signalHandler(int signum){
   fprintf(stderr, "Interrupt signal %d received (pid: %d)\n", signum, getpid());
   fprintf(stderr, "%s:%u (%s): %s", stackTraceFile.c_str(), stackTraceLine, stackTraceFile.c_str(), stackTraceName.c_str());
@@ -373,7 +381,12 @@ int main(int argc, char** argv){
   printf(" done!\n");
 
   Skybox::init();
+  ShaderUniformLocations::skyboxProjection = Skybox::shader->getUniformLocation("projection");
+  ShaderUniformLocations::skyboxView = Skybox::shader->getUniformLocation("view");
   ChunkManager::init();
+  ShaderUniformLocations::chunkProjection = ChunkManager::shader->getUniformLocation("projection");
+  ShaderUniformLocations::chunkView = ChunkManager::shader->getUniformLocation("view");
+  ShaderUniformLocations::chunkModel = ChunkManager::shader->getUniformLocation("model");
   ParticleManager::init();
 
   CATCH_OPENGL_ERROR
@@ -509,10 +522,10 @@ int main(int argc, char** argv){
     ChunkManager::shader->use();
     if(perspectiveChanged){
       projection = glm::perspective(glm::radians(camera.fov), (float)windowWidth/(float)windowHeight, .1f, 10000.0f);
-      ChunkManager::shader->setMat4("projection", projection);
+      ChunkManager::shader->setMat4(ShaderUniformLocations::chunkProjection, projection);
     }
 
-    ChunkManager::shader->setMat4("view", cameraView);
+    ChunkManager::shader->setMat4(ShaderUniformLocations::chunkView, cameraView);
 
     uint32_t chunksDeleted = 0;
     uint32_t chunksGenerated = 0;
@@ -554,7 +567,7 @@ int main(int argc, char** argv){
         continue;
       }
 
-      ChunkManager::shader->setMat4("model", chunk->model);
+      ChunkManager::shader->setMat4(ShaderUniformLocations::chunkModel, chunk->model);
       chunk->draw(); CATCH_OPENGL_ERROR
 
       elements += chunk->elements;
@@ -562,13 +575,13 @@ int main(int argc, char** argv){
     }
     // printf("draw all chunks %.4fms\n", (glfwGetTime() - start) * 1000.0);
 
-    ParticleManager::draw(projection, cameraView);
+    ParticleManager::draw(projection, cameraView); CATCH_OPENGL_ERROR
 
     Skybox::shader->use();
-    Skybox::shader->setMat4("view", cameraView);
+    Skybox::shader->setMat4(ShaderUniformLocations::skyboxView, cameraView);
 
     if(perspectiveChanged){
-      Skybox::shader->setMat4("projection", projection);
+      Skybox::shader->setMat4(ShaderUniformLocations::skyboxProjection, projection);
       perspectiveChanged = false;
     }
 

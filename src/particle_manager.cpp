@@ -140,6 +140,8 @@ namespace ParticleManager{
 
   unsigned int vao;
   unsigned int particlesToDraw;
+
+  int shaderProjectionLocation, shaderViewLocation;
 }
 
 void ParticleManager::init(){
@@ -147,6 +149,10 @@ void ParticleManager::init(){
   particles.resize(20480);
 
   shader = new GL::Shader(shaderVertexSource, shaderFragmentSource);
+  shader->use();
+  shaderProjectionLocation = shader->getUniformLocation("projection");
+  shaderViewLocation = shader->getUniformLocation("view");
+
   setWeatherCycle();
 
   glGenVertexArrays(1, &vao);
@@ -224,8 +230,8 @@ void ParticleManager::update(double delta, glm::vec3 cameraPos){
 
 void ParticleManager::draw(glm::mat4 projection, glm::mat4 view){
   shader->use();
-  shader->setMat4("projection", projection);
-  shader->setMat4("view", view);
+  shader->setMat4(shaderProjectionLocation, projection);
+  shader->setMat4(shaderViewLocation, view);
 
   glBindVertexArray(vao);
   glDrawArraysInstanced(GL_TRIANGLES, 0, 36, particlesToDraw);

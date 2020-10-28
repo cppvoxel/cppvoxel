@@ -85,11 +85,6 @@ void ChunkManager::init(){
 }
 
 void ChunkManager::free(){
-  // for(chunk_it it = chunks.begin(); it != chunks.end(); it++){
-  //   std::shared_ptr<Chunk> chunk = it->second;
-  //   delete chunk;
-  // }
-
   delete shader;
 }
 

@@ -17,9 +17,9 @@ Shader::Shader(const char* vertexSource, const char* fragmentSource){
   if(!success){
     char infoLog[512];
     glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-    printf("vertex shader error\n");
-    printf(infoLog);
-    printf("\n");
+    fprintf(stderr, "vertex shader error\n");
+    fprintf(stderr, infoLog);
+    fprintf(stderr, "\n");
 
     glDeleteShader(vertexShader);
     return;
@@ -35,9 +35,9 @@ Shader::Shader(const char* vertexSource, const char* fragmentSource){
   if(!success){
     char infoLog[512];
     glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-    printf("fragment shader error\n");
-    printf(infoLog);
-    printf("\n");
+    fprintf(stderr, "fragment shader error\n");
+    fprintf(stderr, infoLog);
+    fprintf(stderr, "\n");
 
     glDeleteShader(fragmentShader);
     return;

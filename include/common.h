@@ -8,7 +8,11 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
+#ifdef DEBUG
 #define CATCH_OPENGL_ERROR {GLenum err; while((err = glGetError()) != GL_NO_ERROR){fprintf(stderr, "[OpenGL Error] %s:%d (%s): %#8x\n", __FILE__, __LINE__, __func__, err);}}
+#else
+#define CATCH_OPENGL_ERROR
+#endif
 
 extern std::string stackTraceName;
 extern std::string stackTraceFile;
