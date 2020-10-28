@@ -192,10 +192,6 @@ void ParticleManager::update(double delta, glm::vec3 cameraPos){
     }
   }
 
-  if(particles.size() == 0){
-    return;
-  }
-
   colorInstanceBuffer->expand(particles.size());
   matrixInstanceBuffer->expand(particles.size());
 
