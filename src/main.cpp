@@ -21,7 +21,7 @@
 
 #include "common.h"
 #include "window.h"
-#include "shader.h"
+#include "gl/shader.h"
 #include "config.h"
 #include "input.h"
 #include "camera.h"

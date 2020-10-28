@@ -73,11 +73,11 @@ void main(){
 
 namespace ChunkManager{
   chunk_map chunks;
-  Shader* shader;
+  GL::Shader* shader;
 }
 
 void ChunkManager::init(){
-  shader = new Shader(shaderVertexSource, shaderFragmentSource);
+  shader = new GL::Shader(shaderVertexSource, shaderFragmentSource);
   shader->use();
   shader->setInt("texture_array", 0);
   shader->setInt("fog_near", (viewDistance + 1) * CHUNK_SIZE - 8);

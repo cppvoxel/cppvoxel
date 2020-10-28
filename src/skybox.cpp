@@ -164,13 +164,13 @@ const unsigned char indices[] = {
 };
 
 namespace Skybox{
-  Shader* shader;
+  GL::Shader* shader;
 
   unsigned int vao;
 }
 
 void Skybox::init(){
-  shader = new Shader(shaderVertexSource, shaderFragmentSource);
+  shader = new GL::Shader(shaderVertexSource, shaderFragmentSource);
 
   unsigned int vbo, ebo;
   glGenVertexArrays(1, &vao);

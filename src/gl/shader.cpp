@@ -1,6 +1,8 @@
-#include "shader.h"
+#include "gl/shader.h"
 
 #include <stdio.h>
+
+namespace GL{
 
 Shader::Shader(const char* vertexSource, const char* fragmentSource){
   int success;
@@ -77,4 +79,6 @@ void Shader::use(){
   }
 
   glUseProgram(id);
+}
+
 }

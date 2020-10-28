@@ -134,7 +134,7 @@ inline void setWeatherCycle(){
 
 namespace ParticleManager{
   std::vector<particle_t> particles;
-  Shader* shader;
+  GL::Shader* shader;
   GL::InstanceBuffer<unsigned int>* colorInstanceBuffer;
   GL::InstanceBuffer<glm::mat4>* matrixInstanceBuffer;
 
@@ -146,7 +146,7 @@ void ParticleManager::init(){
   // pre-allocate particles
   particles.resize(20480);
 
-  shader = new Shader(shaderVertexSource, shaderFragmentSource);
+  shader = new GL::Shader(shaderVertexSource, shaderFragmentSource);
   setWeatherCycle();
 
   glGenVertexArrays(1, &vao);

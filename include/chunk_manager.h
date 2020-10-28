@@ -4,7 +4,7 @@
 #include <map>
 #include <memory>
 
-#include "shader.h"
+#include "gl/shader.h"
 #include "common.h"
 #include "chunk.h"
 
@@ -14,7 +14,7 @@ using chunk_it = chunk_map::iterator;
 namespace ChunkManager{
 
 extern chunk_map chunks;
-extern Shader* shader;
+extern GL::Shader* shader;
 
 void init();
 void free();

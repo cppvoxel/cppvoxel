@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "shader.h"
+#include "gl/shader.h"
 
 namespace ParticleManager{
 
@@ -19,7 +19,7 @@ struct particle_t{
 };
 
 extern std::vector<particle_t> particles;
-extern Shader* shader;
+extern GL::Shader* shader;
 
 void init();
 void free();

@@ -5,6 +5,8 @@
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
 
+namespace GL{
+
 class Shader{
 public:
   Shader(const char* vertexSource, const char* fragmentSource);
@@ -26,5 +28,7 @@ public:
 private:
   unsigned int id = 0;
 };
+
+}
 
 #endif
