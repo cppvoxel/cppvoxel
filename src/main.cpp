@@ -71,14 +71,6 @@ bool cursorLocked = true;
 glm::mat4 projection = glm::mat4(1.0f);
 glm::mat4 cameraView;
 
-namespace ShaderUniformLocations{
-  int chunkProjection;
-  int chunkView;
-  int chunkModel;
-  int skyboxProjection;
-  int skyboxView;
-}
-
 void signalHandler(int signum){
   fprintf(stderr, "Interrupt signal %d received (pid: %d)\n", signum, getpid());
   fprintf(stderr, "%s:%u (%s): %s", stackTraceFile.c_str(), stackTraceLine, stackTraceFile.c_str(), stackTraceName.c_str());
@@ -87,7 +79,7 @@ void signalHandler(int signum){
 }
 
 #ifdef DEBUG
-void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char *message, const void *userParam){
+void APIENTRY glDebugOutput(GLenum source, GLenum type, uint id, GLenum severity, GLsizei length, const char *message, const void *userParam){
   // ignore non-significant error/warning codes
   if(id == 131169 || id == 131185 || id == 131218 || id == 131204){
     return; 
@@ -157,15 +149,6 @@ void scrollCallback(GLFWwindow* _window, double xoffset, double yoffset){
   camera.processMouseScroll((float)yoffset);
 }
 
-inline bool isChunkInsideFrustum(glm::mat4 model){
-  glm::mat4 mvp = projection * cameraView * model;
-  glm::vec4 center = mvp * glm::vec4(CHUNK_SIZE / 2, CHUNK_SIZE / 2, CHUNK_SIZE / 2, 1);
-  center.x /= center.w;
-  center.y /= center.w;
-
-  return !(center.z < -CHUNK_SIZE / 2 || fabsf(center.x) > 1 + fabsf(CHUNK_SIZE * 2 / center.w) || fabsf(center.y) > 1 + fabsf(CHUNK_SIZE * 2 / center.w));
-}
-
 #ifdef MULTI_THREADING
 void updateChunksThread(){
   while(!window.shouldClose()){
@@ -204,7 +187,7 @@ bool VercidiumRayMarch(int *bx, int *by, int *bz, int *cx, int *cy, int *cz){
       int ny = abs(roundf(rayy));
       int nz = abs(roundf(rayz));
 
-      uint8_t block = chunk->get(nx % CHUNK_SIZE, ny % CHUNK_SIZE, nz % CHUNK_SIZE);
+      block_t block = chunk->get(nx % CHUNK_SIZE, ny % CHUNK_SIZE, nz % CHUNK_SIZE);
       if(block > 0){
         // printf("chunk: %d %d %d\n", chunk->x, chunk->y, chunk->z);
         // printf("hit block %d at %d %d %d\n", block, nx % CHUNK_SIZE, ny % CHUNK_SIZE, nz % CHUNK_SIZE);
@@ -256,17 +239,14 @@ int main(int argc, char** argv){
   printf("vendor: %s\n", glGetString(GL_VENDOR));
 
   printf("== System ==\n");
-  printf("CHAR_MAX  : %d\n", CHAR_MAX);
-  printf("CHAR_MIN  : %d\n", CHAR_MIN);
-  printf("INT_MAX   : %d\n", INT_MAX);
-  printf("INT_MIN   : %d\n", INT_MIN);
-  printf("SCHAR_MAX : %d\n", SCHAR_MAX);
-  printf("SCHAR_MIN : %d\n", SCHAR_MIN);
-  printf("SHRT_MAX  : %d\n", SHRT_MAX);
-  printf("SHRT_MIN  : %d\n", SHRT_MIN);
-  printf("UCHAR_MAX : %d\n", UCHAR_MAX);
-  printf("UINT_MAX  : %u\n", (unsigned int)UINT_MAX);
-  printf("USHRT_MAX : %d\n", (unsigned short)USHRT_MAX);
+  printf("double : %lu\n", (long unsigned)sizeof(double));
+  printf("float  : %lu\n", (long unsigned)sizeof(float));
+  printf("int    : %lu\n", (long unsigned)sizeof(int));
+  printf("uint   : %lu\n", (long unsigned)sizeof(uint));
+  printf("short  : %lu\n", (long unsigned)sizeof(short));
+  printf("ushort : %lu\n", (long unsigned)sizeof(ushort));
+  printf("byte   : %lu\n", (long unsigned)sizeof(int8_t));
+  printf("ubyte  : %lu\n", (long unsigned)sizeof(uint8_t));
 
   glfwSetFramebufferSizeCallback(window.window, framebufferResizeCallback);
   glfwSetCursorPosCallback(window.window, mouseCallback);
@@ -312,7 +292,7 @@ int main(int argc, char** argv){
   printf("loading textures: ");
 
   glActiveTexture(GL_TEXTURE0);
-  unsigned int textureArray;
+  uint textureArray;
   glGenTextures(1, &textureArray);
   glBindTexture(GL_TEXTURE_2D_ARRAY, textureArray);
   glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_SRGB_ALPHA, TEXTURE_RES, TEXTURE_RES, NUM_TEXTURES, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -352,6 +332,7 @@ int main(int argc, char** argv){
         break;
       case 9:
         imageData = stbi_load_from_memory(IMAGE_LOG_BYTES, sizeof(IMAGE_LOG_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+        break;
       case 10:
         imageData = stbi_load_from_memory(IMAGE_LOG_TOP_BYTES, sizeof(IMAGE_LOG_TOP_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
         break;
@@ -381,12 +362,7 @@ int main(int argc, char** argv){
   printf(" done!\n");
 
   Skybox::init();
-  ShaderUniformLocations::skyboxProjection = Skybox::shader->getUniformLocation("projection");
-  ShaderUniformLocations::skyboxView = Skybox::shader->getUniformLocation("view");
   ChunkManager::init();
-  ShaderUniformLocations::chunkProjection = ChunkManager::shader->getUniformLocation("projection");
-  ShaderUniformLocations::chunkView = ChunkManager::shader->getUniformLocation("view");
-  ShaderUniformLocations::chunkModel = ChunkManager::shader->getUniformLocation("model");
   ParticleManager::init();
 
   CATCH_OPENGL_ERROR
@@ -400,8 +376,6 @@ int main(int argc, char** argv){
 #endif
 
   double currentTime;
-  unsigned int elements = 0;
-  unsigned int chunksDrawn = 0;
 
   unsigned short frames = 0;
   double lastPrintTime = glfwGetTime();
@@ -415,7 +389,7 @@ int main(int argc, char** argv){
     frames++;
 
     if(currentTime - lastPrintTime >= 1.0){
-      printf("%.2fms (%dfps) %d chunks (%u elements, %u chunks drawn) %d particles\n", 1000.0f/(float)frames, frames, (int)ChunkManager::chunks.size(), elements, chunksDrawn, (int)ParticleManager::particles.size());
+      printf("%.2fms (%dfps) %u chunks %u particles allocated\n", 1000.0f/(float)frames, frames, (uint)ChunkManager::chunks.size(), (uint)ParticleManager::particles.size());
       frames = 0;
       lastPrintTime += 1.0;
     }
@@ -479,14 +453,12 @@ int main(int argc, char** argv){
     camera.fast = Input::getKey(Input::LEFT_SHIFT).down;
     if(Input::getKey(Input::W).down){
       camera.processKeyboard(FORWARD, deltaTime);
-    }
-    if(Input::getKey(Input::S).down){
+    }else if(Input::getKey(Input::S).down){
       camera.processKeyboard(BACKWARD, deltaTime);
     }
     if(Input::getKey(Input::A).down){
       camera.processKeyboard(LEFT, deltaTime);
-    }
-    if(Input::getKey(Input::D).down){
+    }else if(Input::getKey(Input::D).down){
       camera.processKeyboard(RIGHT, deltaTime);
     }
 
@@ -503,89 +475,27 @@ int main(int argc, char** argv){
       }
     }
 
-    elements = 0;
-    chunksDrawn = 0;
-
     pos.x = (int)floorf(camera.position.x / CHUNK_SIZE);
     pos.y = (int)floorf(camera.position.y / CHUNK_SIZE);
     pos.z = (int)floorf(camera.position.z / CHUNK_SIZE);
 
 #ifndef MULTI_THREADING
-    ChunkManager::update(pos, viewDistance + 1);
+    ChunkManager::update(pos);
 #endif
     ParticleManager::update(deltaTime, camera.position);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    cameraView = camera.getViewMatrix();
-
-    ChunkManager::shader->use();
     if(perspectiveChanged){
       projection = glm::perspective(glm::radians(camera.fov), (float)windowWidth/(float)windowHeight, .1f, 10000.0f);
-      ChunkManager::shader->setMat4(ShaderUniformLocations::chunkProjection, projection);
-    }
-
-    ChunkManager::shader->setMat4(ShaderUniformLocations::chunkView, cameraView);
-
-    uint32_t chunksDeleted = 0;
-    uint32_t chunksGenerated = 0;
-    int dx, dy, dz;
-
-    // double start = glfwGetTime();
-    for(chunk_it it = ChunkManager::chunks.begin(); it != ChunkManager::chunks.end(); it++){
-      std::shared_ptr<Chunk> chunk = it->second;
-
-      dx = pos.x - chunk->x;
-      dy = pos.y - chunk->y;
-      dz = pos.z - chunk->z;
-
-      // don't render chunks outside of render radius
-      if(abs(dx) > viewDistance + 1 || abs(dy) > viewDistance + 1 || abs(dz) > viewDistance + 1){
-        if(chunksDeleted < (uint32_t)maxChunksDeletedPerFrame){
-          STACK_TRACE_PUSH("remove chunk")
-          it = ChunkManager::chunks.erase(it);
-          chunk.reset();
-          chunksDeleted++;
-        }
-
-        continue;
-      }
-
-      // don't render invisible chunks
-      if(chunk->empty || abs(dx) > viewDistance || abs(dy) > viewDistance || abs(dz) > viewDistance || !isChunkInsideFrustum(chunk->model)){
-        continue;
-      }
-
-      if(chunk->changed && chunksGenerated < (uint32_t)maxChunksGeneratedPerFrame){
-        if(chunk->update() && chunk->elements > 0){
-          chunksGenerated++;
-        }
-      }
-
-      // don't draw if chunk has no mesh
-      if(chunk->elements == 0){
-        continue;
-      }
-
-      ChunkManager::shader->setMat4(ShaderUniformLocations::chunkModel, chunk->model);
-      chunk->draw(); CATCH_OPENGL_ERROR
-
-      elements += chunk->elements;
-      chunksDrawn++;
-    }
-    // printf("draw all chunks %.4fms\n", (glfwGetTime() - start) * 1000.0);
-
-    ParticleManager::draw(projection, cameraView); CATCH_OPENGL_ERROR
-
-    Skybox::shader->use();
-    Skybox::shader->setMat4(ShaderUniformLocations::skyboxView, cameraView);
-
-    if(perspectiveChanged){
-      Skybox::shader->setMat4(ShaderUniformLocations::skyboxProjection, projection);
       perspectiveChanged = false;
     }
+    cameraView = camera.getViewMatrix();
 
-    Skybox::draw(); CATCH_OPENGL_ERROR
+    ChunkManager::draw(projection, cameraView);
+
+    ParticleManager::draw(projection, cameraView); CATCH_OPENGL_ERROR
+    Skybox::draw(projection, cameraView); CATCH_OPENGL_ERROR
 
     Input::update();
     window.pollEvents();

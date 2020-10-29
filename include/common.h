@@ -1,8 +1,12 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
+#include <cstdint>
 #include <map>
 #include <string>
+
+typedef uint32_t uint;
+typedef uint16_t ushort;
 
 // #define MAX(a, b) ({__typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b;})
 #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -16,9 +20,9 @@
 
 extern std::string stackTraceName;
 extern std::string stackTraceFile;
-extern unsigned int stackTraceLine;
+extern uint stackTraceLine;
 extern std::string stackTraceFunc;
-void stackTracePush(const char* name, const char* file, unsigned int line, const char* func);
+void stackTracePush(const char* name, const char* file, uint line, const char* func);
 
 #define STACK_TRACE_PUSH(x) stackTracePush(x, __FILE__, __LINE__, __func__);
 

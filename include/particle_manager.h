@@ -12,7 +12,7 @@ namespace ParticleManager{
 
 struct particle_t{
 	glm::vec3 pos, size;
-  unsigned int color;
+  uint color;
 	float speed, life;
 
   particle_t() : pos({0.0f, 0.0f, 0.0f}), size({1.0f, 1.0f, 1.0f}), speed(0.0f), life(0.0f){}

@@ -4,6 +4,8 @@
 
 #include "common.h"
 
+#define SKYBOX_SIZE 1
+
 const static char* shaderVertexSource = R"(#version 330 core
 layout (location = 0) in vec3 position;
 
@@ -165,14 +167,18 @@ const unsigned char indices[] = {
 
 namespace Skybox{
   GL::Shader* shader;
+  int shaderProjectionLocation, shaderViewLocation;
 
-  unsigned int vao;
+  uint vao;
 }
 
 void Skybox::init(){
   shader = new GL::Shader(shaderVertexSource, shaderFragmentSource);
+  shader->use();
+  shaderProjectionLocation = shader->getUniformLocation("projection");
+  shaderViewLocation = shader->getUniformLocation("view");
 
-  unsigned int vbo, ebo;
+  uint vbo, ebo;
   glGenVertexArrays(1, &vao);
   glGenBuffers(1, &vbo);
   glGenBuffers(1, &ebo);
@@ -194,14 +200,20 @@ void Skybox::init(){
   glDeleteBuffers(1, &ebo);
 }
 
-void Skybox::draw(){
-  glDepthFunc(GL_LEQUAL);
-  glBindVertexArray(vao);
-  glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0); CATCH_OPENGL_ERROR
-  glDepthFunc(GL_LESS);
-}
-
 void Skybox::free(){
   glDeleteVertexArrays(1, &vao);
   delete shader;
+}
+
+void Skybox::draw(glm::mat4 projection, glm::mat4 view){
+  glDepthFunc(GL_LEQUAL);
+
+  shader->use();
+  shader->setMat4(shaderProjectionLocation, projection);
+  shader->setMat4(shaderViewLocation, view);
+
+  glBindVertexArray(vao);
+  glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
+
+  glDepthFunc(GL_LESS);
 }

@@ -1,18 +1,17 @@
 #ifndef CHUNK_H_
 #define CHUNK_H_
 
-#include <stdint.h>
 #include <vector>
 #include <memory>
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "common.h"
+
 #define CHUNK_SIZE 32
 #define CHUNK_SIZE_SQUARED 1024
 #define CHUNK_SIZE_CUBED 32768
 
-typedef uint8_t byte4[4];
-typedef uint8_t byte3[3];
 typedef int vec2i[2];
 typedef uint8_t block_t;
 
@@ -21,7 +20,7 @@ public:
   int x;
   int y;
   int z;
-  int elements;
+  uint elements;
   bool changed;
   bool empty;
   glm::mat4 model;
@@ -40,7 +39,7 @@ public:
 
 private:
   block_t *blocks;
-  unsigned int vao;
+  uint vao;
   bool meshChanged;
   std::vector<int> vertexData;
 

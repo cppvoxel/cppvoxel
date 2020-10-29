@@ -5,6 +5,8 @@
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
 
+#include "common.h"
+
 namespace GL{
 
 class Shader{
@@ -42,7 +44,7 @@ public:
   }
 
 private:
-  unsigned int id = 0;
+  uint id = 0;
 };
 
 }

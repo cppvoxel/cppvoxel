@@ -7,7 +7,7 @@ namespace GL{
 Shader::Shader(const char* vertexSource, const char* fragmentSource){
   int success;
 
-  unsigned int vertexShader;
+  uint vertexShader;
   vertexShader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShader, 1, &vertexSource, NULL);
   glCompileShader(vertexShader);
@@ -25,7 +25,7 @@ Shader::Shader(const char* vertexSource, const char* fragmentSource){
     return;
   }
 
-  unsigned int fragmentShader;
+  uint fragmentShader;
   fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
   glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
   glCompileShader(fragmentShader);
@@ -43,7 +43,7 @@ Shader::Shader(const char* vertexSource, const char* fragmentSource){
     return;
   }
 
-  unsigned int shaderProgram;
+  uint shaderProgram;
   shaderProgram = glCreateProgram();
 
   glAttachShader(shaderProgram, vertexShader);
@@ -75,7 +75,8 @@ Shader::~Shader(){
 
 void Shader::use(){
   if(id == 0){
-    printf("WARNING: shader id = 0\n");
+    fprintf(stderr, "ERROR: shader id = 0\n");
+    exit(-1);
   }
 
   glUseProgram(id);

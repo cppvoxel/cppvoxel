@@ -14,21 +14,21 @@
 namespace GL{
 
 template <typename T>
-InstanceBuffer<T>::InstanceBuffer(unsigned int vao, int initialSize, unsigned int attrib){
+InstanceBuffer<T>::InstanceBuffer(uint vao, int initialSize, uint attrib){
   glGenBuffers(1, &vbo);
   glBindVertexArray(vao);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-  if(typeid(T) == typeid(unsigned int)){
-    vertexSize = sizeof(unsigned int);
+  if(typeid(T) == typeid(uint)){
+    vertexSize = sizeof(uint);
     glEnableVertexAttribArray(attrib);
-    // unsigned int is treated as 4 bytes so it can be used as a color in the shader
+    // uint is treated as 4 bytes so it can be used as a color in the shader
     glVertexAttribPointer(attrib, 4, GL_UNSIGNED_BYTE, GL_TRUE, vertexSize, (void*)0);
     // must set attribute divisor
     glVertexAttribDivisor(attrib, 1);
   }else if(typeid(T) == typeid(glm::mat4)){
     vertexSize = sizeof(glm::mat4);
-    for(unsigned int i = 0; i < 4; i++){
+    for(uint i = 0; i < 4; i++){
       glEnableVertexAttribArray(attrib + i);
       // mat4 is treated as 4 sets of 4 floats in the shader
       glVertexAttribPointer(attrib + i, 4, GL_FLOAT, GL_FALSE, vertexSize, (void*)(sizeof(float) * 4 * i));
@@ -51,12 +51,12 @@ InstanceBuffer<T>::~InstanceBuffer(){
 }
 
 template <typename T>
-void InstanceBuffer<T>::bind(){
+inline void InstanceBuffer<T>::bind(){
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
 }
 
 template <typename T>
-void InstanceBuffer<T>::expand(int newLength){
+inline void InstanceBuffer<T>::expand(int newLength){
   if(newLength < currentLength){
     return;
   }
@@ -66,16 +66,16 @@ void InstanceBuffer<T>::expand(int newLength){
 }
 
 template <typename T>
-void InstanceBuffer<T>::bufferData(int newLength){
+inline void InstanceBuffer<T>::bufferData(int newLength){
   currentLength = newLength;
 
   bind();
-  glBufferData(GL_ARRAY_BUFFER, (unsigned int)(currentLength * vertexSize), (void*)0, GL_DYNAMIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, (uint)(currentLength * vertexSize), (void*)0, GL_DYNAMIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 // tell the compiler we will be using these data types
-template class InstanceBuffer<unsigned int>;
+template class InstanceBuffer<uint>;
 template class InstanceBuffer<glm::mat4>;
 
 }

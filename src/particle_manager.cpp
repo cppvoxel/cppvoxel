@@ -4,48 +4,49 @@
 
 #include <glfw/glfw3.h>
 
+#include "common.h"
 #include "gl/instance_buffer.h"
 
-const static unsigned int RAIN_COLOR = (unsigned int)(40 | (60 << 8) | (255 << 16) | (255 << 24));
-const static unsigned int SNOW_COLOR = (unsigned int)(255 | (255 << 8) | (255 << 16) | (255 << 24));
+const static uint RAIN_COLOR = (uint)(40 | (60 << 8) | (255 << 16) | (255 << 24));
+const static uint SNOW_COLOR = (uint)(255 | (255 << 8) | (255 << 16) | (255 << 24));
 
-const static float vertices[] = {
-  -1.0f,-1.0f,-1.0f,
-  -1.0f,-1.0f, 1.0f,
-  -1.0f, 1.0f, 1.0f,
-  1.0f, 1.0f,-1.0f,
-  -1.0f,-1.0f,-1.0f,
-  -1.0f, 1.0f,-1.0f,
-  1.0f,-1.0f, 1.0f,
-  -1.0f,-1.0f,-1.0f,
-  1.0f,-1.0f,-1.0f,
-  1.0f, 1.0f,-1.0f,
-  1.0f,-1.0f,-1.0f,
-  -1.0f,-1.0f,-1.0f,
-  -1.0f,-1.0f,-1.0f,
-  -1.0f, 1.0f, 1.0f,
-  -1.0f, 1.0f,-1.0f,
-  1.0f,-1.0f, 1.0f,
-  -1.0f,-1.0f, 1.0f,
-  -1.0f,-1.0f,-1.0f,
-  -1.0f, 1.0f, 1.0f,
-  -1.0f,-1.0f, 1.0f,
-  1.0f,-1.0f, 1.0f,
-  1.0f, 1.0f, 1.0f,
-  1.0f,-1.0f,-1.0f,
-  1.0f, 1.0f,-1.0f,
-  1.0f,-1.0f,-1.0f,
-  1.0f, 1.0f, 1.0f,
-  1.0f,-1.0f, 1.0f,
-  1.0f, 1.0f, 1.0f,
-  1.0f, 1.0f,-1.0f,
-  -1.0f, 1.0f,-1.0f,
-  1.0f, 1.0f, 1.0f,
-  -1.0f, 1.0f,-1.0f,
-  -1.0f, 1.0f, 1.0f,
-  1.0f, 1.0f, 1.0f,
-  -1.0f, 1.0f, 1.0f,
-  1.0f,-1.0f, 1.0f
+const static int8_t vertices[] = {
+  -1,-1,-1,
+  -1,-1, 1,
+  -1, 1, 1,
+  1, 1,-1,
+  -1,-1,-1,
+  -1, 1,-1,
+  1,-1, 1,
+  -1,-1,-1,
+  1,-1,-1,
+  1, 1,-1,
+  1,-1,-1,
+  -1,-1,-1,
+  -1,-1,-1,
+  -1, 1, 1,
+  -1, 1,-1,
+  1,-1, 1,
+  -1,-1, 1,
+  -1,-1,-1,
+  -1, 1, 1,
+  -1,-1, 1,
+  1,-1, 1,
+  1, 1, 1,
+  1,-1,-1,
+  1, 1,-1,
+  1,-1,-1,
+  1, 1, 1,
+  1,-1, 1,
+  1, 1, 1,
+  1, 1,-1,
+  -1, 1,-1,
+  1, 1, 1,
+  -1, 1,-1,
+  -1, 1, 1,
+  1, 1, 1,
+  -1, 1, 1,
+  1,-1, 1
 };
 
 const static char* shaderVertexSource = R"(#version 330 core
@@ -81,25 +82,25 @@ enum WeatherType{
 double timeToEndWeatherCycle;
 WeatherType weather;
 
-unsigned int lastUsedParticle = 0;
-unsigned int findUnusedParticle(){
-  for(unsigned int i = lastUsedParticle; i < (unsigned int)ParticleManager::particles.size(); i++){
+uint lastUsedParticle = 0;
+uint findUnusedParticle(){
+  for(uint i = lastUsedParticle; i < (uint)ParticleManager::particles.size(); i++){
     if(ParticleManager::particles[i].life <= 0.0f){
       lastUsedParticle = i;
       return i;
     }
   }
 
-  for(unsigned int i = 0; i < lastUsedParticle; i++){
+  for(uint i = 0; i < lastUsedParticle; i++){
     if(ParticleManager::particles[i].life <= 0.0f){
       lastUsedParticle = i;
       return i;
     }
   }
 
-  printf("resizing particles (%u;%u)\n", (unsigned int)ParticleManager::particles.size(), lastUsedParticle);
-  lastUsedParticle = (unsigned int)ParticleManager::particles.size();
-  ParticleManager::particles.resize(ParticleManager::particles.size() * 2);
+  printf("resizing particles (%u;%u)\n", (uint)ParticleManager::particles.size(), lastUsedParticle);
+  lastUsedParticle = (uint)ParticleManager::particles.size();
+  ParticleManager::particles.resize(ParticleManager::particles.size() + 2048);
 
   return lastUsedParticle;
 }
@@ -107,21 +108,21 @@ unsigned int findUnusedParticle(){
 void respawnParticle(ParticleManager::particle_t& particle, glm::vec3 cameraPos){
   particle.pos = glm::vec3(
     (rand() % 1000) - 500,   // x
-    300.0f - (rand() % 100), // y
+    250.0f - (rand() % 100), // y
     (rand() % 1000) - 500    // z
   ) + cameraPos;
 
   if(weather == RAIN){
     float size = (rand() % 11) / 100.0f + 0.1f;
     particle.size = {size, size * 20.0f, size};
-    particle.life = 3.5f;
+    particle.life = 2.0f;
     particle.speed = -300.0f;
     particle.color = RAIN_COLOR;
   }else{
     float size = (rand() % 11) / 100.0f + 0.2f;
     particle.size = {size, size, size};
-    particle.life = 17.0f;
-    particle.speed = -35.0f;
+    particle.life = 10.0f;
+    particle.speed = -25.0f;
     particle.color = SNOW_COLOR;
   }
 }
@@ -132,21 +133,31 @@ inline void setWeatherCycle(){
   printf("weather changed to %d\n", weather);
 }
 
+inline glm::mat4 particleMatrix(glm::vec3 scale, glm::vec3 position){
+  return {
+    scale.x, 0.0f, 0.0f, 0.0f,
+    0.0f, scale.y, 0.0f, 0.0f,
+    0.0f, 0.0f, scale.z, 0.0f,
+    position.x, position.y, position.z, 1.0f
+  };
+}
+
 namespace ParticleManager{
   std::vector<particle_t> particles;
+
   GL::Shader* shader;
-  GL::InstanceBuffer<unsigned int>* colorInstanceBuffer;
+  int shaderProjectionLocation, shaderViewLocation;
+
+  GL::InstanceBuffer<uint>* colorInstanceBuffer;
   GL::InstanceBuffer<glm::mat4>* matrixInstanceBuffer;
 
-  unsigned int vao;
-  unsigned int particlesToDraw;
-
-  int shaderProjectionLocation, shaderViewLocation;
+  uint vao;
+  uint particlesToDraw;
 }
 
 void ParticleManager::init(){
   // pre-allocate particles
-  particles.resize(20480);
+  particles.resize(16380);
 
   shader = new GL::Shader(shaderVertexSource, shaderFragmentSource);
   shader->use();
@@ -157,7 +168,7 @@ void ParticleManager::init(){
 
   glGenVertexArrays(1, &vao);
 
-  unsigned int vbo;
+  uint vbo;
   glGenBuffers(1, &vbo);
 
   glBindVertexArray(vao);
@@ -166,15 +177,15 @@ void ParticleManager::init(){
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
   // vertices
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+  glVertexAttribPointer(0, 3, GL_BYTE, GL_FALSE, 3 * sizeof(int8_t), (void*)0);
   glEnableVertexAttribArray(0);
   glVertexAttribDivisor(0, 0);
 
   glBindVertexArray(0);
   glDeleteBuffers(1, &vbo);
 
-  colorInstanceBuffer = new GL::InstanceBuffer<unsigned int>(vao, 1024, 1);
-  matrixInstanceBuffer = new GL::InstanceBuffer<glm::mat4>(vao, 1024, 2);
+  colorInstanceBuffer = new GL::InstanceBuffer<uint>(vao, particles.size(), 1);
+  matrixInstanceBuffer = new GL::InstanceBuffer<glm::mat4>(vao, particles.size(), 2);
 }
 
 void ParticleManager::free(){
@@ -184,6 +195,8 @@ void ParticleManager::free(){
   delete colorInstanceBuffer;
   delete matrixInstanceBuffer;
   delete shader;
+
+  glDeleteVertexArrays(1, &vao);
 }
 
 void ParticleManager::update(double delta, glm::vec3 cameraPos){
@@ -192,32 +205,31 @@ void ParticleManager::update(double delta, glm::vec3 cameraPos){
   }
 
   if(weather != NONE){
-    for(unsigned int i = 0; i < 20; i++){
-      unsigned int unusedParticle = findUnusedParticle();
-      respawnParticle(particles[unusedParticle], cameraPos);
+    uint8_t amount = weather == RAIN ? 25 : 5;
+    for(uint i = 0; i < amount; i++){
+      respawnParticle(particles[findUnusedParticle()], cameraPos);
     }
   }
 
   colorInstanceBuffer->expand(particles.size());
   matrixInstanceBuffer->expand(particles.size());
 
+  // double start = glfwGetTime();
   colorInstanceBuffer->bind();
-  unsigned int* colorPtr = (unsigned int*)glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
+  uint* colorPtr = (uint*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
   matrixInstanceBuffer->bind();
-  glm::mat4* matrixPtr = (glm::mat4*)glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
+  glm::mat4* matrixPtr = (glm::mat4*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+  // printf("map particle buffers: %.4fms with %u particles\n", (glfwGetTime() - start) * 1000.0, particlesToDraw);
 
-  unsigned int bufferIndex = 0;
+  uint bufferIndex = 0;
   for(particle_t& p : particles){
     p.life -= (float)delta;
     if(p.life > 0.0f){
       p.pos += glm::vec3(0.0f, p.speed * (float)delta, 0.0f);
 
-      glm::mat4 transform = glm::translate(glm::mat4(1.0f), p.pos);
-      transform = glm::scale(transform, p.size);
-
       // write directly to memory 😬
       colorPtr[bufferIndex] = p.color;
-      matrixPtr[bufferIndex++] = transform;
+      matrixPtr[bufferIndex++] = particleMatrix(p.size, p.pos);
     }
   }
   particlesToDraw = bufferIndex;

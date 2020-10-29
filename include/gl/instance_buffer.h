@@ -1,14 +1,14 @@
 #ifndef INSTANCE_BUFFER_H_
 #define INSTANCE_BUFFER_H_
 
-#include <cstdint>
+#include "common.h"
 
 namespace GL{
 
 template <typename T>
 class InstanceBuffer{
 public:
-  InstanceBuffer(unsigned int vao, int initialSize, unsigned int attrib);
+  InstanceBuffer(uint vao, int initialSize, uint attrib);
   ~InstanceBuffer();
 
   void bind();
@@ -16,7 +16,7 @@ public:
   void bufferData(int newLength);
 
 private:
-  unsigned int vbo;
+  uint vbo;
   size_t vertexSize;
   int currentLength;
 };

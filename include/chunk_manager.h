@@ -4,8 +4,10 @@
 #include <map>
 #include <memory>
 
-#include "gl/shader.h"
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "common.h"
+#include "gl/shader.h"
 #include "chunk.h"
 
 using chunk_map = std::map<vec3i, std::shared_ptr<Chunk>>;
@@ -19,7 +21,8 @@ extern GL::Shader* shader;
 void init();
 void free();
 std::shared_ptr<Chunk> get(vec3i pos);
-void update(vec3i camPos, int distance);
+void update(vec3i camPos);
+void draw(glm::mat4 projection, glm::mat4 view);
 
 }
 

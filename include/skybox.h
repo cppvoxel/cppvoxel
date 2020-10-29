@@ -3,15 +3,15 @@
 
 #include "gl/shader.h"
 
-#define SKYBOX_SIZE 1
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace Skybox{
 
 extern GL::Shader* shader;
 
 void init();
-void draw();
 void free();
+void draw(glm::mat4 projection, glm::mat4 view);
 
 };
 
