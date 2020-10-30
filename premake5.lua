@@ -63,7 +63,11 @@ workspace "cppvoxel"
         res = os.matchfiles("res/*.png")
         for _, resFile in ipairs(res) do
           resFile = string.sub(resFile, string.find(resFile, "/[^/]*$") + 1, string.find(resFile, ".[^.]*$") - 1)
-          os.execute("bin\\tools\\embed_images.exe "..resFile)
+          if _TARGET_OS == "windows" then
+            os.execute("bin\\tools\\embed_images.exe "..resFile)
+          else
+            os.execute("./bin/tools/embed_images "..resFile)
+          end
         end
 
         if _TARGET_OS == "windows" then
