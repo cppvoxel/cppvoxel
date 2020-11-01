@@ -44,6 +44,7 @@ workspace "cppvoxel"
         os.rmdir("bin")
         os.rmdir("obj")
         os.rmdir("build")
+        os.rmdir("embed")
       end,
     ["onEnd"] =
       function()
@@ -59,7 +60,7 @@ workspace "cppvoxel"
         os.execute("premake5 gmake2")
 
         print "Embeding resources..."
-        os.mkdir("res/embed")
+        os.mkdir("embed/res")
         res = os.matchfiles("res/*.png")
         for _, resFile in ipairs(res) do
           resFile = string.sub(resFile, string.find(resFile, "/[^/]*$") + 1, string.find(resFile, ".[^.]*$") - 1)
@@ -94,7 +95,7 @@ project "embed_images"
 project "cppvoxel"
   files {"src/**.cpp"}
 
-  includedirs {"../cppgl/vendors", "../cppgl/vendors/glm", "include", "res/embed"}
+  includedirs {"../cppgl/vendors", "../cppgl/vendors/glm", "include", "embed"}
   defines {"GLEW_STATIC"}
 
   filter {"system:windows"}

@@ -31,17 +31,17 @@
 #include "particle_manager.h"
 
 // textures
-#include "dirt.h"
-#include "stone.h"
-#include "bedrock.h"
-#include "sand.h"
-#include "grass_side.h"
-#include "glass.h"
-#include "snow.h"
-#include "water.h"
-#include "grass.h"
-#include "log.h"
-#include "log_top.h"
+#include "res/dirt.h"
+#include "res/stone.h"
+#include "res/bedrock.h"
+#include "res/sand.h"
+#include "res/grass_side.h"
+#include "res/glass.h"
+#include "res/snow.h"
+#include "res/water.h"
+#include "res/grass.h"
+#include "res/log.h"
+#include "res/log_top.h"
 
 #define REACH_DISTANCE 20.0f
 

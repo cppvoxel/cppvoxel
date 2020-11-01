@@ -41,7 +41,7 @@ int main(int argc, char** argv){
   transform(nameUpper.begin(), nameUpper.end(), nameUpper.begin(), ::toupper);
 
   printf("converting image to binary: %s\n", name.c_str());
-  compileImagePNGtoBinary(nameUpper.c_str(), (std::string("res/")+name+std::string(".png")).c_str(), (std::string("res/embed/")+name+std::string(".h")).c_str());
+  compileImagePNGtoBinary(nameUpper.c_str(), (std::string("res/")+name+std::string(".png")).c_str(), (std::string("embed/res/")+name+std::string(".h")).c_str());
 
   return 0;
 }
