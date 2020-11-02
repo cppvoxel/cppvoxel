@@ -49,30 +49,6 @@ const static int8_t vertices[] = {
   1,-1, 1
 };
 
-const static char* shaderVertexSource = R"(#version 330 core
-layout (location = 0) in vec3 aPosition;
-layout (location = 1) in vec4 aColor;
-layout (location = 2) in mat4 aTransform;
-
-flat out vec4 vColor;
-
-uniform mat4 projection;
-uniform mat4 view;
-
-void main(){
-  vColor = aColor;
-  gl_Position = projection * view * aTransform * vec4(aPosition, 1.0);
-})";
-
-const static char* shaderFragmentSource = R"(#version 330 core
-out vec4 FragColor;
-
-flat in vec4 vColor;
-
-void main(){
-  FragColor = vColor;
-})";
-
 enum WeatherType{
   NONE,
   RAIN,
@@ -159,7 +135,7 @@ void ParticleManager::init(){
   // pre-allocate particles
   particles.resize(16380);
 
-  shader = new GL::Shader(shaderVertexSource, shaderFragmentSource);
+  shader = new GL::Shader(GL::Shaders::particle);
   shader->use();
   shaderProjectionLocation = shader->getUniformLocation("projection");
   shaderViewLocation = shader->getUniformLocation("view");

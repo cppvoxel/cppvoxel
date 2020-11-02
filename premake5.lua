@@ -70,6 +70,11 @@ workspace "cppvoxel"
             os.execute("./bin/tools/embed_images "..resFile)
           end
         end
+        if _TARGET_OS == "windows" then
+          os.execute("bin\\tools\\embed_shaders.exe")
+        else
+          os.execute("./bin/tools/embed_shaders")
+        end
 
         if _TARGET_OS == "windows" then
           if _OPTIONS["release"] then
@@ -89,8 +94,11 @@ workspace "cppvoxel"
 
 project "embed_images"
   targetdir "bin/tools"
-
   files {"tools/embed_images.cpp"}
+
+project "embed_shaders"
+  targetdir "bin/tools"
+  files {"tools/embed_shaders.cpp"}
 
 project "cppvoxel"
   files {"src/**.cpp"}

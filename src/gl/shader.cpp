@@ -4,12 +4,12 @@
 
 namespace GL{
 
-Shader::Shader(const char* vertexSource, const char* fragmentSource){
+Shader::Shader(ShaderSource source){
   int success;
 
   uint vertexShader;
   vertexShader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertexShader, 1, &vertexSource, NULL);
+  glShaderSource(vertexShader, 1, &source.vertex, NULL);
   glCompileShader(vertexShader);
 
   // check compile errors
@@ -27,7 +27,7 @@ Shader::Shader(const char* vertexSource, const char* fragmentSource){
 
   uint fragmentShader;
   fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
+  glShaderSource(fragmentShader, 1, &source.fragment, NULL);
   glCompileShader(fragmentShader);
 
   // check compile errors

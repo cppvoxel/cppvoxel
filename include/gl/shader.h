@@ -5,13 +5,16 @@
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
 
+#include "gl/shader_source.h"
+#include "shaders.h"
+
 #include "common.h"
 
 namespace GL{
 
 class Shader{
 public:
-  Shader(const char* vertexSource, const char* fragmentSource);
+  Shader(ShaderSource source);
   ~Shader();
 
   void use();

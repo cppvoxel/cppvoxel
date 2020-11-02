@@ -1,64 +1,5 @@
 #include "chunk_manager.h"
 
-const static char* shaderVertexSource = R"(#version 330 core
-layout (location = 0) in int aVertex;
-
-out vec3 vPosition;
-out vec3 vTexCoord;
-out float vDiffuse;
-
-uniform mat4 projection;
-uniform mat4 view;
-uniform mat4 model;
-
-const vec3 sun_direction = normalize(vec3(1, 3, 2));
-const float ambient = 0.4f;
-
-const vec3 normalCoords[] = vec3[](
-  vec3(0.0, 1.0, 0.0),
-  vec3(0.0, -1.0, 0.0),
-  vec3(1.0, 0.0, 0.0),
-  vec3(-1.0, 0.0, 0.0),
-  vec3(0.0, 0.0, 1.0),
-  vec3(0.0, 0.0, -1.0)
-);
-
-void main(){
-  vec3 aPosition = vec3(float(aVertex & (63)), float((aVertex >> 6) & (63)), float((aVertex >> 12) & (63)));
-  int aNormal = (aVertex >> 18) & (7);
-
-  int aTextureId = (aVertex >> 21) & (255);
-
-  vPosition = (view * model * vec4(aPosition, 1.0)).xyz;
-  vTexCoord = vec3(float((aVertex >> 29) & (1)), float((aVertex >> 30) & (1)), aTextureId);
-  vDiffuse = (max(dot(normalCoords[aNormal], sun_direction), 0.0) + ambient);
-
-  gl_Position = projection * vec4(vPosition, 1.0);
-})";
-
-const static char* shaderFragmentSource = R"(#version 330 core
-out vec4 FragColor;
-
-in vec3 vPosition;
-in vec3 vTexCoord;
-in float vDiffuse;
-
-uniform sampler2DArray texture_array;
-
-uniform int fog_near;
-uniform int fog_far;
-
-void main(){
-  vec4 color = vec4(texture(texture_array, vTexCoord).rgb * vDiffuse, 1.0);
-  color *= 1.0 - smoothstep(fog_near, fog_far, length(vPosition));
-
-  if(color.a < 0.1){
-    discard;
-  }
-
-  FragColor = color;
-})";
-
 inline bool isChunkInsideFrustum(glm::mat4 mvp){
   glm::vec4 center = mvp * glm::vec4(CHUNK_SIZE / 2, CHUNK_SIZE / 2, CHUNK_SIZE / 2, 1);
   center.x /= center.w;
@@ -76,7 +17,7 @@ namespace ChunkManager{
 }
 
 void ChunkManager::init(){
-  shader = new GL::Shader(shaderVertexSource, shaderFragmentSource);
+  shader = new GL::Shader(GL::Shaders::chunk);
   shader->use();
 
   shader->setInt("texture_array", 0);
