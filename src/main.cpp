@@ -218,6 +218,15 @@ int main(int argc, char** argv){
 
   STACK_TRACE_PUSH("init")
 
+  printf("== cppvoxel ==\n");
+  printf("version: %s@%s\n", GIT_BRANCH, GIT_HASH);
+
+#ifdef MULTI_THREADING
+  printf("multithreading: enabled\n");
+#else
+  printf("multithreading: disabled\n");
+#endif
+
   Config config("config.conf");
 
   printf("== Config ==\n");
@@ -226,27 +235,21 @@ int main(int argc, char** argv){
   maxChunksDeletedPerFrame = config.getInt("maxChunksDeletedPerFrame", 16);
   bool vsync = config.getBool("vsync", false);
 
-#ifdef MULTI_THREADING
-  printf("multithreading enabled\n");
-#else
-  printf("multithreading disabled\n");
-#endif
-
   printf("== OpenGL ==\n");
   printf("version: %s\n", glGetString(GL_VERSION));
   printf("shading language version: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
   printf("renderer: %s\n", glGetString(GL_RENDERER));
   printf("vendor: %s\n", glGetString(GL_VENDOR));
 
-  printf("== System ==\n");
-  printf("double : %lu\n", (long unsigned)sizeof(double));
-  printf("float  : %lu\n", (long unsigned)sizeof(float));
-  printf("int    : %lu\n", (long unsigned)sizeof(int));
-  printf("uint   : %lu\n", (long unsigned)sizeof(uint));
-  printf("short  : %lu\n", (long unsigned)sizeof(short));
-  printf("ushort : %lu\n", (long unsigned)sizeof(ushort));
-  printf("byte   : %lu\n", (long unsigned)sizeof(int8_t));
-  printf("ubyte  : %lu\n", (long unsigned)sizeof(uint8_t));
+  // printf("== System ==\n");
+  // printf("double : %lu\n", (long unsigned)sizeof(double));
+  // printf("float  : %lu\n", (long unsigned)sizeof(float));
+  // printf("int    : %lu\n", (long unsigned)sizeof(int));
+  // printf("uint   : %lu\n", (long unsigned)sizeof(uint));
+  // printf("short  : %lu\n", (long unsigned)sizeof(short));
+  // printf("ushort : %lu\n", (long unsigned)sizeof(ushort));
+  // printf("byte   : %lu\n", (long unsigned)sizeof(int8_t));
+  // printf("ubyte  : %lu\n", (long unsigned)sizeof(uint8_t));
 
   glfwSetFramebufferSizeCallback(window.window, framebufferResizeCallback);
   glfwSetCursorPosCallback(window.window, mouseCallback);

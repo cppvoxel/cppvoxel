@@ -1,3 +1,13 @@
+function getCmdOutput(cmd)
+  local handle = io.popen(cmd)
+  local output = handle:read("*a")
+  handle:close()
+
+  output = string.sub(output, 0, string.find(output, "\n") - 1)
+
+  return output
+end
+
 workspace "cppvoxel"
   configurations {"Debug", "Release"}
   architecture "x64"
@@ -104,7 +114,10 @@ project "cppvoxel"
   files {"src/**.cpp"}
 
   includedirs {"../cppgl/vendors", "../cppgl/vendors/glm", "include", "embed"}
-  defines {"GLEW_STATIC"}
+
+  local git_hash = getCmdOutput("git rev-parse HEAD")
+  local git_branch = getCmdOutput("git rev-parse --abbrev-ref HEAD")
+  defines {"GLEW_STATIC", "GIT_HASH=\""..git_hash.."\"", "GIT_BRANCH=\""..git_branch.."\""}
 
   filter {"system:windows"}
     libdirs "../cppgl/lib"
