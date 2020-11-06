@@ -69,7 +69,6 @@ void Skybox::init(){
   // position
   vao->attrib<int8_t>(0, 3, GL_BYTE);
 
-  glBindVertexArray(0);
   GL::VAO::unbind();
   delete vbo;
   delete ebo;
