@@ -57,7 +57,6 @@ void Skybox::init(){
   shaderViewLocation = shader->getUniformLocation("view");
 
   vao = new GL::VAO();
-
   vao->bind();
 
   GL::Buffer<GL::ARRAY>* vbo = new GL::Buffer<GL::ARRAY>();
