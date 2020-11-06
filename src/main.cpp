@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <limits.h>
 #include <thread>
+#include <memory>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -44,6 +45,21 @@
 #include "res/log_top.h"
 
 #define REACH_DISTANCE 20.0f
+
+struct allocation_metrics_t{
+  uint totalAllocations = 0;
+};
+static allocation_metrics_t s_AllocationMetrics;
+
+void* operator new(size_t size){
+  s_AllocationMetrics.totalAllocations++;
+  return malloc(size);
+}
+
+void operator delete(void* memory){
+  s_AllocationMetrics.totalAllocations--;
+  free(memory);
+}
 
 double deltaTime;
 double lastFrame;
@@ -392,7 +408,7 @@ int main(int argc, char** argv){
     frames++;
 
     if(currentTime - lastPrintTime >= 1.0){
-      printf("%.2fms (%dfps) %u chunks %u particles allocated\n", 1000.0f/(float)frames, frames, (uint)ChunkManager::chunks.size(), (uint)ParticleManager::particles.size());
+      printf("%.2fms (%dfps) %u chunks %u particles allocated %u allocations\n", 1000.0f/(float)frames, frames, (uint)ChunkManager::chunks.size(), (uint)ParticleManager::particles.size(), s_AllocationMetrics.totalAllocations);
       frames = 0;
       lastPrintTime += 1.0;
     }
