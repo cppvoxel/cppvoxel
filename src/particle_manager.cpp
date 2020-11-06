@@ -5,7 +5,10 @@
 #include <glfw/glfw3.h>
 
 #include "common.h"
+#include "gl/utils.h"
 #include "gl/instance_buffer.h"
+#include "gl/vao.h"
+#include "gl/buffer.h"
 
 const static uint RAIN_COLOR = (uint)(40 | (60 << 8) | (255 << 16) | (255 << 24));
 const static uint SNOW_COLOR = (uint)(255 | (255 << 8) | (255 << 16) | (255 << 24));
@@ -129,7 +132,7 @@ namespace ParticleManager{
   GL::InstanceBuffer<uint>* colorInstanceBuffer;
   GL::InstanceBuffer<glm::mat4>* matrixInstanceBuffer;
 
-  uint vao;
+  GL::VAO* vao;
   uint particlesToDraw;
 }
 
@@ -144,23 +147,15 @@ void ParticleManager::init(){
 
   setWeatherCycle();
 
-  glGenVertexArrays(1, &vao);
+  vao = new GL::VAO();
+  GL::Buffer<GL::ARRAY>* vbo = new GL::Buffer<GL::ARRAY>();
 
-  uint vbo;
-  glGenBuffers(1, &vbo);
+  vao->bind();
+  vbo->data(sizeof(vertices), vertices);
+  vao->attrib<int8_t>(0, 3, GL_BYTE, 0);
 
-  glBindVertexArray(vao);
-
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-  // vertices
-  glVertexAttribPointer(0, 3, GL_BYTE, GL_FALSE, 3 * sizeof(int8_t), (void*)0);
-  glEnableVertexAttribArray(0);
-  glVertexAttribDivisor(0, 0);
-
-  glBindVertexArray(0);
-  glDeleteBuffers(1, &vbo);
+  GL::VAO::unbind();
+  delete vbo;
 
   colorInstanceBuffer = new GL::InstanceBuffer<uint>(vao, particles.size(), 1);
   matrixInstanceBuffer = new GL::InstanceBuffer<glm::mat4>(vao, particles.size(), 2);
@@ -172,11 +167,10 @@ void ParticleManager::free(){
   particles.clear();
   particles.shrink_to_fit();
 
+  delete vao;
   delete colorInstanceBuffer;
   delete matrixInstanceBuffer;
   delete shader;
-
-  glDeleteVertexArrays(1, &vao);
 }
 
 void ParticleManager::update(double delta, glm::vec3 cameraPos){
@@ -197,9 +191,9 @@ void ParticleManager::update(double delta, glm::vec3 cameraPos){
 
   // double start = glfwGetTime();
   colorInstanceBuffer->bind();
-  uint* colorPtr = (uint*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+  uint* colorPtr = GL::mapBuffer<uint>();
   matrixInstanceBuffer->bind();
-  glm::mat4* matrixPtr = (glm::mat4*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+  glm::mat4* matrixPtr = GL::mapBuffer<glm::mat4>();
   // printf("map particle buffers: %.4fms with %u particles\n", (glfwGetTime() - start) * 1000.0, particlesToDraw);
 
   uint bufferIndex = 0;
@@ -216,9 +210,9 @@ void ParticleManager::update(double delta, glm::vec3 cameraPos){
   particlesToDraw = bufferIndex;
 
   colorInstanceBuffer->bind();
-  glUnmapBuffer(GL_ARRAY_BUFFER);
+  GL::unmapBuffer();
   matrixInstanceBuffer->bind();
-  glUnmapBuffer(GL_ARRAY_BUFFER);
+  GL::unmapBuffer();
 }
 
 void ParticleManager::draw(glm::mat4 projection, glm::mat4 view){
@@ -226,6 +220,6 @@ void ParticleManager::draw(glm::mat4 projection, glm::mat4 view){
   shader->setMat4(shaderProjectionLocation, projection);
   shader->setMat4(shaderViewLocation, view);
 
-  glBindVertexArray(vao);
-  glDrawArraysInstanced(GL_TRIANGLES, 0, 36, particlesToDraw);
+  vao->bind();
+  GL::drawInstanced(36, particlesToDraw);
 }

@@ -7,6 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "common.h"
+#include "gl/vao.h"
 
 #define CHUNK_SIZE 32
 #define CHUNK_SIZE_SQUARED 1024
@@ -38,8 +39,8 @@ public:
   void set(uint8_t _x, uint8_t _y, uint8_t _z, block_t block);
 
 private:
-  block_t *blocks;
-  uint vao;
+  block_t* blocks;
+  GL::VAO* vao;
   bool meshChanged;
   std::vector<int> vertexData;
 

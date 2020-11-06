@@ -1,11 +1,10 @@
-#ifndef SHADER_H_
-#define SHADER_H_
+#ifndef GL_SHADER_H_
+#define GL_SHADER_H_
 
-#include <GL/glew.h>
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
 
-#include "gl/shader_source.h"
+#include "gl/utils.h"
 #include "shaders.h"
 
 #include "common.h"

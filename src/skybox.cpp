@@ -1,12 +1,13 @@
 #include "skybox.h"
 
-#include <GL/glew.h>
-
 #include "common.h"
+#include "gl/utils.h"
+#include "gl/vao.h"
+#include "gl/buffer.h"
 
 #define SKYBOX_SIZE 1
 
-const short vertices[] = {
+const int8_t vertices[] = {
    SKYBOX_SIZE,  SKYBOX_SIZE,  SKYBOX_SIZE,
   -SKYBOX_SIZE,  SKYBOX_SIZE,  SKYBOX_SIZE,
   -SKYBOX_SIZE, -SKYBOX_SIZE,  SKYBOX_SIZE,
@@ -33,7 +34,7 @@ const short vertices[] = {
   -SKYBOX_SIZE, -SKYBOX_SIZE,  SKYBOX_SIZE
 };
 
-const unsigned char indices[] = {
+const uint8_t indices[] = {
   2, 1, 0, 0, 3, 2,
   6, 5, 4, 4, 7, 6,
   10, 9, 8, 8, 11, 10,
@@ -46,7 +47,7 @@ namespace Skybox{
   GL::Shader* shader;
   int shaderProjectionLocation, shaderViewLocation;
 
-  uint vao;
+  GL::VAO* vao;
 }
 
 void Skybox::init(){
@@ -55,42 +56,39 @@ void Skybox::init(){
   shaderProjectionLocation = shader->getUniformLocation("projection");
   shaderViewLocation = shader->getUniformLocation("view");
 
-  uint vbo, ebo;
-  glGenVertexArrays(1, &vao);
-  glGenBuffers(1, &vbo);
-  glGenBuffers(1, &ebo);
+  vao = new GL::VAO();
 
-  glBindVertexArray(vao);
+  vao->bind();
 
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  GL::Buffer<GL::ARRAY>* vbo = new GL::Buffer<GL::ARRAY>();
+  vbo->data(sizeof(vertices), vertices);
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+  GL::Buffer<GL::ELEMENT_ARRAY>* ebo = new GL::Buffer<GL::ELEMENT_ARRAY>();
+  ebo->data(sizeof(indices), indices);
 
   // position
-  glVertexAttribPointer(0, 3, GL_SHORT, GL_FALSE, 3 * sizeof(short), (void*)0);
-  glEnableVertexAttribArray(0);
+  vao->attrib<int8_t>(0, 3, GL_BYTE);
 
   glBindVertexArray(0);
-  glDeleteBuffers(1, &vbo);
-  glDeleteBuffers(1, &ebo);
+  GL::VAO::unbind();
+  delete vbo;
+  delete ebo;
 }
 
 void Skybox::free(){
-  glDeleteVertexArrays(1, &vao);
+  delete vao;
   delete shader;
 }
 
 void Skybox::draw(glm::mat4 projection, glm::mat4 view){
-  glDepthFunc(GL_LEQUAL);
+  GL::setDepthTest(GL::LEQUAL);
 
   shader->use();
   shader->setMat4(shaderProjectionLocation, projection);
   shader->setMat4(shaderViewLocation, view);
 
-  glBindVertexArray(vao);
-  glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
+  vao->bind();
+  GL::drawElements(36);
 
-  glDepthFunc(GL_LESS);
+  GL::setDepthTest(GL::LESS);
 }

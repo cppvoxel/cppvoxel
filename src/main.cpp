@@ -22,7 +22,6 @@
 
 #include "common.h"
 #include "window.h"
-#include "gl/shader.h"
 #include "config.h"
 #include "input.h"
 #include "camera.h"
@@ -30,6 +29,8 @@
 #include "chunk.h"
 #include "skybox.h"
 #include "particle_manager.h"
+
+#include "gl/utils.h"
 
 // textures
 #include "res/dirt.h"
@@ -135,7 +136,7 @@ void APIENTRY glDebugOutput(GLenum source, GLenum type, uint id, GLenum severity
 #endif
 
 void framebufferResizeCallback(GLFWwindow* _window, int width, int height){
-  glViewport(0, 0, width, height);
+  GL::viewport(width, height);
   windowWidth = width;
   windowHeight = height;
   perspectiveChanged = true;
@@ -252,10 +253,10 @@ int main(int argc, char** argv){
   bool vsync = config.getBool("vsync", false);
 
   printf("== OpenGL ==\n");
-  printf("version: %s\n", glGetString(GL_VERSION));
-  printf("shading language version: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-  printf("renderer: %s\n", glGetString(GL_RENDERER));
-  printf("vendor: %s\n", glGetString(GL_VENDOR));
+  printf("version: %s\n", GL::getString(GL::VERSION));
+  printf("shading language version: %s\n", GL::getString(GL::SHADING_LANGUAGE_VERSION));
+  printf("renderer: %s\n", GL::getString(GL::RENDERER));
+  printf("vendor: %s\n", GL::getString(GL::VENDOR));
 
   // printf("== System ==\n");
   // printf("double : %lu\n", (long unsigned)sizeof(double));
@@ -297,13 +298,13 @@ int main(int argc, char** argv){
 
   CATCH_OPENGL_ERROR
 
-  glEnable(GL_FRAMEBUFFER_SRGB); 
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_CULL_FACE);
-  glCullFace(GL_BACK);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  GL::enable(GL::FRAMEBUFFER_SRGB); 
+  GL::enable(GL::DEPTH_TEST);
+  GL::enable(GL::CULL_FACE);
+  GL::setCullFace(GL::BACK);
+  GL::setBlendFunction(GL::SRC_ALPHA, GL::ONE_MINUS_SRC_ALPHA);
+  GL::enable(GL::BLEND);
+  GL::setClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
   const int NUM_TEXTURES = 11;
   const int TEXTURE_RES = 16;
@@ -445,28 +446,6 @@ int main(int argc, char** argv){
     if(Input::getKey(Input::F10).pressed){
       vsync = !vsync;
       glfwSwapInterval(vsync ? 1 : 0);
-    }
-
-    if(Input::getKey(Input::F2).pressed){
-      // FIXME: please
-      printf("saving screenshot...\n");
-
-      const int pixelsSize = windowWidth * windowHeight * 3;
-      uint8_t* pixels = new uint8_t[pixelsSize];
-
-      glPixelStorei(GL_PACK_ALIGNMENT, 1);
-      glReadBuffer(GL_FRONT);
-      glReadPixels(0, 0, windowWidth, windowHeight, GL_BGR, GL_UNSIGNED_BYTE, pixels);
-
-      FILE* file = fopen("screenshot.tga", "w");
-      short header[] = {0, 2, 0, 0, 0, 0, (short)windowWidth, (short)windowHeight, 24};
-
-      fwrite(&header, sizeof(header), 1, file);
-      fwrite(pixels, sizeof(uint8_t), pixelsSize, file);
-      fclose(file);
-
-      delete[] pixels;
-      printf("screenshot saved\n");
     }
 
     camera.fast = Input::getKey(Input::LEFT_SHIFT).down;

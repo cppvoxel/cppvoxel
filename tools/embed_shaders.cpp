@@ -32,7 +32,7 @@ int main(){
 
   file << "#ifndef SHADERS_H_\n"
        << "#define SHADERS_H_\n\n"
-       << "#include \"gl/shader_source.h\"\n\n"
+       << "#include \"gl/utils.h\"\n\n"
        << "namespace GL{\n"
        << "namespace Shaders{\n\n";
 

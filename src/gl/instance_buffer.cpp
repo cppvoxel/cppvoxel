@@ -14,9 +14,9 @@
 namespace GL{
 
 template <typename T>
-InstanceBuffer<T>::InstanceBuffer(uint vao, int initialSize, uint attrib){
+InstanceBuffer<T>::InstanceBuffer(VAO* vao, int initialSize, uint attrib){
   glGenBuffers(1, &vbo);
-  glBindVertexArray(vao);
+  vao->bind();
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
   if(typeid(T) == typeid(uint)){

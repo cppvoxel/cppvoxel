@@ -4,12 +4,12 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include <GL/glew.h>
 #include <glfw/glfw3.h>
 
 #include "noise.h"
 #include "blocks.h"
 #include "chunk_manager.h"
+#include "gl/buffer.h"
 
 #define sign(_x) ({ __typeof__(_x) _xx = (_x);\
   ((__typeof__(_x)) ( (((__typeof__(_x)) 0) < _xx) - (_xx < ((__typeof__(_x)) 0))));})
@@ -39,16 +39,6 @@ inline bool isTransparent(block_t block){
   return block == 0 || block == 6;
 }
 
-inline uint makeBuffer(GLenum target, GLsizei size, const void* data){
-  uint buffer;
-
-  glGenBuffers(1, &buffer);
-  glBindBuffer(target, buffer);
-  glBufferData(target, size, data, GL_STATIC_DRAW);
-
-  return buffer;
-}
-
 /*
   x y z 6 bits
   normal 3 bits
@@ -68,9 +58,10 @@ Chunk::Chunk(int _x, int _y, int _z){
   blocks = (block_t*)malloc(CHUNK_SIZE_CUBED * sizeof(block_t));
   if(blocks == NULL){
     fprintf(stderr, ";-;\n");
+    exit(-1);
   }
 
-  vao = 0;
+  vao = nullptr;
   elements = 0;
   changed = false;
   empty = true;
@@ -130,9 +121,8 @@ Chunk::Chunk(int _x, int _y, int _z){
 }
 
 Chunk::~Chunk(){
-  // delete the vertex array
-  if(vao != 0){
-    glDeleteVertexArrays(1, &vao);
+  if(vao != nullptr){
+    delete vao;
   }
 
   // delete the stored data
@@ -270,8 +260,8 @@ bool Chunk::update(){
 void Chunk::draw(){
   bufferMesh();
 
-  glBindVertexArray(vao);
-  glDrawArrays(GL_TRIANGLES, 0, elements);
+  vao->bind();
+  GL::drawArrays(elements);
 }
 
 // if the chunk's mesh has been modified then send the new data to opengl (TODO: don't create a new buffer, just reuse the old one)
@@ -285,18 +275,19 @@ void Chunk::bufferMesh(){
   double start = glfwGetTime();
 #endif
 
-  if(vao == 0){
-    glGenVertexArrays(1, &vao);
+  if(vao == nullptr){
+    vao = new GL::VAO();
   }
 
-  glBindVertexArray(vao);
+  GL::Buffer<GL::ARRAY>* vbo = new GL::Buffer<GL::ARRAY>();
 
-  uint vertexDataBuffer = makeBuffer(GL_ARRAY_BUFFER, elements * sizeof(int), vertexData.data());
-  glVertexAttribIPointer(0, 1, GL_INT, 0, 0);
-  glEnableVertexAttribArray(0);
+  vao->bind();
 
-  glBindVertexArray(0);
-  glDeleteBuffers(1, &vertexDataBuffer);
+  vbo->data(elements * sizeof(int), vertexData.data());
+  vao->attribI(0, 1, GL_INT);
+
+  GL::VAO::unbind();
+  delete vbo;
 
   vertexData.clear();
   vertexData.shrink_to_fit();
