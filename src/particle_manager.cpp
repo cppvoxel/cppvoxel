@@ -57,6 +57,8 @@ enum WeatherType{
 
 double timeToEndWeatherCycle;
 WeatherType weather;
+double timeToSpawnParticles;
+const double PARTICLE_SPAWN_INTERVAL = 0.05; // seconds
 
 uint lastUsedParticle = 0;
 uint findUnusedParticle(){
@@ -97,7 +99,7 @@ void respawnParticle(ParticleManager::particle_t& particle, glm::vec3 cameraPos)
   }else{
     float size = (rand() % 11) / 100.0f + 0.2f;
     particle.size = {size, size, size};
-    particle.life = 10.0f;
+    particle.life = 15.0f;
     particle.speed = -25.0f;
     particle.color = SNOW_COLOR;
   }
@@ -162,6 +164,8 @@ void ParticleManager::init(){
 
   colorInstanceBuffer = new GL::InstanceBuffer<uint>(vao, particles.size(), 1);
   matrixInstanceBuffer = new GL::InstanceBuffer<glm::mat4>(vao, particles.size(), 2);
+
+  timeToSpawnParticles = glfwGetTime();
 }
 
 void ParticleManager::free(){
@@ -180,8 +184,9 @@ void ParticleManager::update(double delta, glm::vec3 cameraPos){
     setWeatherCycle();
   }
 
-  if(weather != NONE){
-    uint8_t amount = weather == RAIN ? 25 : 5;
+  if(weather != NONE && timeToSpawnParticles <= glfwGetTime()){
+    timeToSpawnParticles += PARTICLE_SPAWN_INTERVAL;
+    uint8_t amount = weather == RAIN ? 50 : 15;
     for(uint i = 0; i < amount; i++){
       respawnParticle(particles[findUnusedParticle()], cameraPos);
     }

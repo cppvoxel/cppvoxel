@@ -103,6 +103,7 @@ void ChunkManager::draw(glm::mat4 projection, glm::mat4 view){
       continue;
     }
 
+    // update chunk if needed
     if(chunk->changed && chunksGenerated < (uint)maxChunksGeneratedPerFrame){
       if(chunk->update() && chunk->elements > 0){
         chunksGenerated++;
