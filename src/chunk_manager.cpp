@@ -1,5 +1,7 @@
 #include "chunk_manager.h"
 
+#include "glfw/glfw.h"
+
 inline bool isChunkInsideFrustum(glm::mat4 mvp){
   glm::vec4 center = mvp * glm::vec4(CHUNK_SIZE / 2, CHUNK_SIZE / 2, CHUNK_SIZE / 2, 1);
   center.x /= center.w;
@@ -78,7 +80,7 @@ void ChunkManager::draw(glm::mat4 projection, glm::mat4 view){
 
   glm::mat4 pv = projection * view;
 
-  // double start = glfwGetTime();
+  // double start = GLFW::getTime();
   for(chunk_it it = ChunkManager::chunks.begin(); it != ChunkManager::chunks.end(); it++){
     std::shared_ptr<Chunk> chunk = it->second;
 
@@ -118,6 +120,6 @@ void ChunkManager::draw(glm::mat4 projection, glm::mat4 view){
     ChunkManager::shader->setMat4(shaderModelLocation, chunk->model);
     chunk->draw();
   }
-  // printf("draw all chunks %.4fms\n", (glfwGetTime() - start) * 1000.0);
+  // printf("draw all chunks %.4fms\n", (GLFW::getTime() - start) * 1000.0);
   CATCH_OPENGL_ERROR
 }

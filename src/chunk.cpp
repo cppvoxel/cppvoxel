@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include <glfw/glfw3.h>
+#include "glfw/glfw.h"
 
 #include "noise.h"
 #include "blocks.h"
@@ -51,7 +51,7 @@ inline int packVertex(uint8_t x, uint8_t y, uint8_t z, NORMAL_FACES normal, uint
 
 Chunk::Chunk(int _x, int _y, int _z){
 #ifdef PRINT_TIMING
-  double start = glfwGetTime();
+  double start = GLFW::getTime();
   unsigned short count = 0;
 #endif
 
@@ -116,7 +116,7 @@ Chunk::Chunk(int _x, int _y, int _z){
   }
 
 #ifdef PRINT_TIMING
-  // printf("chunk gen: %.4fms with %d blocks\n", (glfwGetTime() - start) * 1000.0, count);
+  // printf("chunk gen: %.4fms with %d blocks\n", (GLFW::getTime() - start) * 1000.0, count);
 #endif
 }
 
@@ -138,7 +138,7 @@ bool Chunk::update(){
   }
 
 #ifdef PRINT_TIMING
-  double start = glfwGetTime();
+  double start = GLFW::getTime();
 #endif
 
   STACK_TRACE_PUSH("chunk neighbors")
@@ -251,7 +251,7 @@ bool Chunk::update(){
   meshChanged = true; // set mesh has changed flag
 
 #ifdef PRINT_TIMING
-  printf("created chunk with %d vertices in %.4fms\n", elements, (glfwGetTime() - start) * 1000.0);
+  printf("created chunk with %d vertices in %.4fms\n", elements, (GLFW::getTime() - start) * 1000.0);
 #endif
 
   return true;
@@ -272,7 +272,7 @@ void Chunk::bufferMesh(){
   }
 
 #ifdef PRINT_TIMING
-  double start = glfwGetTime();
+  double start = GLFW::getTime();
 #endif
 
   if(vao == nullptr){
@@ -295,7 +295,7 @@ void Chunk::bufferMesh(){
   meshChanged = false;
 
 #ifdef PRINT_TIMING
-  printf("buffered chunk mesh in %.4fms\n", (glfwGetTime() - start) * 1000.0);
+  printf("buffered chunk mesh in %.4fms\n", (GLFW::getTime() - start) * 1000.0);
 #endif
 }
 

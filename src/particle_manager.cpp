@@ -2,9 +2,8 @@
 
 #include <stdio.h>
 
-#include <glfw/glfw3.h>
-
 #include "common.h"
+#include "glfw/glfw.h"
 #include "gl/utils.h"
 #include "gl/instance_buffer.h"
 #include "gl/vao.h"
@@ -110,7 +109,7 @@ void respawnParticle(ParticleManager::particle_t& particle, glm::vec3 cameraPos)
 
 inline void setWeatherCycle(){
   weather = (WeatherType)((rand() % 2) + 1);
-  timeToEndWeatherCycle = glfwGetTime() + 10.0;
+  timeToEndWeatherCycle = GLFW::getTime() + 10.0;
   printf("weather changed to %d\n", weather);
 }
 
@@ -160,7 +159,7 @@ void ParticleManager::init(){
   colorInstanceBuffer = new GL::InstanceBuffer<uint>(vao, particles.size(), 1);
   matrixInstanceBuffer = new GL::InstanceBuffer<glm::mat4>(vao, particles.size(), 2);
 
-  timeToSpawnParticles = glfwGetTime();
+  timeToSpawnParticles = GLFW::getTime();
 }
 
 void ParticleManager::free(){
@@ -174,11 +173,11 @@ void ParticleManager::free(){
 }
 
 void ParticleManager::update(double delta, glm::vec3 cameraPos){
-  if(glfwGetTime() > timeToEndWeatherCycle){
+  if(GLFW::getTime() > timeToEndWeatherCycle){
     setWeatherCycle();
   }
 
-  if(weather != NONE && timeToSpawnParticles <= glfwGetTime()){
+  if(weather != NONE && timeToSpawnParticles <= GLFW::getTime()){
     timeToSpawnParticles += PARTICLE_SPAWN_INTERVAL;
     uint8_t amount = weather == RAIN ? 50 : 15;
     for(uint i = 0; i < amount; i++){
@@ -189,12 +188,12 @@ void ParticleManager::update(double delta, glm::vec3 cameraPos){
   colorInstanceBuffer->expand(particles.size());
   matrixInstanceBuffer->expand(particles.size());
 
-  // double start = glfwGetTime();
+  // double start = GLFW::getTime();
   colorInstanceBuffer->bind();
   uint* colorPtr = GL::mapBuffer<uint>();
   matrixInstanceBuffer->bind();
   glm::mat4* matrixPtr = GL::mapBuffer<glm::mat4>();
-  // printf("map particle buffers: %.4fms with %u particles\n", (glfwGetTime() - start) * 1000.0, particlesToDraw);
+  // printf("map particle buffers: %.4fms with %u particles\n", (GLFW::getTime() - start) * 1000.0, particlesToDraw);
 
   uint bufferIndex = 0;
   for(particle_t& p : particles){

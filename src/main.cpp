@@ -14,15 +14,12 @@
 #endif
 
 #include <GL/glew.h>
-#include <glfw/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <stb_image.h>
 
 #include "common.h"
-#include "window.h"
 #include "config.h"
-#include "input.h"
 #include "camera.h"
 #include "chunk_manager.h"
 #include "chunk.h"
@@ -31,6 +28,10 @@
 
 #include "gl/utils.h"
 #include "gl/texture_array.h"
+
+#include "glfw/glfw.h"
+#include "glfw/window.h"
+#include "glfw/input.h"
 
 // textures
 #include "res/dirt.h"
@@ -77,7 +78,7 @@ int windowWidth = 800;
 int windowHeight = 600;
 int windowedXPos, windowedYPos, windowedWidth, windowedHeight;
 
-Window window(windowWidth, windowHeight, "cppvoxel");
+GLFW::Window window(windowWidth, windowHeight, "cppvoxel");
 
 // config
 int viewDistance;
@@ -90,7 +91,6 @@ float lastY = (float)windowHeight / 2.0f;
 bool firstMouse = true;
 
 vec3i pos;
-bool perspectiveChanged = true;
 bool cursorLocked = true;
 
 glm::mat4 projection = glm::mat4(1.0f);
@@ -143,14 +143,7 @@ void APIENTRY glDebugOutput(GLenum source, GLenum type, uint id, GLenum severity
 }
 #endif
 
-void framebufferResizeCallback(GLFWwindow* _window, int width, int height){
-  GL::viewport(width, height);
-  windowWidth = width;
-  windowHeight = height;
-  perspectiveChanged = true;
-}
-
-void mouseCallback(GLFWwindow* _window, double xpos, double ypos){
+void mouseCallback(double xpos, double ypos){
   if(!cursorLocked){
     return;
   }
@@ -168,10 +161,6 @@ void mouseCallback(GLFWwindow* _window, double xpos, double ypos){
   lastY = (float)ypos;
 
   camera.processMouseMovement(xoffset, yoffset);
-}
-
-void scrollCallback(GLFWwindow* _window, double xoffset, double yoffset){
-  camera.processMouseScroll((float)yoffset);
 }
 
 #ifdef MULTI_THREADING
@@ -324,14 +313,10 @@ int main(int argc, char** argv){
   // printf("byte   : %lu\n", (long unsigned)sizeof(int8_t));
   // printf("ubyte  : %lu\n", (long unsigned)sizeof(uint8_t));
 
-  glfwSetFramebufferSizeCallback(window.window, framebufferResizeCallback);
-  glfwSetCursorPosCallback(window.window, mouseCallback);
-  glfwSetScrollCallback(window.window, scrollCallback);
+  window.setMouseCallback(mouseCallback);
 
-  Input::init(window.window);
-
-  glfwSetInputMode(window.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-  glfwSwapInterval(vsync ? 1 : 0);
+  window.setCursorMode(GLFW::DISABLED);
+  GLFW::enableVsync(vsync);
 
   glewExperimental = true;
   if(glewInit() != GLEW_OK){
@@ -388,12 +373,12 @@ int main(int argc, char** argv){
   double currentTime;
 
   unsigned short frames = 0;
-  double lastPrintTime = glfwGetTime();
+  double lastPrintTime = GLFW::getTime();
 
   STACK_TRACE_PUSH("main loop")
 
   while(!window.shouldClose()){
-    currentTime = glfwGetTime();
+    currentTime = GLFW::getTime();
     deltaTime = currentTime - lastFrame;
     lastFrame = currentTime;
     frames++;
@@ -404,54 +389,44 @@ int main(int argc, char** argv){
       lastPrintTime += 1.0;
     }
 
-    if(Input::getKey(Input::F12).pressed){
-      glfwSetWindowShouldClose(window.window, true);
+    if(Input::getKey(Input::Key::F12).pressed){
+      window.setShouldClose(true);
     }
 
-    if(Input::getKey(Input::ESCAPE).pressed){
+    if(Input::getKey(Input::Key::ESCAPE).pressed){
       if(cursorLocked){
-        glfwSetInputMode(window.window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        window.setCursorMode(GLFW::NORMAL);
         firstMouse = true;
       }else{
-        glfwSetInputMode(window.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        window.setCursorMode(GLFW::DISABLED);
       }
 
       cursorLocked = !cursorLocked;
     }
 
-    if(Input::getKey(Input::F11).pressed){
-      if(glfwGetWindowMonitor(window.window)){
-        glfwSetWindowMonitor(window.window, NULL, windowedXPos, windowedYPos, windowedWidth, windowedHeight, 0);
-      }else{
-        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-        if(monitor){
-          const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-          glfwGetWindowPos(window.window, &windowedXPos, &windowedYPos);
-          glfwGetWindowSize(window.window, &windowedWidth, &windowedHeight);
-          glfwSetWindowMonitor(window.window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
-        }
-      }
+    if(Input::getKey(Input::Key::F11).pressed){
+      window.setFullscreen(!window.getFullscreen());
     }
 
-    if(Input::getKey(Input::F10).pressed){
+    if(Input::getKey(Input::Key::F10).pressed){
       vsync = !vsync;
-      glfwSwapInterval(vsync ? 1 : 0);
+      GLFW::enableVsync(vsync);
     }
 
-    camera.fast = Input::getKey(Input::LEFT_SHIFT).down;
-    if(Input::getKey(Input::W).down){
+    camera.fast = Input::getKey(Input::Key::LEFT_SHIFT).down;
+    if(Input::getKey(Input::Key::W).down){
       camera.processKeyboard(FORWARD, deltaTime);
-    }else if(Input::getKey(Input::S).down){
+    }else if(Input::getKey(Input::Key::S).down){
       camera.processKeyboard(BACKWARD, deltaTime);
     }
-    if(Input::getKey(Input::A).down){
+    if(Input::getKey(Input::Key::A).down){
       camera.processKeyboard(LEFT, deltaTime);
-    }else if(Input::getKey(Input::D).down){
+    }else if(Input::getKey(Input::Key::D).down){
       camera.processKeyboard(RIGHT, deltaTime);
     }
 
-    bool leftMouse = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-    bool rightMouse = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+    bool leftMouse = Input::getMosue(Input::MouseButton::LEFT);
+    bool rightMouse = Input::getMosue(Input::MouseButton::RIGHT);
 
     if(leftMouse || rightMouse){
       int hx, hy, hz, cx, cy, cz;
@@ -474,10 +449,8 @@ int main(int argc, char** argv){
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if(perspectiveChanged){
-      projection = glm::perspective(glm::radians(camera.fov), (float)windowWidth/(float)windowHeight, .1f, 10000.0f);
-      perspectiveChanged = false;
-    }
+    window.getSize(&windowWidth, &windowHeight);
+    projection = glm::perspective(glm::radians(camera.fov), (float)windowWidth/(float)windowHeight, .1f, 10000.0f);
     cameraView = camera.getViewMatrix();
 
     ChunkManager::draw(projection, cameraView);

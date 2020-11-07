@@ -11,7 +11,7 @@ struct KeyEvent{
   bool down;
 };
 
-enum Key{
+enum class Key{
   SPACE = 32,
   COMMA = 44,
   MINUS,
@@ -104,9 +104,16 @@ enum Key{
   MENU
 };
 
-void init(GLFWwindow* window);
+enum class MouseButton{
+  LEFT = GLFW_MOUSE_BUTTON_LEFT,
+  RIGHT = GLFW_MOUSE_BUTTON_RIGHT,
+  MIDDLE = GLFW_MOUSE_BUTTON_MIDDLE
+};
+
+void init(GLFWwindow* _window);
 void update();
 KeyEvent getKey(Key keycode);
+bool getMosue(MouseButton button);
 
 };
 
