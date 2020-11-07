@@ -98,10 +98,10 @@ Chunk::Chunk(int _x, int _y, int _z){
           realHeight = height - y * CHUNK_SIZE;
         }
 
-        block = dy < realHeight ? block : VOID_BLOCK;
+        block = dy < realHeight ? block : 0;
         blocks[blockIndex(dx, dy, dz)] = block;
 
-        if(empty && block != VOID_BLOCK){
+        if(empty && block != 0){
           changed = true;
           empty = false;
         }
@@ -168,7 +168,7 @@ bool Chunk::update(){
       for(_y = 0; _y < CHUNK_SIZE; _y++){
         block = blocks[blockIndex(_x, _y, _z)];
 
-        if(block == VOID_BLOCK){
+        if(block == 0){
           continue;
         }
 
@@ -315,6 +315,10 @@ inline block_t Chunk::get(uint8_t _x, uint8_t _y, uint8_t _z, std::shared_ptr<Ch
   }
 
   return blocks[blockIndex(_x, _y, _z)];
+}
+
+block_t Chunk::get(uint8_t _x, uint8_t _y, uint8_t _z){
+  return get(_x, _y, _z, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 }
 
 void Chunk::set(uint8_t _x, uint8_t _y, uint8_t _z, block_t block){
