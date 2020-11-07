@@ -17,7 +17,6 @@
 #include <glfw/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 #include "common.h"
@@ -31,6 +30,7 @@
 #include "particle_manager.h"
 
 #include "gl/utils.h"
+#include "gl/texture_array.h"
 
 // textures
 #include "res/dirt.h"
@@ -225,6 +225,54 @@ bool VercidiumRayMarch(int *bx, int *by, int *bz, int *cx, int *cy, int *cz){
   return false;
 }
 
+uint8_t* loadTexture(int index){
+  int width, height, nrChannels;
+  uint8_t* imageData;
+  printf("%d;", index);
+
+  switch(index){
+    case 0:
+      imageData = stbi_load_from_memory(IMAGE_DIRT_BYTES, sizeof(IMAGE_DIRT_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+      break;
+    case 1:
+      imageData = stbi_load_from_memory(IMAGE_STONE_BYTES, sizeof(IMAGE_STONE_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+      break;
+    case 2:
+      imageData = stbi_load_from_memory(IMAGE_BEDROCK_BYTES, sizeof(IMAGE_BEDROCK_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+      break;
+    case 3:
+      imageData = stbi_load_from_memory(IMAGE_SAND_BYTES, sizeof(IMAGE_SAND_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+      break;
+    case 4:
+      imageData = stbi_load_from_memory(IMAGE_GRASS_SIDE_BYTES, sizeof(IMAGE_GRASS_SIDE_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+      break;
+    case 5:
+      imageData = stbi_load_from_memory(IMAGE_GLASS_BYTES, sizeof(IMAGE_GLASS_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+      break;
+    case 6:
+      imageData = stbi_load_from_memory(IMAGE_SNOW_BYTES, sizeof(IMAGE_SNOW_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+      break;
+    case 7:
+      imageData = stbi_load_from_memory(IMAGE_WATER_BYTES, sizeof(IMAGE_WATER_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+      break;
+    case 8:
+      imageData = stbi_load_from_memory(IMAGE_GRASS_BYTES, sizeof(IMAGE_GRASS_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+      break;
+    case 9:
+      imageData = stbi_load_from_memory(IMAGE_LOG_BYTES, sizeof(IMAGE_LOG_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+      break;
+    case 10:
+      imageData = stbi_load_from_memory(IMAGE_LOG_TOP_BYTES, sizeof(IMAGE_LOG_TOP_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
+      break;
+    default:
+      fprintf(stderr, "f");
+      exit(-1);
+      break;
+  }
+
+  return imageData;
+}
+
 int main(int argc, char** argv){
   signal(SIGABRT, signalHandler);
   signal(SIGFPE, signalHandler);
@@ -311,73 +359,7 @@ int main(int argc, char** argv){
 
   printf("loading textures: ");
 
-  glActiveTexture(GL_TEXTURE0);
-  uint textureArray;
-  glGenTextures(1, &textureArray);
-  glBindTexture(GL_TEXTURE_2D_ARRAY, textureArray);
-  glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_SRGB_ALPHA, TEXTURE_RES, TEXTURE_RES, NUM_TEXTURES, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-  stbi_set_flip_vertically_on_load(true);
-  for(int i = 0; i < NUM_TEXTURES; i++){
-    int width, height, nrChannels;
-
-    uint8_t* imageData;
-    switch(i){
-      case 0:
-        imageData = stbi_load_from_memory(IMAGE_DIRT_BYTES, sizeof(IMAGE_DIRT_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
-        break;
-      case 1:
-        imageData = stbi_load_from_memory(IMAGE_STONE_BYTES, sizeof(IMAGE_STONE_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
-        break;
-      case 2:
-        imageData = stbi_load_from_memory(IMAGE_BEDROCK_BYTES, sizeof(IMAGE_BEDROCK_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
-        break;
-      case 3:
-        imageData = stbi_load_from_memory(IMAGE_SAND_BYTES, sizeof(IMAGE_SAND_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
-        break;
-      case 4:
-        imageData = stbi_load_from_memory(IMAGE_GRASS_SIDE_BYTES, sizeof(IMAGE_GRASS_SIDE_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
-        break;
-      case 5:
-        imageData = stbi_load_from_memory(IMAGE_GLASS_BYTES, sizeof(IMAGE_GLASS_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
-        break;
-      case 6:
-        imageData = stbi_load_from_memory(IMAGE_SNOW_BYTES, sizeof(IMAGE_SNOW_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
-        break;
-      case 7:
-        imageData = stbi_load_from_memory(IMAGE_WATER_BYTES, sizeof(IMAGE_WATER_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
-        break;
-      case 8:
-        imageData = stbi_load_from_memory(IMAGE_GRASS_BYTES, sizeof(IMAGE_GRASS_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
-        break;
-      case 9:
-        imageData = stbi_load_from_memory(IMAGE_LOG_BYTES, sizeof(IMAGE_LOG_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
-        break;
-      case 10:
-        imageData = stbi_load_from_memory(IMAGE_LOG_TOP_BYTES, sizeof(IMAGE_LOG_TOP_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
-        break;
-      default:
-        fprintf(stderr, "i%d;", i);
-        exit(-1);
-        break;
-    }
-
-    if(imageData){
-      glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, TEXTURE_RES, TEXTURE_RES, 1, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
-      printf("%d;", i);
-    }else{
-      fprintf(stderr, "f%d;", i);
-      exit(-1);
-    }
-
-    stbi_image_free(imageData);
-  }
-
-  glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
-  glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  GL::TextureArray* textureArray = new GL::TextureArray(0, NUM_TEXTURES, TEXTURE_RES, loadTexture);
 
   printf(" done!\n");
 
@@ -509,7 +491,7 @@ int main(int argc, char** argv){
   ChunkManager::free();
   Skybox::free();
 
-  glDeleteTextures(1, &textureArray);
+  delete textureArray;
 
   return 0;
 }
