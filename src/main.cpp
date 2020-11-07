@@ -45,6 +45,14 @@
 #include "res/log.h"
 #include "res/log_top.h"
 
+#ifndef GIT_BRANCH
+#define GIT_BRANCH "unknown"
+#endif
+
+#ifndef GIT_HASH
+#define GIT_HASH "unknown"
+#endif
+
 #define REACH_DISTANCE 20.0f
 
 struct allocation_metrics_t{
