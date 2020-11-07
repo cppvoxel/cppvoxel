@@ -299,7 +299,7 @@ void Chunk::bufferMesh(){
 #endif
 }
 
-inline block_t Chunk::get(uint8_t _x, uint8_t _y, uint8_t _z, std::shared_ptr<Chunk> px, std::shared_ptr<Chunk> nx, std::shared_ptr<Chunk> py, std::shared_ptr<Chunk> ny, std::shared_ptr<Chunk> pz, std::shared_ptr<Chunk> nz){
+inline block_t Chunk::get(uint8_t _x, uint8_t _y, uint8_t _z, const std::shared_ptr<Chunk>& px, const std::shared_ptr<Chunk>& nx, const std::shared_ptr<Chunk>& py, const std::shared_ptr<Chunk>& ny, const std::shared_ptr<Chunk>& pz, const std::shared_ptr<Chunk>& nz){
   if(_x < 0){
     return nx->blocks[blockIndex(CHUNK_SIZE + _x, _y, _z)];
   }else if(_x >= CHUNK_SIZE){
