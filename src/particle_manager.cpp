@@ -152,7 +152,7 @@ void ParticleManager::init(){
 
   vao->bind();
   vbo->data(sizeof(vertices), vertices);
-  vao->attrib<int8_t>(0, 3, GL_BYTE, 0);
+  vao->attrib<int8_t>(0, 3, GL::BYTE, 0);
 
   GL::VAO::unbind();
   delete vbo;

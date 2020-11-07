@@ -7,6 +7,11 @@
 
 namespace GL{
 
+enum DataType{
+  BYTE = GL_BYTE,
+  INT = GL_INT
+};
+
 class VAO{
 public:
   VAO();
@@ -16,11 +21,11 @@ public:
   static void unbind();
 
   template <typename T>
-  void attrib(uint index, uint size, GLenum type);
+  void attrib(uint index, uint size, DataType type);
   template <typename T>
-  void attrib(uint index, uint size, GLenum type, uint divisor);
+  void attrib(uint index, uint size, DataType type, uint divisor);
 
-  void attribI(uint index, uint size, GLenum type);
+  void attribI(uint index, uint size, DataType type);
 
 private:
   uint handle;

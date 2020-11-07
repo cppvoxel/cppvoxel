@@ -17,22 +17,22 @@ void GL::VAO::unbind(){
 }
 
 template <typename T>
-void GL::VAO::attrib(uint index, uint size, GLenum type){
+void GL::VAO::attrib(uint index, uint size, DataType type){
   glVertexAttribPointer(index, size, type, GL_FALSE, size * sizeof(T), (void*)0);
   glEnableVertexAttribArray(index);
 }
 
 template <typename T>
-void GL::VAO::attrib(uint index, uint size, GLenum type, uint divisor){
+void GL::VAO::attrib(uint index, uint size, DataType type, uint divisor){
   glVertexAttribPointer(index, size, type, GL_FALSE, size * sizeof(T), (void*)0);
   glEnableVertexAttribArray(index);
   glVertexAttribDivisor(index, divisor);
 }
 
-void GL::VAO::attribI(uint index, uint size, GLenum type){
+void GL::VAO::attribI(uint index, uint size, DataType type){
   glVertexAttribIPointer(index, size, type, 0, (void*)0);
   glEnableVertexAttribArray(index);
 }
 
-template void GL::VAO::attrib<int8_t>(uint, uint, GLenum);
-template void GL::VAO::attrib<int8_t>(uint, uint, GLenum, uint);
+template void GL::VAO::attrib<int8_t>(uint, uint, DataType);
+template void GL::VAO::attrib<int8_t>(uint, uint, DataType, uint);

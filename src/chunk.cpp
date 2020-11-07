@@ -284,7 +284,7 @@ void Chunk::bufferMesh(){
   vao->bind();
 
   vbo->data(elements * sizeof(int), vertexData.data());
-  vao->attribI(0, 1, GL_INT);
+  vao->attribI(0, 1, GL::INT);
 
   GL::VAO::unbind();
   delete vbo;

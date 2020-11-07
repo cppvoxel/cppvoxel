@@ -66,7 +66,7 @@ void Skybox::init(){
   ebo->data(sizeof(indices), indices);
 
   // position
-  vao->attrib<int8_t>(0, 3, GL_BYTE);
+  vao->attrib<int8_t>(0, 3, GL::BYTE);
 
   GL::VAO::unbind();
   delete vbo;
