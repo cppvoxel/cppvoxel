@@ -1,0 +1,38 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Release Build",
+      "type": "shell",
+      "command": "premake5 build --release",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Release Run",
+      "type": "shell",
+      "command": "./bin/cppvoxel",
+      "windows": {
+        "command": "bin\\cppvoxel.exe"
+      }
+    },
+    {
+      "label": "Release Build + Run",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Release Build",
+        "Release Run"
+      ],
+      "problemMatcher": [
+        "$gcc"
+      ]
+    }
+  ]
+}

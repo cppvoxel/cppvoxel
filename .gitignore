@@ -6,7 +6,6 @@ Makefile
 /embed
 
 # configs
-.vscode/
 .vs/
 
 screenshot.tga
