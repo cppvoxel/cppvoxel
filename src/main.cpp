@@ -345,6 +345,7 @@ int main(int argc, char** argv){
   GL::setCullFace(GL::BACK);
   GL::setBlendFunction(GL::SRC_ALPHA, GL::ONE_MINUS_SRC_ALPHA);
   GL::enable(GL::BLEND);
+  GL::enable(GL::MULTISAMPLE);
   GL::setClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
   const int NUM_TEXTURES = 11;
