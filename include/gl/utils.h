@@ -60,7 +60,7 @@ void enable(Option option);
 void setCullFace(CullFace face);
 void setBlendFunction(BlendFunction a, BlendFunction b);
 void setClearColor(float red, float green, float blue, float alpha);
-void clear(ClearMask mask);
+void clear(uint mask);
 
 }
 
