@@ -1,9 +1,19 @@
 #include "gl/utils.h"
 
+#include <stdio.h>
+
 #include <glm/gtc/matrix_transform.hpp>
 
 template <typename T> T* GL::mapBuffer(){
   return (T*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+}
+
+void GL::init(){
+  glewExperimental = true;
+  if(glewInit() != GLEW_OK){
+    fprintf(stderr, "Failed to initialize GLEW\n");
+    exit(-1);
+  }
 }
 
 void GL::unmapBuffer(){

@@ -47,6 +47,7 @@ enum ClearMask : uint{
   DEPTH = GL_DEPTH_BUFFER_BIT
 };
 
+void init();
 template <typename T> T* mapBuffer();
 void unmapBuffer();
 void drawInstanced(uint verticesCount, uint objectCount);

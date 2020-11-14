@@ -318,11 +318,7 @@ int main(int argc, char** argv){
   window.setCursorMode(GLFW::DISABLED);
   GLFW::enableVsync(vsync);
 
-  glewExperimental = true;
-  if(glewInit() != GLEW_OK){
-    fprintf(stderr, "Failed to initialize GLEW\n");
-    return -1;
-  }
+  GL::init();
 
 #ifdef DEBUG
   int flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
