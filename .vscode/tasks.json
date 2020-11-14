@@ -41,6 +41,11 @@
       }
     },
     {
+      "label": "Clean",
+      "type": "shell",
+      "command": "premake5 clean"
+    },
+    {
       "label": "Debug Build + Run",
       "dependsOrder": "sequence",
       "dependsOn": [
