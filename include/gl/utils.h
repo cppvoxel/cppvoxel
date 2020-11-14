@@ -33,7 +33,8 @@ enum Option{
 };
 
 enum CullFace{
-  BACK = GL_BACK
+  BACK = GL_BACK,
+  FRONT = GL_FRONT
 };
 
 enum BlendFunction{

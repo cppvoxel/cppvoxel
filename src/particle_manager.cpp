@@ -12,45 +12,6 @@
 const static uint RAIN_COLOR = (uint)(40 | (60 << 8) | (255 << 16) | (255 << 24));
 const static uint SNOW_COLOR = (uint)(255 | (255 << 8) | (255 << 16) | (255 << 24));
 
-const static int8_t vertices[] = {
-  -1, -1, -1,
-  -1, -1,  1,
-  -1,  1,  1,
-   1,  1, -1,
-  -1, -1, -1,
-  -1,  1, -1,
-   1, -1,  1,
-  -1, -1, -1,
-   1, -1, -1,
-   1,  1, -1,
-   1, -1, -1,
-  -1, -1, -1,
-  -1, -1, -1,
-  -1,  1,  1,
-  -1,  1, -1,
-   1, -1,  1,
-  -1, -1,  1,
-  -1, -1, -1,
-  -1,  1,  1,
-  -1, -1,  1,
-   1, -1,  1,
-   1,  1,  1,
-   1, -1, -1,
-   1,  1, -1,
-   1, -1, -1,
-   1,  1,  1,
-   1, -1,  1,
-   1,  1,  1,
-   1,  1, -1,
-  -1,  1, -1,
-   1,  1,  1,
-  -1,  1, -1,
-  -1,  1,  1,
-   1,  1,  1,
-  -1,  1,  1,
-   1, -1,  1,
-};
-
 enum WeatherType{
   NONE,
   RAIN,
@@ -150,8 +111,8 @@ void ParticleManager::init(){
   GL::Buffer<GL::ARRAY>* vbo = new GL::Buffer<GL::ARRAY>();
 
   vao->bind();
-  vbo->data(sizeof(vertices), vertices);
-  vao->attrib<int8_t>(0, 3, GL::BYTE, 0);
+  vbo->data(sizeof(cube_vertices), cube_vertices);
+  vao->attrib<int8_t>(0, 4, GL::BYTE, 0);
 
   GL::VAO::unbind();
   delete vbo;
@@ -179,7 +140,7 @@ void ParticleManager::update(double delta, glm::vec3 cameraPos){
 
   if(weather != NONE && timeToSpawnParticles <= GLFW::getTime()){
     timeToSpawnParticles += PARTICLE_SPAWN_INTERVAL;
-    uint8_t amount = weather == RAIN ? 50 : 15;
+    uint8_t amount = weather == RAIN ? 100 : 15;
     for(uint i = 0; i < amount; i++){
       respawnParticle(particles[findUnusedParticle()], cameraPos);
     }
@@ -220,5 +181,5 @@ void ParticleManager::draw(glm::mat4 projection, glm::mat4 view){
   shader->setMat4(shaderViewLocation, view);
 
   vao->bind();
-  GL::drawInstanced(36, particlesToDraw);
+  GL::drawInstanced(48, particlesToDraw);
 }

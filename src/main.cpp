@@ -454,15 +454,15 @@ int main(int argc, char** argv){
     projection = glm::perspective(glm::radians(camera.fov), (float)windowWidth/(float)windowHeight, .1f, 10000.0f);
     cameraView = camera.getViewMatrix();
 
+    Skybox::draw(projection, cameraView);
     ChunkManager::draw(projection, cameraView);
+    ParticleManager::draw(projection, cameraView);
 
-    ParticleManager::draw(projection, cameraView); CATCH_OPENGL_ERROR
-    Skybox::draw(projection, cameraView); CATCH_OPENGL_ERROR
+    CATCH_OPENGL_ERROR
 
     Input::update();
     window.pollEvents();
     window.swapBuffers();
-    CATCH_OPENGL_ERROR
   }
 
 #ifdef MULTI_THREADING
