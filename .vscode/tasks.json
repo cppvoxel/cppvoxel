@@ -6,7 +6,7 @@
     {
       "label": "Debug Build",
       "type": "shell",
-      "command": "premake5 build --release",
+      "command": "premake5 build",
       "problemMatcher": [
         "$gcc"
       ],
@@ -15,7 +15,7 @@
     {
       "label": "Release Build",
       "type": "shell",
-      "command": "premake5 build",
+      "command": "premake5 build --release",
       "problemMatcher": [
         "$gcc"
       ],
