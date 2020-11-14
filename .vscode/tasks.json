@@ -4,15 +4,32 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Release Build",
+      "label": "Debug Build",
       "type": "shell",
       "command": "premake5 build --release",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "Release Build",
+      "type": "shell",
+      "command": "premake5 build",
       "problemMatcher": [
         "$gcc"
       ],
       "group": {
         "kind": "build",
         "isDefault": true
+      }
+    },
+    {
+      "label": "Debug Run",
+      "type": "shell",
+      "command": "./bin/cppvoxel.debug",
+      "windows": {
+        "command": "bin\\cppvoxel.debug.exe"
       }
     },
     {
