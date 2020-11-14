@@ -41,6 +41,17 @@
       }
     },
     {
+      "label": "Debug Build + Run",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Debug Build",
+        "Debug Run"
+      ],
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
       "label": "Release Build + Run",
       "dependsOrder": "sequence",
       "dependsOn": [
