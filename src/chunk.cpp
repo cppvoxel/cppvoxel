@@ -303,7 +303,7 @@ inline block_t Chunk::get(uint8_t _x, uint8_t _y, uint8_t _z, const std::shared_
   if(_x < 0){
     return nx->blocks[blockIndex(CHUNK_SIZE + _x, _y, _z)];
   }else if(_x >= CHUNK_SIZE){
-    return blocks[blockIndex(_x % CHUNK_SIZE, _y, _z)];
+    return px->blocks[blockIndex(_x % CHUNK_SIZE, _y, _z)];
   }else if(_y < 0){
     return ny->blocks[blockIndex(_x, CHUNK_SIZE + _y, _z)];
   }else if(_y >= CHUNK_SIZE){
