@@ -50,6 +50,10 @@ void GL::setClearColor(float red, float green, float blue, float alpha){
   glClearColor(red, green, blue, alpha);
 }
 
+void GL::clear(uint mask){
+  glClear(mask);
+}
+
 // tell the compiler we will be using these data types
 template uint* GL::mapBuffer<uint>();
 template glm::mat4* GL::mapBuffer<glm::mat4>();

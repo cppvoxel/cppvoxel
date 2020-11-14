@@ -42,6 +42,11 @@ enum BlendFunction{
   ONE_MINUS_SRC_ALPHA = GL_ONE_MINUS_SRC_ALPHA
 };
 
+enum ClearMask : uint{
+  COLOR = GL_COLOR_BUFFER_BIT,
+  DEPTH = GL_DEPTH_BUFFER_BIT
+};
+
 template <typename T> T* mapBuffer();
 void unmapBuffer();
 void drawInstanced(uint verticesCount, uint objectCount);
@@ -54,6 +59,7 @@ void enable(Option option);
 void setCullFace(CullFace face);
 void setBlendFunction(BlendFunction a, BlendFunction b);
 void setClearColor(float red, float green, float blue, float alpha);
+void clear(ClearMask mask);
 
 }
 

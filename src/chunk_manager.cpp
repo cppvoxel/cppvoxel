@@ -23,8 +23,8 @@ void ChunkManager::init(){
   shader->use();
 
   shader->setInt("texture_array", 0);
-  shader->setInt("fog_near", (viewDistance + 1) * CHUNK_SIZE);
-  shader->setInt("fog_far", (viewDistance + 2) * CHUNK_SIZE);
+  shader->setInt("fog_near", viewDistance * CHUNK_SIZE);
+  shader->setInt("fog_far", (viewDistance + 1) * CHUNK_SIZE);
 
   shaderProjectionLocation = shader->getUniformLocation("projection");
   shaderViewLocation = shader->getUniformLocation("view");
@@ -121,5 +121,4 @@ void ChunkManager::draw(glm::mat4 projection, glm::mat4 view){
     chunk->draw();
   }
   // printf("draw all chunks %.4fms\n", (GLFW::getTime() - start) * 1000.0);
-  CATCH_OPENGL_ERROR
 }

@@ -448,7 +448,7 @@ int main(int argc, char** argv){
 #endif
     ParticleManager::update(deltaTime, camera.position);
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    GL::clear(GL::COLOR | GL::DEPTH);
 
     window.getSize(&windowWidth, &windowHeight);
     projection = glm::perspective(glm::radians(camera.fov), (float)windowWidth/(float)windowHeight, .1f, 10000.0f);
