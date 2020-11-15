@@ -17,7 +17,7 @@
 #define VOID_BLOCK 0 // block id if there is no neighbor for block
 // #define PRINT_TIMING
 
-enum NORMAL_FACES : uint8_t{
+enum NormalFace : uint8_t{
   PY = 0,
   NY,
   PX,
@@ -45,7 +45,7 @@ inline bool isTransparent(block_t block){
   textureId 8 bits
   texX texY 1 bit
 */
-inline int packVertex(uint8_t x, uint8_t y, uint8_t z, NORMAL_FACES normal, uint8_t textureId, uint8_t texX, uint8_t texY){
+inline int packVertex(uint8_t x, uint8_t y, uint8_t z, NormalFace normal, uint8_t textureId, uint8_t texX, uint8_t texY){
   return x | (y << 6) | (z << 12) | (normal << 18) | (textureId << 21) | (texX << 29) | (texY << 30);
 }
 
@@ -248,7 +248,7 @@ bool Chunk::update(){
   }
 
   elements = (uint)vertexData.size(); // set number of vertices
-  meshChanged = true; // set mesh has changed flag
+  meshChanged = true;
 
 #ifdef PRINT_TIMING
   printf("created chunk with %d vertices in %.4fms\n", elements, (GLFW::getTime() - start) * 1000.0);
@@ -300,17 +300,22 @@ void Chunk::bufferMesh(){
 }
 
 inline block_t Chunk::get(uint8_t _x, uint8_t _y, uint8_t _z, const std::shared_ptr<Chunk>& px, const std::shared_ptr<Chunk>& nx, const std::shared_ptr<Chunk>& py, const std::shared_ptr<Chunk>& ny, const std::shared_ptr<Chunk>& pz, const std::shared_ptr<Chunk>& nz){
-  if(_x < 0){
+  if(_x < 0){ // gets block from -x neighbor
     return nx->blocks[blockIndex(CHUNK_SIZE + _x, _y, _z)];
-  }else if(_x >= CHUNK_SIZE){
+  }
+  if(_x >= CHUNK_SIZE){ // gets block from +x neighbor
     return px->blocks[blockIndex(_x % CHUNK_SIZE, _y, _z)];
-  }else if(_y < 0){
+  }
+  if(_y < 0){ // gets block from -y neighbor
     return ny->blocks[blockIndex(_x, CHUNK_SIZE + _y, _z)];
-  }else if(_y >= CHUNK_SIZE){
+  }
+  if(_y >= CHUNK_SIZE){ // gets block from +y neighbor
     return py->blocks[blockIndex(_x, _y % CHUNK_SIZE, _z)];
-  }else if(_z < 0){
+  }
+  if(_z < 0){ // gets block from -z neighbor
     return nz->blocks[blockIndex(_x, _y, CHUNK_SIZE + _z)];
-  }else if(_z >= CHUNK_SIZE){
+  }
+  if(_z >= CHUNK_SIZE){ // gets block from +z neighbor
     return pz->blocks[blockIndex(_x, _y, _z % CHUNK_SIZE)];
   }
 
@@ -318,7 +323,7 @@ inline block_t Chunk::get(uint8_t _x, uint8_t _y, uint8_t _z, const std::shared_
 }
 
 block_t Chunk::get(uint8_t _x, uint8_t _y, uint8_t _z){
-  return get(_x, _y, _z, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+  return blocks[blockIndex(_x, _y, _z)];
 }
 
 void Chunk::set(uint8_t _x, uint8_t _y, uint8_t _z, block_t block){
