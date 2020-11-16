@@ -53,10 +53,6 @@ Chunk::Chunk(int _x, int _y, int _z){
 #endif
 
   blocks = (block_t*)malloc(CHUNK_SIZE_CUBED * sizeof(block_t));
-  if(blocks == NULL){
-    fprintf(stderr, ";-;\n");
-    exit(-1);
-  }
 
   vao = nullptr;
   elements = 0;
@@ -68,7 +64,11 @@ Chunk::Chunk(int _x, int _y, int _z){
   y = _y;
   z = _z;
 
-  model = glm::translate(glm::mat4(1.0f), glm::vec3(x * CHUNK_SIZE, y * CHUNK_SIZE, z * CHUNK_SIZE));
+  const int xCS = x * CHUNK_SIZE;
+  const int yCS = y * CHUNK_SIZE;
+  const int zCS = z * CHUNK_SIZE;
+
+  model = glm::translate(glm::mat4(1.0f), glm::vec3(xCS, yCS, zCS));
 
   int chunkX, chunkZ, height, realHeight;
   float f, biomeHeight, e;
@@ -77,22 +77,22 @@ Chunk::Chunk(int _x, int _y, int _z){
 
   for(dx = 0; dx < CHUNK_SIZE; dx++){
     for(dz = 0; dz < CHUNK_SIZE; dz++){
-      chunkX = x * CHUNK_SIZE + dx;
-      chunkZ = z * CHUNK_SIZE + dz;
+      chunkX = xCS + dx;
+      chunkZ = zCS + dz;
 
       biomeHeight = simplex2(chunkX * 0.003f, chunkZ * 0.003f, 2, 0.6f, 1.5f);
       e = lerp(1.3f, 0.2f, (biomeHeight - 1.0f) / 2.0f);
 
       f = simplex2(chunkX * 0.002f, chunkZ * 0.002f, 6, 0.6f, 1.5f);
       height = pow((f + 1) / 2 + 1, 9) * e;
-      realHeight = height - y * CHUNK_SIZE;
+      realHeight = height - yCS;
 
       for(dy = 0; dy < CHUNK_SIZE; dy++){
         thickness = realHeight - dy;
         block = height < 15 && thickness <= 10 ? 8 : height < 18 && thickness <= 3 ? 5 : height >= 160 && thickness <= 7 ? 7 : thickness == 1 ? 1 : thickness <= 6 ? 3 : 2;
         if(block == 8 && height < 14){
           height = 14;
-          realHeight = height - y * CHUNK_SIZE;
+          realHeight = height - yCS;
         }
 
         block = dy < realHeight ? block : 0;
@@ -104,7 +104,7 @@ Chunk::Chunk(int _x, int _y, int _z){
         }
 
 #ifdef PRINT_TIMING
-        if(dy < realHeight){
+        if(block != 0){
           count++;
         }
 #endif
@@ -124,13 +124,12 @@ Chunk::~Chunk(){
 
   // delete the stored data
   free(blocks);
-  blocks = NULL;
 }
 
 // update the chunk
 bool Chunk::update(){
   // if the chunk does not need to remesh then stop
-  if(!changed || blocks == NULL){
+  if(!changed){
     return false;
   }
 
