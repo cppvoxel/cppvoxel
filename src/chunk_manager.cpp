@@ -2,6 +2,10 @@
 
 #include "timer.h"
 
+/**
+  * @brief Checks if the given chunk matrix is visible
+  * @return bool Chunk visible
+*/
 inline bool isChunkInsideFrustum(glm::mat4 mvp){
   glm::vec4 center = mvp * glm::vec4(CHUNK_SIZE / 2, CHUNK_SIZE / 2, CHUNK_SIZE / 2, 1);
   center.x /= center.w;
