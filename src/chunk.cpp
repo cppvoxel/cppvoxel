@@ -4,18 +4,15 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "glfw/glfw.h"
+#include "gl/buffer.h"
 
 #include "noise.h"
 #include "blocks.h"
 #include "chunk_manager.h"
-#include "gl/buffer.h"
+#include "timer.h"
 
 #define sign(_x) ({ __typeof__(_x) _xx = (_x);\
   ((__typeof__(_x)) ( (((__typeof__(_x)) 0) < _xx) - (_xx < ((__typeof__(_x)) 0))));})
-
-#define VOID_BLOCK 0 // block id if there is no neighbor for block
-// #define PRINT_TIMING
 
 enum NormalFace : uint8_t{
   PY = 0,
@@ -51,7 +48,7 @@ inline int packVertex(uint8_t x, uint8_t y, uint8_t z, NormalFace normal, uint8_
 
 Chunk::Chunk(int _x, int _y, int _z){
 #ifdef PRINT_TIMING
-  double start = GLFW::getTime();
+  Timer timer;
   unsigned short count = 0;
 #endif
 
@@ -116,7 +113,7 @@ Chunk::Chunk(int _x, int _y, int _z){
   }
 
 #ifdef PRINT_TIMING
-  // printf("chunk gen: %.4fms with %d blocks\n", (GLFW::getTime() - start) * 1000.0, count);
+  printf("chunk gen: %d blocks ", count);
 #endif
 }
 
@@ -137,10 +134,6 @@ bool Chunk::update(){
     return false;
   }
 
-#ifdef PRINT_TIMING
-  double start = GLFW::getTime();
-#endif
-
   STACK_TRACE_PUSH("chunk neighbors")
 
   // get chunk neighbors
@@ -156,6 +149,10 @@ bool Chunk::update(){
   }
 
   STACK_TRACE_PUSH("update chunk")
+
+#ifdef PRINT_TIMING
+  Timer timer;
+#endif
 
   // updating is taken care of - reset flag
   changed = false;
@@ -251,7 +248,7 @@ bool Chunk::update(){
   meshChanged = true;
 
 #ifdef PRINT_TIMING
-  printf("created chunk with %d vertices in %.4fms\n", elements, (GLFW::getTime() - start) * 1000.0);
+  printf("created chunk with %d vertices: ", elements);
 #endif
 
   return true;
@@ -272,7 +269,7 @@ void Chunk::bufferMesh(){
   }
 
 #ifdef PRINT_TIMING
-  double start = GLFW::getTime();
+  Timer timer;
 #endif
 
   if(vao == nullptr){
@@ -295,7 +292,7 @@ void Chunk::bufferMesh(){
   meshChanged = false;
 
 #ifdef PRINT_TIMING
-  printf("buffered chunk mesh in %.4fms\n", (GLFW::getTime() - start) * 1000.0);
+  printf("buffered chunk mesh: %zuB ", elements * sizeof(int));
 #endif
 }
 

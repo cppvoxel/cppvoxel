@@ -2,12 +2,15 @@
 
 #include <stdio.h>
 
-#include "common.h"
 #include "glfw/glfw.h"
+
 #include "gl/utils.h"
 #include "gl/instance_buffer.h"
 #include "gl/vao.h"
 #include "gl/buffer.h"
+
+#include "common.h"
+#include "timer.h"
 
 const static uint RAIN_COLOR = (uint)(40 | (60 << 8) | (255 << 16) | (255 << 24));
 const static uint SNOW_COLOR = (uint)(255 | (255 << 8) | (255 << 16) | (255 << 24));
@@ -149,12 +152,23 @@ void ParticleManager::update(double delta, glm::vec3 cameraPos){
   colorInstanceBuffer->expand(particles.size());
   matrixInstanceBuffer->expand(particles.size());
 
-  // double start = GLFW::getTime();
-  colorInstanceBuffer->bind();
-  uint* colorPtr = GL::mapBuffer<uint>();
-  matrixInstanceBuffer->bind();
-  glm::mat4* matrixPtr = GL::mapBuffer<glm::mat4>();
-  // printf("map particle buffers: %.4fms with %u particles\n", (GLFW::getTime() - start) * 1000.0, particlesToDraw);
+  uint* colorPtr;
+  glm::mat4* matrixPtr;
+
+#ifdef PRINT_TIMING
+  {
+    Timer timer;
+#endif
+
+    colorInstanceBuffer->bind();
+    colorPtr = GL::mapBuffer<uint>();
+    matrixInstanceBuffer->bind();
+    matrixPtr = GL::mapBuffer<glm::mat4>();
+
+#ifdef PRINT_TIMING
+    printf("map particle buffers: %u particles ", particlesToDraw);
+  }
+#endif
 
   uint bufferIndex = 0;
   for(particle_t& p : particles){
