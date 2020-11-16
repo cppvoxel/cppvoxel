@@ -410,6 +410,10 @@ int main(int argc, char** argv){
       GLFW::enableVsync(vsync);
     }
 
+    if(Input::getKey(Input::Key::F4).pressed){
+      printf("pos: x%.1f y%.1f z%.1f\n", camera.position.x, camera.position.y, camera.position.z);
+    }
+
     camera.fast = Input::getKey(Input::Key::LEFT_SHIFT).down;
     if(Input::getKey(Input::Key::W).down){
       camera.processKeyboard(FORWARD, deltaTime);
