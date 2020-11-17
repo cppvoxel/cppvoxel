@@ -49,9 +49,10 @@ std::shared_ptr<Chunk> ChunkManager::get(vec3i pos){
 }
 
 void ChunkManager::update(vec3i camPos){
+  const int distance = viewDistance + 1;
   cameraPos = camPos;
   vec3i chunkPos;
-  const int distance = viewDistance + 1;
+  uint8_t generated = 0;
 
   for(int i = -distance; i <= distance; i++){
     for(int j = -distance; j <= distance; j++){
@@ -62,6 +63,10 @@ void ChunkManager::update(vec3i camPos){
 
         if(!get(chunkPos)){
           chunks.insert(std::make_pair(chunkPos, std::make_shared<Chunk>(chunkPos.x, chunkPos.y, chunkPos.z)));
+
+          if(++generated == 50){
+            return;
+          }
         }
       }
     }
