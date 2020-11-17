@@ -5,14 +5,14 @@
 
 #include "common.h"
 
-namespace GL{
+namespace GL {
 
-enum DataType{
+enum DataType {
   BYTE = GL_BYTE,
   INT = GL_INT
 };
 
-class VAO{
+class VAO {
 public:
   VAO();
   ~VAO();

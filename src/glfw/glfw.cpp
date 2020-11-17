@@ -2,13 +2,13 @@
 
 #include <stdio.h>
 
-namespace GLFW{
+namespace GLFW {
 
-double getTime(){
+double getTime() {
   return glfwGetTime();
 }
 
-void enableVsync(bool value){
+void enableVsync(bool value) {
   glfwSwapInterval(value ? 1 : 0);
 }
 

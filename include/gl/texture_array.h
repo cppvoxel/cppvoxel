@@ -5,9 +5,9 @@
 
 #include "common.h"
 
-namespace GL{
+namespace GL {
 
-class TextureArray{
+class TextureArray {
 public:
   TextureArray(uint index, uint textureCount, uint textureRes, uint8_t* loadTexture(int));
   ~TextureArray();

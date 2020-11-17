@@ -26,80 +26,80 @@ void stackTracePush(const char* name, const char* file, uint line, const char* f
 
 #define STACK_TRACE_PUSH(x) stackTracePush(x, __FILE__, __LINE__, __func__);
 
-struct vec3i{
+struct vec3i {
   int x;
   int y;
   int z;
 };
 
-inline bool const operator==(const vec3i& l, const vec3i& r){
-	return l.x == r.x && l.y == r.y && l.z == r.z;
+inline bool const operator==(const vec3i& l, const vec3i& r) {
+  return l.x == r.x && l.y == r.y && l.z == r.z;
 };
 
-inline bool const operator!=(const vec3i& l, const vec3i& r){
-	return l.x != r.x || l.y != r.y || l.z != r.z;
+inline bool const operator!=(const vec3i& l, const vec3i& r) {
+  return l.x != r.x || l.y != r.y || l.z != r.z;
 };
 
-inline bool const operator<(const vec3i& l, const vec3i& r){
-	if(l.x < r.x){
+inline bool const operator<(const vec3i& l, const vec3i& r) {
+  if(l.x < r.x) {
     return true;
-  }else if(l.x > r.x){
+  } else if(l.x > r.x) {
     return false;
   }
 
-	if(l.y < r.y){
+  if(l.y < r.y) {
     return true;
-  }else if(l.y > r.y){
+  } else if(l.y > r.y) {
     return false;
   }
 
-	if(l.z < r.z){
+  if(l.z < r.z) {
     return true;
-  }else if(l.z > r.z){
+  } else if(l.z > r.z) {
     return false;
   }
 
-	return false;
+  return false;
 };
 
 const static int8_t cube_vertices[] = {
   -1, -1, -1, 0,
-  -1, -1,  1, 0,
-  -1,  1,  1, 0,
-   1,  1, -1, 0,
-  -1, -1, -1, 0,
-  -1,  1, -1, 0,
-   1, -1,  1, 0,
-  -1, -1, -1, 0,
-   1, -1, -1, 0,
-   1,  1, -1, 0,
-   1, -1, -1, 0,
-  -1, -1, -1, 0,
-  -1, -1, -1, 0,
-  -1,  1,  1, 0,
-  -1,  1, -1, 0,
-   1, -1,  1, 0,
-  -1, -1,  1, 0,
-  -1, -1, -1, 0,
-  -1,  1,  1, 0,
-  -1, -1,  1, 0,
-   1, -1,  1, 0,
-   1,  1,  1, 0,
-   1, -1, -1, 0,
-   1,  1, -1, 0,
-   1, -1, -1, 0,
-   1,  1,  1, 0,
-   1, -1,  1, 0,
-   1,  1,  1, 0,
-   1,  1, -1, 0,
-  -1,  1, -1, 0,
-   1,  1,  1, 0,
-  -1,  1, -1, 0,
-  -1,  1,  1, 0,
-   1,  1,  1, 0,
-  -1,  1,  1, 0,
-   1, -1,  1, 0,
-};
+    -1, -1,  1, 0,
+    -1,  1,  1, 0,
+    1,  1, -1, 0,
+    -1, -1, -1, 0,
+    -1,  1, -1, 0,
+    1, -1,  1, 0,
+    -1, -1, -1, 0,
+    1, -1, -1, 0,
+    1,  1, -1, 0,
+    1, -1, -1, 0,
+    -1, -1, -1, 0,
+    -1, -1, -1, 0,
+    -1,  1,  1, 0,
+    -1,  1, -1, 0,
+    1, -1,  1, 0,
+    -1, -1,  1, 0,
+    -1, -1, -1, 0,
+    -1,  1,  1, 0,
+    -1, -1,  1, 0,
+    1, -1,  1, 0,
+    1,  1,  1, 0,
+    1, -1, -1, 0,
+    1,  1, -1, 0,
+    1, -1, -1, 0,
+    1,  1,  1, 0,
+    1, -1,  1, 0,
+    1,  1,  1, 0,
+    1,  1, -1, 0,
+    -1,  1, -1, 0,
+    1,  1,  1, 0,
+    -1,  1, -1, 0,
+    -1,  1,  1, 0,
+    1,  1,  1, 0,
+    -1,  1,  1, 0,
+    1, -1,  1, 0,
+  };
 
 // config
 extern int viewDistance;

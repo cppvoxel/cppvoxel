@@ -5,15 +5,15 @@
 
 #include "common.h"
 
-namespace GL{
+namespace GL {
 
-enum BufferType{
+enum BufferType {
   ARRAY = GL_ARRAY_BUFFER,
   ELEMENT_ARRAY = GL_ELEMENT_ARRAY_BUFFER
 };
 
 template <BufferType T>
-class Buffer{
+class Buffer {
 public:
   Buffer();
   ~Buffer();

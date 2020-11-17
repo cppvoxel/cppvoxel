@@ -1,6 +1,6 @@
 #version 330 core
 
-layout (location = 0) in int aVertex;
+layout(location = 0) in int aVertex;
 
 out vec3 vPosition;
 out vec3 vTexCoord;
@@ -14,15 +14,15 @@ const vec3 sun_direction = normalize(vec3(1, 3, 2));
 const float ambient = 0.4f;
 
 const vec3 normalCoords[] = vec3[](
-  vec3(0.0, 1.0, 0.0),
-  vec3(0.0, -1.0, 0.0),
-  vec3(1.0, 0.0, 0.0),
-  vec3(-1.0, 0.0, 0.0),
-  vec3(0.0, 0.0, 1.0),
-  vec3(0.0, 0.0, -1.0)
-);
+                              vec3(0.0, 1.0, 0.0),
+                              vec3(0.0, -1.0, 0.0),
+                              vec3(1.0, 0.0, 0.0),
+                              vec3(-1.0, 0.0, 0.0),
+                              vec3(0.0, 0.0, 1.0),
+                              vec3(0.0, 0.0, -1.0)
+                            );
 
-void main(){
+void main() {
   vec3 aPosition = vec3(float(aVertex & (63)), float((aVertex >> 6) & (63)), float((aVertex >> 12) & (63)));
   int aNormal = (aVertex >> 18) & (7);
 

@@ -8,14 +8,14 @@
 
 #include "gl/shader.h"
 
-namespace ParticleManager{
+namespace ParticleManager {
 
-struct particle_t{
-	glm::vec3 pos, size;
+struct particle_t {
+  glm::vec3 pos, size;
   uint color;
-	float speed, life;
+  float speed, life;
 
-  particle_t() : pos({0.0f, 0.0f, 0.0f}), size({1.0f, 1.0f, 1.0f}), speed(0.0f), life(0.0f){}
+  particle_t() : pos({0.0f, 0.0f, 0.0f}), size({1.0f, 1.0f, 1.0f}), speed(0.0f), life(0.0f) {}
 };
 
 extern std::vector<particle_t> particles;

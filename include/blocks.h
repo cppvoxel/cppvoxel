@@ -5,7 +5,7 @@
 
 typedef uint8_t block_t;
 
-enum BlockType : block_t{
+enum BlockType : block_t {
   AIR = 0,
   GRASS,
   DIRT,

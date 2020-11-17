@@ -5,14 +5,14 @@
 #include "gl/vao.h"
 #include "gl/buffer.h"
 
-namespace Skybox{
-  GL::Shader* shader;
-  int shaderProjectionLocation, shaderViewLocation;
+namespace Skybox {
+GL::Shader* shader;
+int shaderProjectionLocation, shaderViewLocation;
 
-  GL::VAO* vao;
+GL::VAO* vao;
 }
 
-void Skybox::init(){
+void Skybox::init() {
   shader = new GL::Shader(GL::Shaders::skybox);
   shader->use();
   shaderProjectionLocation = shader->getUniformLocation("projection");
@@ -29,12 +29,12 @@ void Skybox::init(){
   delete vbo;
 }
 
-void Skybox::free(){
+void Skybox::free() {
   delete vao;
   delete shader;
 }
 
-void Skybox::draw(glm::mat4 projection, glm::mat4 view){
+void Skybox::draw(glm::mat4 projection, glm::mat4 view) {
   GL::setDepthTest(GL::LEQUAL);
   GL::setCullFace(GL::FRONT);
 

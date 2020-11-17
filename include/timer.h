@@ -5,7 +5,7 @@
 
 // #define PRINT_TIMING
 
-class Timer{
+class Timer {
 public:
   Timer();
   ~Timer();

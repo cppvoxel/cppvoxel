@@ -5,26 +5,26 @@
 
 #include "common.h"
 
-namespace GL{
+namespace GL {
 
-struct ShaderSource{
+struct ShaderSource {
   const char* vertex;
   const char* fragment;
 };
 
-enum DepthTest{
+enum DepthTest {
   LESS = GL_LESS,
   LEQUAL = GL_LEQUAL
 };
 
-enum String{
+enum String {
   VERSION = GL_VERSION,
   SHADING_LANGUAGE_VERSION = GL_SHADING_LANGUAGE_VERSION,
   RENDERER = GL_RENDERER,
   VENDOR = GL_VENDOR
 };
 
-enum Option{
+enum Option {
   FRAMEBUFFER_SRGB = GL_FRAMEBUFFER_SRGB,
   DEPTH_TEST = GL_DEPTH_TEST,
   CULL_FACE = GL_CULL_FACE,
@@ -32,17 +32,17 @@ enum Option{
   MULTISAMPLE = GL_MULTISAMPLE
 };
 
-enum CullFace{
+enum CullFace {
   BACK = GL_BACK,
   FRONT = GL_FRONT
 };
 
-enum BlendFunction{
+enum BlendFunction {
   SRC_ALPHA = GL_SRC_ALPHA,
   ONE_MINUS_SRC_ALPHA = GL_ONE_MINUS_SRC_ALPHA
 };
 
-enum ClearMask : uint{
+enum ClearMask : uint {
   COLOR = GL_COLOR_BUFFER_BIT,
   DEPTH = GL_DEPTH_BUFFER_BIT
 };

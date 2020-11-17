@@ -7,13 +7,13 @@
 
 #include "gl/utils.h"
 
-static void framebufferResizeCallback(GLFWwindow* window, int width, int height){
+static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
   GL::viewport(width, height);
 }
 
-namespace GLFW{
+namespace GLFW {
 
-Window::Window(int width, int height, const char* title){
+Window::Window(int width, int height, const char* title) {
   glfwInit();
 #ifdef DEBUG
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -28,7 +28,8 @@ Window::Window(int width, int height, const char* title){
 #endif
 
   window = glfwCreateWindow(width, height, title, nullptr, nullptr);
-  if(window == NULL){
+
+  if(window == NULL) {
     fprintf(stderr, "Failed to create window\n");
     glfwTerminate();
     exit(EXIT_FAILURE);
@@ -43,65 +44,66 @@ Window::Window(int width, int height, const char* title){
   glfwSetCursorPosCallback(window, cursorPosCallback);
 }
 
-Window::~Window(){
+Window::~Window() {
   glfwDestroyWindow(window);
   glfwTerminate();
 }
 
-bool Window::shouldClose() const{
+bool Window::shouldClose() const {
   return glfwWindowShouldClose(window) != 0;
 }
 
-void Window::pollEvents() const{
+void Window::pollEvents() const {
   glfwPollEvents();
 }
 
-void Window::swapBuffers() const{
+void Window::swapBuffers() const {
   glfwSwapBuffers(window);
 }
 
-void Window::getSize(int *width, int *height){
+void Window::getSize(int* width, int* height) {
   glfwGetWindowSize(window, width, height);
 }
 
-void Window::setShouldClose(bool value){
+void Window::setShouldClose(bool value) {
   glfwSetWindowShouldClose(window, value ? 1 : 0);
 }
 
-void Window::setCursorMode(CursorMode mode){
+void Window::setCursorMode(CursorMode mode) {
   glfwSetInputMode(window, GLFW_CURSOR, mode);
 }
 
-bool Window::getFullscreen(){
+bool Window::getFullscreen() {
   return glfwGetWindowMonitor(window) != NULL;
 }
 
-void Window::setFullscreen(bool fullscreen){
-  if(fullscreen){
+void Window::setFullscreen(bool fullscreen) {
+  if(fullscreen) {
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-    if(monitor){
+
+    if(monitor) {
       const GLFWvidmode* mode = glfwGetVideoMode(monitor);
       glfwGetWindowPos(window, &windowedXPos, &windowedYPos);
       glfwGetWindowSize(window, &windowedWidth, &windowedHeight);
       glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
-    }else{
+    } else {
       fprintf(stderr, "unable to get monitor\n");
       exit(-1);
     }
-  }else{
+  } else {
     glfwSetWindowMonitor(window, NULL, windowedXPos, windowedYPos, windowedWidth, windowedHeight, 0);
   }
 }
 
-void Window::setMouseCallback(mouse_callback_t* callback){
+void Window::setMouseCallback(mouse_callback_t* callback) {
   externalMouseCallback = callback;
 }
 
-void Window::mouseCallback(double x, double y){
+void Window::mouseCallback(double x, double y) {
   externalMouseCallback(x, y);
 }
 
-void Window::cursorPosCallback(GLFWwindow* window, double x, double y){
+void Window::cursorPosCallback(GLFWwindow* window, double x, double y) {
   static_cast<GLFW::Window*>(glfwGetWindowUserPointer(window))->mouseCallback(x, y);
 }
 

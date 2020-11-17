@@ -11,31 +11,31 @@
 
 // reference: https://github.com/Vercidium/particles/blob/master/source/InstanceBuffer.cs
 
-namespace GL{
+namespace GL {
 
-template <typename T>
-InstanceBuffer<T>::InstanceBuffer(VAO* vao, int initialSize, uint attrib){
+template <typename T> InstanceBuffer<T>::InstanceBuffer(VAO* vao, int initialSize, uint attrib) {
   glGenBuffers(1, &vbo);
   vao->bind();
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-  if(typeid(T) == typeid(uint)){
+  if(typeid(T) == typeid(uint)) {
     vertexSize = sizeof(uint);
     glEnableVertexAttribArray(attrib);
     // uint is treated as 4 bytes so it can be used as a color in the shader
     glVertexAttribPointer(attrib, 4, GL_UNSIGNED_BYTE, GL_TRUE, vertexSize, (void*)0);
     // must set attribute divisor
     glVertexAttribDivisor(attrib, 1);
-  }else if(typeid(T) == typeid(glm::mat4)){
+  } else if(typeid(T) == typeid(glm::mat4)) {
     vertexSize = sizeof(glm::mat4);
-    for(uint i = 0; i < 4; i++){
+
+    for(uint i = 0; i < 4; i++) {
       glEnableVertexAttribArray(attrib + i);
       // mat4 is treated as 4 sets of 4 floats in the shader
       glVertexAttribPointer(attrib + i, 4, GL_FLOAT, GL_FALSE, vertexSize, (void*)(sizeof(float) * 4 * i));
       // must set attrivute divisor
       glVertexAttribDivisor(attrib + i, 1);
     }
-  }else{
+  } else {
     fprintf(stderr, "unknown InstanceBuffer data type\n");
     exit(-1);
   }
@@ -45,19 +45,18 @@ InstanceBuffer<T>::InstanceBuffer(VAO* vao, int initialSize, uint attrib){
   glBindVertexArray(0);
 }
 
-template <typename T>
-InstanceBuffer<T>::~InstanceBuffer(){
+template <typename T> InstanceBuffer<T>::~InstanceBuffer() {
   glDeleteBuffers(1, &vbo);
 }
 
 template <typename T>
-inline void InstanceBuffer<T>::bind(){
+inline void InstanceBuffer<T>::bind() {
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
 }
 
 template <typename T>
-inline void InstanceBuffer<T>::expand(int newLength){
-  if(newLength < currentLength){
+inline void InstanceBuffer<T>::expand(int newLength) {
+  if(newLength < currentLength) {
     return;
   }
 
@@ -66,7 +65,7 @@ inline void InstanceBuffer<T>::expand(int newLength){
 }
 
 template <typename T>
-inline void InstanceBuffer<T>::bufferData(int newLength){
+inline void InstanceBuffer<T>::bufferData(int newLength) {
   currentLength = newLength;
 
   bind();

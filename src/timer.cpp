@@ -2,11 +2,11 @@
 
 #include <stdio.h>
 
-Timer::Timer(){
+Timer::Timer() {
   startTimepoint = std::chrono::high_resolution_clock::now();
 }
 
-Timer::~Timer(){
+Timer::~Timer() {
   std::chrono::time_point<std::chrono::high_resolution_clock> endTimepoint = std::chrono::high_resolution_clock::now();
 
   long long start = std::chrono::time_point_cast<std::chrono::microseconds>(startTimepoint).time_since_epoch().count();

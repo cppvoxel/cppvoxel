@@ -3,7 +3,7 @@
 
 #include <glfw/glfw3.h>
 
-namespace GLFW{
+namespace GLFW {
 
 double getTime();
 void enableVsync(bool value);

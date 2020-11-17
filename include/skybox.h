@@ -5,7 +5,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-namespace Skybox{
+namespace Skybox {
 
 extern GL::Shader* shader;
 

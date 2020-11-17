@@ -4,13 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-Config::Config(const char* configPath){
+Config::Config(const char* configPath) {
   path = configPath;
 }
 
-char* Config::getString(const char* varName){
+char* Config::getString(const char* varName) {
   FILE* file = fopen(path, "r");
-  if(file == NULL){
+
+  if(file == NULL) {
     fprintf(stderr, "%s: %s not found\n", __func__, path);
     return NULL;
   }
@@ -19,8 +20,8 @@ char* Config::getString(const char* varName){
   char val[128];
   char* ret = NULL;
 
-  while(fscanf(file, "%127[^=]=%127[^\n]%*c", name, val) == 2){
-    if(!strcmp(name, varName)){
+  while(fscanf(file, "%127[^=]=%127[^\n]%*c", name, val) == 2) {
+    if(!strcmp(name, varName)) {
       ret = strdup(val);
       break;
     }
@@ -31,23 +32,23 @@ char* Config::getString(const char* varName){
   return ret;
 }
 
-int Config::getInt(const char* varName, int defaultValue){
+int Config::getInt(const char* varName, int defaultValue) {
   char* temp = getString(varName);
 
   int ret = defaultValue;
 
-  if(temp != NULL){
+  if(temp != NULL) {
     char* stop;
     ret = strtol(temp, &stop, 10);
 
-    if(stop == temp){
+    if(stop == temp) {
       ret = defaultValue;
     }
 
     free(temp);
   }
 
-  if(ret < 1){
+  if(ret < 1) {
     ret = 1;
   }
 
@@ -56,11 +57,12 @@ int Config::getInt(const char* varName, int defaultValue){
   return ret;
 }
 
-bool Config::getBool(const char* varName, bool defaultValue){
+bool Config::getBool(const char* varName, bool defaultValue) {
   char* temp = getString(varName);
 
   bool ret = defaultValue;;
-  if(temp != NULL){
+
+  if(temp != NULL) {
     ret = strcmp(temp, "true") == 0;
     free(temp);
   }

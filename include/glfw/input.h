@@ -3,15 +3,15 @@
 
 #include <glfw/glfw3.h>
 
-namespace Input{
+namespace Input {
 
-struct KeyEvent{
+struct KeyEvent {
   bool pressed;
   bool released;
   bool down;
 };
 
-enum class Key{
+enum class Key {
   SPACE = 32,
   COMMA = 44,
   MINUS,
@@ -95,7 +95,7 @@ enum class Key{
   F25,
   LEFT_SHIFT = 340,
   LEFT_CONTROL,
-  LEFT_ALT,  
+  LEFT_ALT,
   LEFT_SUPER,
   RIGHT_SHIFT,
   RIGHT_CONTROL,
@@ -104,7 +104,7 @@ enum class Key{
   MENU
 };
 
-enum class MouseButton{
+enum class MouseButton {
   LEFT = GLFW_MOUSE_BUTTON_LEFT,
   RIGHT = GLFW_MOUSE_BUTTON_RIGHT,
   MIDDLE = GLFW_MOUSE_BUTTON_MIDDLE

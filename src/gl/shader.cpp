@@ -2,9 +2,9 @@
 
 #include <stdio.h>
 
-namespace GL{
+namespace GL {
 
-Shader::Shader(ShaderSource source){
+Shader::Shader(ShaderSource source) {
   int success;
 
   uint vertexShader;
@@ -14,7 +14,8 @@ Shader::Shader(ShaderSource source){
 
   // check compile errors
   glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-  if(!success){
+
+  if(!success) {
     char infoLog[512];
     glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
     fprintf(stderr, "vertex shader error\n");
@@ -32,7 +33,8 @@ Shader::Shader(ShaderSource source){
 
   // check compile errors
   glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-  if(!success){
+
+  if(!success) {
     char infoLog[512];
     glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
     fprintf(stderr, "fragment shader error\n");
@@ -54,7 +56,8 @@ Shader::Shader(ShaderSource source){
 
   // check compile errors
   glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-  if(!success){
+
+  if(!success) {
     char infoLog[512];
     glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
     printf("shader program error\n");
@@ -68,13 +71,13 @@ Shader::Shader(ShaderSource source){
   id = shaderProgram;
 }
 
-Shader::~Shader(){
+Shader::~Shader() {
   glDeleteProgram(id);
   id = 0;
 }
 
-void Shader::use(){
-  if(id == 0){
+void Shader::use() {
+  if(id == 0) {
     fprintf(stderr, "ERROR: shader id = 0\n");
     exit(-1);
   }

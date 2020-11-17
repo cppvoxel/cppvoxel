@@ -15,7 +15,7 @@
 const static uint RAIN_COLOR = (uint)(40 | (60 << 8) | (255 << 16) | (255 << 24));
 const static uint SNOW_COLOR = (uint)(255 | (255 << 8) | (255 << 16) | (255 << 24));
 
-enum WeatherType{
+enum WeatherType {
   NONE,
   RAIN,
   SNOW
@@ -27,16 +27,16 @@ double timeToSpawnParticles;
 const double PARTICLE_SPAWN_INTERVAL = 0.05; // seconds
 
 uint lastUsedParticle = 0;
-uint findUnusedParticle(){
-  for(uint i = lastUsedParticle; i < (uint)ParticleManager::particles.size(); i++){
-    if(ParticleManager::particles[i].life <= 0.0f){
+uint findUnusedParticle() {
+  for(uint i = lastUsedParticle; i < (uint)ParticleManager::particles.size(); i++) {
+    if(ParticleManager::particles[i].life <= 0.0f) {
       lastUsedParticle = i;
       return i;
     }
   }
 
-  for(uint i = 0; i < lastUsedParticle; i++){
-    if(ParticleManager::particles[i].life <= 0.0f){
+  for(uint i = 0; i < lastUsedParticle; i++) {
+    if(ParticleManager::particles[i].life <= 0.0f) {
       lastUsedParticle = i;
       return i;
     }
@@ -49,20 +49,20 @@ uint findUnusedParticle(){
   return lastUsedParticle;
 }
 
-void respawnParticle(ParticleManager::particle_t& particle, glm::vec3 cameraPos){
+void respawnParticle(ParticleManager::particle_t& particle, glm::vec3 cameraPos) {
   particle.pos = glm::vec3(
-    (rand() % 1000) - 500,   // x
-    250.0f - (rand() % 100), // y
-    (rand() % 1000) - 500    // z
-  ) + cameraPos;
+                   (rand() % 1000) - 500,   // x
+                   250.0f - (rand() % 100), // y
+                   (rand() % 1000) - 500    // z
+                 ) + cameraPos;
 
-  if(weather == RAIN){
+  if(weather == RAIN) {
     float size = (rand() % 11) / 100.0f + 0.1f;
     particle.size = {size, size * 20.0f, size};
     particle.life = 2.0f;
     particle.speed = -300.0f;
     particle.color = RAIN_COLOR;
-  }else{
+  } else {
     float size = (rand() % 11) / 100.0f + 0.2f;
     particle.size = {size, size, size};
     particle.life = 15.0f;
@@ -71,13 +71,13 @@ void respawnParticle(ParticleManager::particle_t& particle, glm::vec3 cameraPos)
   }
 }
 
-inline void setWeatherCycle(){
+inline void setWeatherCycle() {
   weather = (WeatherType)((rand() % 2) + 1);
   timeToEndWeatherCycle = GLFW::getTime() + 10.0;
   printf("weather changed to %d\n", weather);
 }
 
-inline glm::mat4 particleMatrix(glm::vec3 scale, glm::vec3 position){
+inline glm::mat4 particleMatrix(glm::vec3 scale, glm::vec3 position) {
   return {
     scale.x, 0.0f, 0.0f, 0.0f,
     0.0f, scale.y, 0.0f, 0.0f,
@@ -86,20 +86,20 @@ inline glm::mat4 particleMatrix(glm::vec3 scale, glm::vec3 position){
   };
 }
 
-namespace ParticleManager{
-  std::vector<particle_t> particles;
+namespace ParticleManager {
+std::vector<particle_t> particles;
 
-  GL::Shader* shader;
-  int shaderProjectionLocation, shaderViewLocation;
+GL::Shader* shader;
+int shaderProjectionLocation, shaderViewLocation;
 
-  GL::InstanceBuffer<uint>* colorInstanceBuffer;
-  GL::InstanceBuffer<glm::mat4>* matrixInstanceBuffer;
+GL::InstanceBuffer<uint>* colorInstanceBuffer;
+GL::InstanceBuffer<glm::mat4>* matrixInstanceBuffer;
 
-  GL::VAO* vao;
-  uint particlesToDraw;
+GL::VAO* vao;
+uint particlesToDraw;
 }
 
-void ParticleManager::init(){
+void ParticleManager::init() {
   // pre-allocate particles
   particles.resize(16380);
 
@@ -126,7 +126,7 @@ void ParticleManager::init(){
   timeToSpawnParticles = GLFW::getTime();
 }
 
-void ParticleManager::free(){
+void ParticleManager::free() {
   particles.clear();
   particles.shrink_to_fit();
 
@@ -136,15 +136,16 @@ void ParticleManager::free(){
   delete shader;
 }
 
-void ParticleManager::update(double delta, glm::vec3 cameraPos){
-  if(GLFW::getTime() > timeToEndWeatherCycle){
+void ParticleManager::update(double delta, glm::vec3 cameraPos) {
+  if(GLFW::getTime() > timeToEndWeatherCycle) {
     setWeatherCycle();
   }
 
-  if(weather != NONE && timeToSpawnParticles <= GLFW::getTime()){
+  if(weather != NONE && timeToSpawnParticles <= GLFW::getTime()) {
     timeToSpawnParticles += PARTICLE_SPAWN_INTERVAL;
     uint8_t amount = weather == RAIN ? 100 : 15;
-    for(uint i = 0; i < amount; i++){
+
+    for(uint i = 0; i < amount; i++) {
       respawnParticle(particles[findUnusedParticle()], cameraPos);
     }
   }
@@ -171,9 +172,11 @@ void ParticleManager::update(double delta, glm::vec3 cameraPos){
 #endif
 
   uint bufferIndex = 0;
-  for(particle_t& p : particles){
+
+  for(particle_t& p : particles) {
     p.life -= (float)delta;
-    if(p.life > 0.0f){
+
+    if(p.life > 0.0f) {
       p.pos += glm::vec3(0.0f, p.speed * (float)delta, 0.0f);
 
       // write directly to memory 😬
@@ -181,6 +184,7 @@ void ParticleManager::update(double delta, glm::vec3 cameraPos){
       matrixPtr[bufferIndex++] = particleMatrix(p.size, p.pos);
     }
   }
+
   particlesToDraw = bufferIndex;
 
   colorInstanceBuffer->bind();
@@ -189,7 +193,7 @@ void ParticleManager::update(double delta, glm::vec3 cameraPos){
   GL::unmapBuffer();
 }
 
-void ParticleManager::draw(glm::mat4 projection, glm::mat4 view){
+void ParticleManager::draw(glm::mat4 projection, glm::mat4 view) {
   shader->use();
   shader->setMat4(shaderProjectionLocation, projection);
   shader->setMat4(shaderViewLocation, view);

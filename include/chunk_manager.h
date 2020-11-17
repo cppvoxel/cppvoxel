@@ -13,7 +13,7 @@
 using chunk_map = std::map<vec3i, std::shared_ptr<Chunk>>;
 using chunk_it = chunk_map::iterator;
 
-namespace ChunkManager{
+namespace ChunkManager {
 
 extern chunk_map chunks;
 extern GL::Shader* shader;

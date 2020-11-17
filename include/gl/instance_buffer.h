@@ -5,10 +5,10 @@
 
 #include "common.h"
 
-namespace GL{
+namespace GL {
 
 template <typename T>
-class InstanceBuffer{
+class InstanceBuffer {
 public:
   InstanceBuffer(VAO* vao, int initialSize, uint attrib);
   ~InstanceBuffer();

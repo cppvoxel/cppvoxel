@@ -56,17 +56,17 @@
 
 #define REACH_DISTANCE 20.0f
 
-struct allocation_metrics_t{
+struct allocation_metrics_t {
   uint totalAllocations = 0;
 };
 static allocation_metrics_t s_AllocationMetrics;
 
-void* operator new(size_t size){
+void* operator new(size_t size) {
   s_AllocationMetrics.totalAllocations++;
   return malloc(size);
 }
 
-void operator delete(void* memory){
+void operator delete(void* memory) {
   s_AllocationMetrics.totalAllocations--;
   free(memory);
 }
@@ -96,59 +96,113 @@ bool cursorLocked = true;
 glm::mat4 projection = glm::mat4(1.0f);
 glm::mat4 cameraView;
 
-void signalHandler(int signum){
+void signalHandler(int signum) {
   fprintf(stderr, "Interrupt signal %d received (pid: %d)\n", signum, getpid());
   fprintf(stderr, "%s:%u (%s): %s", stackTraceFile.c_str(), stackTraceLine, stackTraceFile.c_str(), stackTraceName.c_str());
 
-  exit(signum);  
+  exit(signum);
 }
 
 #ifdef DEBUG
-void APIENTRY glDebugOutput(GLenum source, GLenum type, uint id, GLenum severity, GLsizei length, const char *message, const void *userParam){
+void APIENTRY glDebugOutput(GLenum source, GLenum type, uint id, GLenum severity, GLsizei length, const char* message, const void* userParam) {
   // ignore non-significant error/warning codes
-  if(id == 131169 || id == 131185 || id == 131218 || id == 131204){
-    return; 
+  if(id == 131169 || id == 131185 || id == 131218 || id == 131204) {
+    return;
   }
 
   printf("---------------\n");
   printf("debug message (%u): %s\n", id, message);
 
-  switch(source){
-    case GL_DEBUG_SOURCE_API:             printf("source: api\n"); break;
-    case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   printf("source: window system\n"); break;
-    case GL_DEBUG_SOURCE_SHADER_COMPILER: printf("source: shader compiler\n"); break;
-    case GL_DEBUG_SOURCE_THIRD_PARTY:     printf("source: third party\n"); break;
-    case GL_DEBUG_SOURCE_APPLICATION:     printf("source: application\n"); break;
-    case GL_DEBUG_SOURCE_OTHER:           printf("source: other\n"); break;
+  switch(source) {
+    case GL_DEBUG_SOURCE_API:
+      printf("source: api\n");
+      break;
+
+    case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+      printf("source: window system\n");
+      break;
+
+    case GL_DEBUG_SOURCE_SHADER_COMPILER:
+      printf("source: shader compiler\n");
+      break;
+
+    case GL_DEBUG_SOURCE_THIRD_PARTY:
+      printf("source: third party\n");
+      break;
+
+    case GL_DEBUG_SOURCE_APPLICATION:
+      printf("source: application\n");
+      break;
+
+    case GL_DEBUG_SOURCE_OTHER:
+      printf("source: other\n");
+      break;
   }
 
-  switch(type){
-    case GL_DEBUG_TYPE_ERROR:               printf("type: error\n"); break;
-    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: printf("type: deprecated behaviour\n"); break;
-    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  printf("type: undefined behaviour\n"); break; 
-    case GL_DEBUG_TYPE_PORTABILITY:         printf("type: portability\n"); break;
-    case GL_DEBUG_TYPE_PERFORMANCE:         printf("type: performance\n"); break;
-    case GL_DEBUG_TYPE_MARKER:              printf("type: marker\n"); break;
-    case GL_DEBUG_TYPE_PUSH_GROUP:          printf("type: push group\n"); break;
-    case GL_DEBUG_TYPE_POP_GROUP:           printf("type: pop group\n"); break;
-    case GL_DEBUG_TYPE_OTHER:               printf("type: other\n"); break;
+  switch(type) {
+    case GL_DEBUG_TYPE_ERROR:
+      printf("type: error\n");
+      break;
+
+    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+      printf("type: deprecated behaviour\n");
+      break;
+
+    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+      printf("type: undefined behaviour\n");
+      break;
+
+    case GL_DEBUG_TYPE_PORTABILITY:
+      printf("type: portability\n");
+      break;
+
+    case GL_DEBUG_TYPE_PERFORMANCE:
+      printf("type: performance\n");
+      break;
+
+    case GL_DEBUG_TYPE_MARKER:
+      printf("type: marker\n");
+      break;
+
+    case GL_DEBUG_TYPE_PUSH_GROUP:
+      printf("type: push group\n");
+      break;
+
+    case GL_DEBUG_TYPE_POP_GROUP:
+      printf("type: pop group\n");
+      break;
+
+    case GL_DEBUG_TYPE_OTHER:
+      printf("type: other\n");
+      break;
   }
 
-  switch(severity){
-    case GL_DEBUG_SEVERITY_HIGH:         printf("severity: high\n"); break;
-    case GL_DEBUG_SEVERITY_MEDIUM:       printf("severity: medium\n"); break;
-    case GL_DEBUG_SEVERITY_LOW:          printf("severity: low\n"); break;
-    case GL_DEBUG_SEVERITY_NOTIFICATION: printf("severity: notification\n"); break;
+  switch(severity) {
+    case GL_DEBUG_SEVERITY_HIGH:
+      printf("severity: high\n");
+      break;
+
+    case GL_DEBUG_SEVERITY_MEDIUM:
+      printf("severity: medium\n");
+      break;
+
+    case GL_DEBUG_SEVERITY_LOW:
+      printf("severity: low\n");
+      break;
+
+    case GL_DEBUG_SEVERITY_NOTIFICATION:
+      printf("severity: notification\n");
+      break;
   }
 }
 #endif
 
-void mouseCallback(double xpos, double ypos){
-  if(!cursorLocked){
+void mouseCallback(double xpos, double ypos) {
+  if(!cursorLocked) {
     return;
   }
 
-  if(firstMouse){
+  if(firstMouse) {
     lastX = (float)xpos;
     lastY = (float)ypos;
     firstMouse = false;
@@ -164,8 +218,8 @@ void mouseCallback(double xpos, double ypos){
 }
 
 #ifdef MULTI_THREADING
-void updateChunksThread(){
-  while(!window.shouldClose()){
+void updateChunksThread() {
+  while(!window.shouldClose()) {
     ChunkManager::update(pos, viewDistance + 1);
 
 #ifdef _WIN32
@@ -182,27 +236,29 @@ void updateChunksThread(){
   start your map at 2 ^ 32 / 2
 
   - Verc
-*/ 
-bool VercidiumRayMarch(int *bx, int *by, int *bz, int *cx, int *cy, int *cz){
+*/
+bool VercidiumRayMarch(int* bx, int* by, int* bz, int* cx, int* cy, int* cz) {
   float vx = camera.front.x;
   float vy = camera.front.y;
   float vz = camera.front.z;
 
   float t = 0.0f;
 
-  while(t < REACH_DISTANCE){
+  while(t < REACH_DISTANCE) {
     float rayx = camera.position.x + vx * t;
     float rayy = camera.position.y + vy * t;
     float rayz = camera.position.z + vz * t;
 
     std::shared_ptr<Chunk> chunk = ChunkManager::get({(int)floorf(rayx / CHUNK_SIZE), (int)floorf(rayy / CHUNK_SIZE), (int)floorf(rayz / CHUNK_SIZE)});
-    if(chunk != nullptr){
+
+    if(chunk != nullptr) {
       int nx = abs(roundf(rayx));
       int ny = abs(roundf(rayy));
       int nz = abs(roundf(rayz));
 
       block_t block = chunk->get(nx % CHUNK_SIZE, ny % CHUNK_SIZE, nz % CHUNK_SIZE);
-      if(block > 0){
+
+      if(block > 0) {
         // printf("chunk: %d %d %d\n", chunk->x, chunk->y, chunk->z);
         // printf("hit block %d at %d %d %d\n", block, nx % CHUNK_SIZE, ny % CHUNK_SIZE, nz % CHUNK_SIZE);
         *bx = nx;
@@ -226,45 +282,56 @@ bool VercidiumRayMarch(int *bx, int *by, int *bz, int *cx, int *cy, int *cz){
  * Use an array
  * Have texture IDs be constants
 */
-uint8_t* loadTexture(int index){
+uint8_t* loadTexture(int index) {
   int width, height, nrChannels;
   uint8_t* imageData;
   printf("%d;", index);
 
-  switch(index){
+  switch(index) {
     case 0:
       imageData = stbi_load_from_memory(IMAGE_DIRT_BYTES, sizeof(IMAGE_DIRT_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
       break;
+
     case 1:
       imageData = stbi_load_from_memory(IMAGE_STONE_BYTES, sizeof(IMAGE_STONE_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
       break;
+
     case 2:
       imageData = stbi_load_from_memory(IMAGE_BEDROCK_BYTES, sizeof(IMAGE_BEDROCK_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
       break;
+
     case 3:
       imageData = stbi_load_from_memory(IMAGE_SAND_BYTES, sizeof(IMAGE_SAND_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
       break;
+
     case 4:
       imageData = stbi_load_from_memory(IMAGE_GRASS_SIDE_BYTES, sizeof(IMAGE_GRASS_SIDE_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
       break;
+
     case 5:
       imageData = stbi_load_from_memory(IMAGE_GLASS_BYTES, sizeof(IMAGE_GLASS_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
       break;
+
     case 6:
       imageData = stbi_load_from_memory(IMAGE_SNOW_BYTES, sizeof(IMAGE_SNOW_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
       break;
+
     case 7:
       imageData = stbi_load_from_memory(IMAGE_WATER_BYTES, sizeof(IMAGE_WATER_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
       break;
+
     case 8:
       imageData = stbi_load_from_memory(IMAGE_GRASS_BYTES, sizeof(IMAGE_GRASS_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
       break;
+
     case 9:
       imageData = stbi_load_from_memory(IMAGE_LOG_BYTES, sizeof(IMAGE_LOG_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
       break;
+
     case 10:
       imageData = stbi_load_from_memory(IMAGE_LOG_TOP_BYTES, sizeof(IMAGE_LOG_TOP_BYTES), &width, &height, &nrChannels, STBI_rgb_alpha);
       break;
+
     default:
       fprintf(stderr, "f");
       exit(-1);
@@ -274,7 +341,7 @@ uint8_t* loadTexture(int index){
   return imageData;
 }
 
-int main(int argc, char** argv){
+int main(int argc, char** argv) {
   signal(SIGABRT, signalHandler);
   signal(SIGFPE, signalHandler);
   signal(SIGILL, signalHandler);
@@ -325,21 +392,24 @@ int main(int argc, char** argv){
   GL::init();
 
 #ifdef DEBUG
-  int flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
-  if(flags & GL_CONTEXT_FLAG_DEBUG_BIT){
+  int flags;
+  glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+
+  if(flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
     printf("OpenGL debug supported\n");
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(glDebugOutput, NULL);
     glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-  }else{
+  } else {
     printf("OpenGL debug not supported\n");
   }
+
 #endif
 
   CATCH_OPENGL_ERROR
 
-  GL::enable(GL::FRAMEBUFFER_SRGB); 
+  GL::enable(GL::FRAMEBUFFER_SRGB);
   GL::enable(GL::DEPTH_TEST);
   GL::enable(GL::CULL_FACE);
   GL::setCullFace(GL::BACK);
@@ -378,66 +448,71 @@ int main(int argc, char** argv){
 
   STACK_TRACE_PUSH("main loop")
 
-  while(!window.shouldClose()){
+  while(!window.shouldClose()) {
     currentTime = GLFW::getTime();
     deltaTime = currentTime - lastFrame;
     lastFrame = currentTime;
     frames++;
 
-    if(currentTime - lastPrintTime >= 1.0){
-      printf("%.2fms (%dfps) %u chunks %u particles allocated %u allocations\n", 1000.0f/(float)frames, frames, (uint)ChunkManager::chunks.size(), (uint)ParticleManager::particles.size(), s_AllocationMetrics.totalAllocations);
+    if(currentTime - lastPrintTime >= 1.0) {
+      printf("%.2fms (%dfps) %u chunks %u particles allocated %u allocations\n", 1000.0f / (float)frames, frames, (uint)ChunkManager::chunks.size(), (uint)ParticleManager::particles.size(),
+             s_AllocationMetrics.totalAllocations);
       frames = 0;
       lastPrintTime += 1.0;
     }
 
-    if(Input::getKey(Input::Key::F12).pressed){
+    if(Input::getKey(Input::Key::F12).pressed) {
       window.setShouldClose(true);
     }
 
-    if(Input::getKey(Input::Key::ESCAPE).pressed){
-      if(cursorLocked){
+    if(Input::getKey(Input::Key::ESCAPE).pressed) {
+      if(cursorLocked) {
         window.setCursorMode(GLFW::NORMAL);
         firstMouse = true;
-      }else{
+      } else {
         window.setCursorMode(GLFW::DISABLED);
       }
 
       cursorLocked = !cursorLocked;
     }
 
-    if(Input::getKey(Input::Key::F11).pressed){
+    if(Input::getKey(Input::Key::F11).pressed) {
       window.setFullscreen(!window.getFullscreen());
     }
 
-    if(Input::getKey(Input::Key::F10).pressed){
+    if(Input::getKey(Input::Key::F10).pressed) {
       vsync = !vsync;
       GLFW::enableVsync(vsync);
     }
 
-    if(Input::getKey(Input::Key::F4).pressed){
+    if(Input::getKey(Input::Key::F4).pressed) {
       printf("pos: x%.1f y%.1f z%.1f\n", camera.position.x, camera.position.y, camera.position.z);
     }
 
     camera.fast = Input::getKey(Input::Key::LEFT_SHIFT).down;
-    if(Input::getKey(Input::Key::W).down){
+
+    if(Input::getKey(Input::Key::W).down) {
       camera.processKeyboard(FORWARD, deltaTime);
-    }else if(Input::getKey(Input::Key::S).down){
+    } else if(Input::getKey(Input::Key::S).down) {
       camera.processKeyboard(BACKWARD, deltaTime);
     }
-    if(Input::getKey(Input::Key::A).down){
+
+    if(Input::getKey(Input::Key::A).down) {
       camera.processKeyboard(LEFT, deltaTime);
-    }else if(Input::getKey(Input::Key::D).down){
+    } else if(Input::getKey(Input::Key::D).down) {
       camera.processKeyboard(RIGHT, deltaTime);
     }
 
     bool leftMouse = Input::getMosue(Input::MouseButton::LEFT);
     bool rightMouse = Input::getMosue(Input::MouseButton::RIGHT);
 
-    if(leftMouse || rightMouse){
+    if(leftMouse || rightMouse) {
       int hx, hy, hz, cx, cy, cz;
-      if(VercidiumRayMarch(&hx, &hy, &hz, &cx, &cy, &cz)){
+
+      if(VercidiumRayMarch(&hx, &hy, &hz, &cx, &cy, &cz)) {
         std::shared_ptr<Chunk> chunk = ChunkManager::get({cx, cy, cz});
-        if(chunk != NULL){
+
+        if(chunk != NULL) {
           chunk->set(hx % CHUNK_SIZE, hy % CHUNK_SIZE, hz % CHUNK_SIZE, leftMouse ? 0 : 1);
         }
       }
@@ -455,7 +530,7 @@ int main(int argc, char** argv){
     GL::clear(GL::COLOR | GL::DEPTH);
 
     window.getSize(&windowWidth, &windowHeight);
-    projection = glm::perspective(glm::radians(camera.fov), (float)windowWidth/(float)windowHeight, .1f, 10000.0f);
+    projection = glm::perspective(glm::radians(camera.fov), (float)windowWidth / (float)windowHeight, .1f, 10000.0f);
     cameraView = camera.getViewMatrix();
 
     Skybox::draw(projection, cameraView);

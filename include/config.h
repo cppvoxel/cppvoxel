@@ -1,7 +1,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-class Config{
+class Config {
 public:
   Config(const char* configPath);
 
