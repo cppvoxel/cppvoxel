@@ -292,9 +292,9 @@ int main(int argc, char** argv){
   Config config("config.conf");
 
   printf("== Config ==\n");
-  viewDistance = config.getInt("viewDistance", 6);
-  maxChunksGeneratedPerFrame = config.getInt("maxChunksGeneratedPerFrame", 8);
-  maxChunksDeletedPerFrame = config.getInt("maxChunksDeletedPerFrame", 16);
+  viewDistance = config.getInt("viewDistance", 8);
+  maxChunksGeneratedPerFrame = config.getInt("maxChunksGeneratedPerFrame", 2);
+  maxChunksDeletedPerFrame = config.getInt("maxChunksDeletedPerFrame", 4);
   bool vsync = config.getBool("vsync", false);
 
   printf("== OpenGL ==\n");
