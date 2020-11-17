@@ -8,7 +8,6 @@
 
 #include "gl/buffer.h"
 
-#include "blocks.h"
 #include "chunk_manager.h"
 #include "timer.h"
 
@@ -34,9 +33,9 @@ inline ushort blockIndex(uint8_t x, uint8_t y, uint8_t z){
   return x | (y << 5) | (z << 10);
 }
 
-// use magic numbers >.> to check if a block ID is transparent
+// check if a block ID is transparent
 inline bool isTransparent(block_t block){
-  return block == 0 || block == 6;
+  return block == AIR || block == GLASS;
 }
 
 /*
@@ -105,21 +104,21 @@ Chunk::Chunk(int _x, int _y, int _z){
         thickness = height - (dy + yCS);
 
         block = dy + yCS <= height ? 
-          height <= WATER_LEVEL && thickness <= 1 ? 8 : // water
-          height <= WATER_LEVEL + 3 && thickness <= 4 ? 5 : // sand
-          thickness == 0 ? 1 : // grass
-          thickness <= 3 ? 2 : // dirt
-          3 // stone
-          : 0; // air
+          height <= WATER_LEVEL && thickness <= 1 ? WATER :
+          height <= WATER_LEVEL + 3 && thickness <= 4 ? SAND :
+          thickness == 0 ? GRASS :
+          thickness <= 3 ? DIRT :
+          STONE
+          : AIR;
         blocks[blockIndex(dx, dy, dz)] = block;
 
-        if(empty && block != 0){
+        if(empty && block != AIR){
           changed = true;
           empty = false;
         }
 
 #ifdef PRINT_TIMING
-        if(block != 0){
+        if(block != AIR){
           count++;
         }
 #endif
@@ -179,7 +178,7 @@ bool Chunk::update(){
       for(_y = 0; _y < CHUNK_SIZE; _y++){
         block = blocks[blockIndex(_x, _y, _z)];
 
-        if(block == 0){
+        if(block == AIR){
           continue;
         }
 

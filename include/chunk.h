@@ -6,15 +6,16 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "common.h"
 #include "gl/vao.h"
+
+#include "common.h"
+#include "blocks.h"
 
 #define CHUNK_SIZE 32
 #define CHUNK_SIZE_SQUARED 1024
 #define CHUNK_SIZE_CUBED 32768
 
 typedef int vec2i[2];
-typedef uint8_t block_t;
 
 class Chunk{
 public:
