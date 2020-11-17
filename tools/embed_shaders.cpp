@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string>
 
-void handleShader(std::ofstream& file, std::string name){
+void handleShader(std::ofstream& file, std::string name) {
   std::cout << "embeding shader: " << name << "\n";
   std::ifstream vertexFile, fragmentFile;
 
@@ -26,7 +26,7 @@ void handleShader(std::ofstream& file, std::string name){
   fragmentFile.close();
 }
 
-int main(){
+int main() {
   std::ofstream file;
   file.open("embed/shaders.h");
 
@@ -38,13 +38,15 @@ int main(){
 
   std::ifstream listFile;
   listFile.open("shaders/list.txt");
-  if(!listFile){
+
+  if(!listFile) {
     std::cout << "ERROR: could not open shader list file\n";
     return -1;
   }
 
   std::string path;
-  while(std::getline(listFile, path, '\n')){
+
+  while(std::getline(listFile, path, '\n')) {
     handleShader(file, path);
   }
 

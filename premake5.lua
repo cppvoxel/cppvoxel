@@ -71,7 +71,7 @@ workspace "cppvoxel"
       print "Formatting files..."
     end,
     ["execute"] = function()
-      os.execute("astyle --options=.astylerc src/*.cpp include/*.h shaders/*.glsl")
+      os.execute("astyle --options=.astylerc src/*.cpp tools/*.cpp include/*.h shaders/*.glsl")
     end,
     ["onEnd"] = function()
       print "Done."
