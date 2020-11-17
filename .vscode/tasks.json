@@ -7,18 +7,14 @@
       "label": "Debug Build",
       "type": "shell",
       "command": "premake5 build",
-      "problemMatcher": [
-        "$gcc"
-      ],
+      "problemMatcher": ["$gcc"],
       "group": "build"
     },
     {
       "label": "Release Build",
       "type": "shell",
       "command": "premake5 build --release",
-      "problemMatcher": [
-        "$gcc"
-      ],
+      "problemMatcher": ["$gcc"],
       "group": {
         "kind": "build",
         "isDefault": true
@@ -41,6 +37,12 @@
       }
     },
     {
+      "label": "Format",
+      "type": "shell",
+      "command": "premake5 format",
+      "problemMatcher": []
+    },
+    {
       "label": "Clean",
       "type": "shell",
       "command": "premake5 clean",
@@ -55,24 +57,14 @@
     {
       "label": "Debug Build + Run",
       "dependsOrder": "sequence",
-      "dependsOn": [
-        "Debug Build",
-        "Debug Run"
-      ],
-      "problemMatcher": [
-        "$gcc"
-      ]
+      "dependsOn": ["Debug Build", "Debug Run"],
+      "problemMatcher": ["$gcc"]
     },
     {
       "label": "Release Build + Run",
       "dependsOrder": "sequence",
-      "dependsOn": [
-        "Release Build",
-        "Release Run"
-      ],
-      "problemMatcher": [
-        "$gcc"
-      ]
+      "dependsOn": ["Release Build", "Release Run"],
+      "problemMatcher": ["$gcc"]
     }
   ]
 }

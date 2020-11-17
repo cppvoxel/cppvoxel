@@ -65,29 +65,40 @@ workspace "cppvoxel"
   }
 
   newaction {
-    ["trigger"] = "clean",
-    ["description"] = "Delete generated project and build files",
-    ["onStart"] =
-      function()
-        print "Cleaning files..."
-      end,
-    ["execute"] =
-      function()
-        os.rmdir("bin")
-        os.rmdir("obj")
-        os.rmdir("build")
-        os.rmdir("embed")
-      end,
-    ["onEnd"] =
-      function()
-        print "Done."
-      end
+    ["trigger"] = "format",
+    ["description"] = "Formats all source files",
+    ["onStart"] = function()
+      print "Formatting files..."
+    end,
+    ["execute"] = function()
+      os.execute("astyle --options=.astylerc src/*.cpp include/*.h shaders/*.glsl")
+    end,
+    ["onEnd"] = function()
+      print "Done."
+    end
   }
 
   newaction {
-    trigger = "embed",
-    description = "Embed resource files",
-    execute = function ()
+    ["trigger"] = "clean",
+    ["description"] = "Delete generated project and build files",
+    ["onStart"] = function()
+      print "Cleaning files..."
+    end,
+    ["execute"] = function()
+      os.rmdir("bin")
+      os.rmdir("obj")
+      os.rmdir("build")
+      os.rmdir("embed")
+    end,
+    ["onEnd"] = function()
+      print "Done."
+    end
+  }
+
+  newaction {
+    ["trigger"] = "embed",
+    ["description"] = "Embed resource files",
+    ["execute"] = function ()
       os.execute("premake5 gmake2")
       buildProject("embed_images", true)
       buildProject("embed_shaders", true)
@@ -106,11 +117,10 @@ workspace "cppvoxel"
   newaction {
     ["trigger"] = "build",
     ["description"] = "Build",
-    ["execute"] =
-      function()
-        os.execute("premake5 gmake2")
-        buildProject("cppvoxel")
-      end
+    ["execute"] = function()
+      os.execute("premake5 gmake2")
+      buildProject("cppvoxel")
+    end
   }
 
 project "embed_images"

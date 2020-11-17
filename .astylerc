@@ -1,0 +1,48 @@
+# no backup files
+suffix=none
+# all files
+# recursive
+
+# output
+preserve-date
+formatted
+ignore-exclude-errors-x
+
+# ignore non source folders
+exclude="build"
+exclude="bin"
+exclude="embed"
+
+# brace style
+style=attach
+# line endings
+lineend=linux
+
+# tabs
+convert-tabs
+indent=spaces=2
+
+# pointer alignment
+align-pointer=type
+align-reference=type
+
+# line length
+max-code-length=200
+break-after-logical
+max-continuation-indent=120
+
+# space
+break-blocks
+break-one-line-headers
+attach-return-type
+
+# add
+pad-oper
+add-braces
+add-one-line-braces
+indent-switches
+
+# remove
+# remove-braces
+unpad-paren
+close-templates
