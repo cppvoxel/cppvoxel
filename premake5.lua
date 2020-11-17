@@ -8,6 +8,28 @@ function getCmdOutput(cmd)
   return output
 end
 
+function buildProject(project, forceRelease)
+  local buildCommand = "make -C build "..project
+
+  if _OPTIONS["release"] or forceRelease then
+    buildCommand = buildCommand.." config=release"
+  end
+
+  if _TARGET_OS == "windows" then
+    buildCommand = "mingw32-"..buildCommand;
+  end
+
+  os.execute(buildCommand)
+end
+
+function getToolBuildPath(name)
+  if _TARGET_OS == "windows" then
+    return "bin\\tools\\"..name..".exe "
+  else
+    return "./bin/tools/"..name
+  end
+end
+
 workspace "cppvoxel"
   configurations {"Debug", "Release"}
   architecture "x64"
@@ -63,42 +85,31 @@ workspace "cppvoxel"
   }
 
   newaction {
+    trigger = "embed",
+    description = "Embed resource files",
+    execute = function ()
+      os.execute("premake5 gmake2")
+      buildProject("embed_images", true)
+      buildProject("embed_shaders", true)
+
+      print "Embeding resources..."
+      os.mkdir("embed/res")
+      res = os.matchfiles("res/*.png")
+      for _, resFile in ipairs(res) do
+        resFile = string.sub(resFile, string.find(resFile, "/[^/]*$") + 1, string.find(resFile, ".[^.]*$") - 1)
+        os.execute(getToolBuildPath("embed_images").." "..resFile)
+      end
+      os.execute(getToolBuildPath("embed_shaders"))
+    end
+ }
+
+  newaction {
     ["trigger"] = "build",
     ["description"] = "Build",
     ["execute"] =
       function()
         os.execute("premake5 gmake2")
-
-        print "Embeding resources..."
-        os.mkdir("embed/res")
-        res = os.matchfiles("res/*.png")
-        for _, resFile in ipairs(res) do
-          resFile = string.sub(resFile, string.find(resFile, "/[^/]*$") + 1, string.find(resFile, ".[^.]*$") - 1)
-          if _TARGET_OS == "windows" then
-            os.execute("bin\\tools\\embed_images.exe "..resFile)
-          else
-            os.execute("./bin/tools/embed_images "..resFile)
-          end
-        end
-        if _TARGET_OS == "windows" then
-          os.execute("bin\\tools\\embed_shaders.exe")
-        else
-          os.execute("./bin/tools/embed_shaders")
-        end
-
-        if _TARGET_OS == "windows" then
-          if _OPTIONS["release"] then
-            os.execute("mingw32-make -C build config=release")
-          else
-            os.execute("mingw32-make -C build")
-          end
-        else
-          if _OPTIONS["release"] then
-            os.execute("make -C build config=release")
-          else
-            os.execute("make -C build")
-          end
-        end
+        buildProject("cppvoxel")
       end
   }
 

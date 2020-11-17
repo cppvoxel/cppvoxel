@@ -43,7 +43,14 @@
     {
       "label": "Clean",
       "type": "shell",
-      "command": "premake5 clean"
+      "command": "premake5 clean",
+      "problemMatcher": []
+    },
+    {
+      "label": "Embed Resources",
+      "type": "shell",
+      "command": "premake5 embed",
+      "problemMatcher": []
     },
     {
       "label": "Debug Build + Run",
