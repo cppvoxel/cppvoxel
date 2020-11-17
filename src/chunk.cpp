@@ -4,15 +4,18 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include <glm/gtc/noise.hpp>
+
 #include "gl/buffer.h"
 
-#include "noise.h"
 #include "blocks.h"
 #include "chunk_manager.h"
 #include "timer.h"
 
 #define sign(_x) ({ __typeof__(_x) _xx = (_x);\
   ((__typeof__(_x)) ( (((__typeof__(_x)) 0) < _xx) - (_xx < ((__typeof__(_x)) 0))));})
+
+#define WATER_LEVEL 57
 
 enum NormalFace : uint8_t{
   PY = 0,
@@ -46,6 +49,21 @@ inline int packVertex(uint8_t x, uint8_t y, uint8_t z, NormalFace normal, uint8_
   return x | (y << 6) | (z << 12) | (normal << 18) | (textureId << 21) | (texX << 29) | (texY << 30);
 }
 
+float getHeight(int x, int z, int xCS, int zCS, int octaves, float roughness, float smoothness, float amplitude){
+  float xCoord = (float)(x + xCS);
+  float zCoord = (float)(z + zCS);
+  float totalValue = 0.0f;
+
+  float frequency, _amplitude;
+  for(int octave = 0; octave < octaves - 1; octave++){
+    frequency = glm::pow(2.0f, octave);
+    _amplitude = glm::pow(roughness, octave);
+    totalValue += glm::simplex(glm::vec2{xCoord * frequency / smoothness, zCoord * frequency / smoothness}) * _amplitude;
+  }
+
+  return ((totalValue / 2.1f) + 1.2f) * amplitude;
+}
+
 Chunk::Chunk(int _x, int _y, int _z){
 #ifdef PRINT_TIMING
   Timer timer;
@@ -64,38 +82,35 @@ Chunk::Chunk(int _x, int _y, int _z){
   y = _y;
   z = _z;
 
+  // precalculate chunk position in block coordinates
   const int xCS = x * CHUNK_SIZE;
   const int yCS = y * CHUNK_SIZE;
   const int zCS = z * CHUNK_SIZE;
 
   model = glm::translate(glm::mat4(1.0f), glm::vec3(xCS, yCS, zCS));
 
-  int chunkX, chunkZ, height, realHeight;
-  float f, biomeHeight, e;
-  uint8_t dx, dy, dz, thickness;
+  int height, thickness;
+  uint8_t dx, dy, dz;
   block_t block;
 
   for(dx = 0; dx < CHUNK_SIZE; dx++){
     for(dz = 0; dz < CHUNK_SIZE; dz++){
-      chunkX = xCS + dx;
-      chunkZ = zCS + dz;
-
-      biomeHeight = simplex2(chunkX * 0.003f, chunkZ * 0.003f, 2, 0.6f, 1.5f);
-      e = lerp(1.3f, 0.2f, (biomeHeight - 1.0f) / 2.0f);
-
-      f = simplex2(chunkX * 0.002f, chunkZ * 0.002f, 6, 0.6f, 1.5f);
-      height = pow((f + 1) / 2 + 1, 9) * e;
-      realHeight = height - yCS;
+      height = (int)getHeight(dx, dz, xCS, zCS, 8, 0.4f, 400.0f, 100.0f);
 
       for(dy = 0; dy < CHUNK_SIZE; dy++){
-        thickness = realHeight - dy;
-        block = height < 15 && thickness <= 10 ? 8 : height < 18 && thickness <= 3 ? 5 : height >= 160 && thickness <= 7 ? 7 : thickness == 1 ? 1 : thickness <= 6 ? 3 : 2;
-        if(block == 8 && height < 14){
-          height = 14;
-          realHeight = height - yCS;
+        if(height < WATER_LEVEL){
+          height = WATER_LEVEL;
         }
 
-        block = dy < realHeight ? block : 0;
+        thickness = height - (dy + yCS);
+
+        block = dy + yCS <= height ? 
+          height <= WATER_LEVEL && thickness <= 1 ? 8 : // water
+          height <= WATER_LEVEL + 3 && thickness <= 4 ? 5 : // sand
+          thickness == 0 ? 1 : // grass
+          thickness <= 3 ? 2 : // dirt
+          3 // stone
+          : 0; // air
         blocks[blockIndex(dx, dy, dz)] = block;
 
         if(empty && block != 0){
