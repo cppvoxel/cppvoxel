@@ -222,6 +222,10 @@ bool VercidiumRayMarch(int *bx, int *by, int *bz, int *cx, int *cy, int *cz){
   return false;
 }
 
+/* FIXME:
+ * Use an array
+ * Have texture IDs be constants
+*/
 uint8_t* loadTexture(int index){
   int width, height, nrChannels;
   uint8_t* imageData;
