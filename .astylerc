@@ -1,7 +1,7 @@
 # no backup files
 suffix=none
 # all files
-# recursive
+recursive
 
 # output
 preserve-date
