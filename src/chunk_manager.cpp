@@ -27,8 +27,8 @@ void ChunkManager::init() {
   shader->use();
 
   shader->setInt("texture_array", 0);
-  shader->setInt("fog_near", (viewDistance + 1) * CHUNK_SIZE - 4);
-  shader->setInt("fog_far", (viewDistance + 1) * CHUNK_SIZE);
+  shader->setInt("fog_near", viewDistance * CHUNK_SIZE - CHUNK_SIZE / 2);
+  shader->setInt("fog_far", viewDistance * CHUNK_SIZE);
 
   shaderProjectionLocation = shader->getUniformLocation("projection");
   shaderViewLocation = shader->getUniformLocation("view");
