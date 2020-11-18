@@ -4,6 +4,7 @@
 /obj
 Makefile
 /embed
+/cppvoxel.res
 
 # configs
 .vs/
