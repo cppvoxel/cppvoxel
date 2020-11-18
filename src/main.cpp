@@ -50,6 +50,10 @@
 #define GIT_BRANCH "unknown"
 #endif
 
+#ifndef GIT_TAG
+#define GIT_TAG "unknown"
+#endif
+
 #ifndef GIT_HASH
 #define GIT_HASH "unknown"
 #endif
@@ -352,7 +356,7 @@ int main(int argc, char** argv) {
   STACK_TRACE_PUSH("init")
 
   printf("== cppvoxel ==\n");
-  printf("version: %s@%s\n", GIT_BRANCH, GIT_HASH);
+  printf("version: %s@%s@%s\n", GIT_BRANCH, GIT_TAG, GIT_HASH);
 
 #ifdef MULTI_THREADING
   printf("multithreading: enabled\n");

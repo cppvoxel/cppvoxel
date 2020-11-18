@@ -137,8 +137,9 @@ project "cppvoxel"
   includedirs {"../cppgl/vendors", "../cppgl/vendors/glm", "include", "embed"}
 
   local git_hash = getCmdOutput("git rev-parse HEAD")
+  local git_tag = getCmdOutput("git describe --tags --candidates 1")
   local git_branch = getCmdOutput("git rev-parse --abbrev-ref HEAD")
-  defines {"GLEW_STATIC", "GIT_HASH=\""..git_hash.."\"", "GIT_BRANCH=\""..git_branch.."\""}
+  defines {"GLEW_STATIC", "GIT_HASH=\""..git_hash.."\"", "GIT_BRANCH=\""..git_branch.."\"", "GIT_TAG=\""..git_tag.."\""}
 
   filter {"system:windows"}
     libdirs "../cppgl/lib"
