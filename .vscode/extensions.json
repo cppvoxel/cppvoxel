@@ -1,5 +1,9 @@
 {
   "recommendations": [
-    "chiehyu.vscode-astyle"
+    "chiehyu.vscode-astyle",
+    "ms-vscode.cpptools",
+    "editorconfig.editorconfig",
+    "slevesque.shader",
+    "wayou.vscode-todo-highlight"
   ]
 }
