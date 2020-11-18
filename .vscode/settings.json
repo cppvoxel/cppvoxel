@@ -1,4 +1,11 @@
 {
+  "editor.formatOnPaste": true,
+  "editor.formatOnSave": true,
+  "astyle.astylerc": "${workspaceRoot}/.astylerc",
+  "astyle.additional_languages": ["glsl"],
+  "[cpp]": {
+    "editor.defaultFormatter": "chiehyu.vscode-astyle"
+  },
   "files.associations": {
     "*.make": "makefile",
     "chrono": "cpp",
